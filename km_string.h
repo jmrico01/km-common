@@ -1,7 +1,6 @@
 #pragma once
 
 #include "km_lib.h"
-#include "km_math.h"
 
 // TODO plz standardize file paths
 #define PATH_MAX_LENGTH 128
@@ -10,7 +9,7 @@
 #define VALUE_MAX_LENGTH 4096
 
 uint64 StringLength(const char* str);
-bool StringCompare(const char* str1, const char* str2, int n);
+bool StringCompare(const char* str1, const char* str2, uint64 n);
 bool StringCompare(const Array<char>& str1, const Array<char>& str2);
 bool StringCompare(const Array<char>& str1, const char* str2);
 bool StringCompare(const char* str1, const char* str2);

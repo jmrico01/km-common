@@ -4,11 +4,6 @@
 
 #include "km_defines.h"
 #include "km_log.h"
-#include "km_math.h"
-#include "main.h"
-#include "main_platform.h"
-#include "opengl_base.h"
-#include "text.h"
 
 #if GAME_SLOW
 #define DEBUG_ASSERTF(expression, format, ...) if (!(expression)) { \

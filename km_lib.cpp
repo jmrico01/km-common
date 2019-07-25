@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <cstring> // memcpy is here... no idea why
 
+#include "km_debug.h"
+#include "km_math.h"
 #include "km_string.h"
 
 #define DYNAMIC_ARRAY_START_CAPACITY 10
@@ -119,7 +121,7 @@ void FixedArray<T, S>::Append(const T& element)
 template <typename T, uint64 S>
 void FixedArray<T, S>::RemoveLast()
 {
-	array.RemoveLast()
+	array.RemoveLast();
 }
 
 template <typename T, uint64 S>
@@ -188,10 +190,9 @@ void DynamicArray<T>::Allocate(uint64 cap)
 template <typename T>
 void DynamicArray<T>::Free()
 {
-	free(data);
-
+	free(array.data);
+	array.size = 0;
 	capacity = 0;
-	size = 0;
 }
 
 template <typename T>

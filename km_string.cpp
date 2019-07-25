@@ -1,6 +1,7 @@
 #include "km_string.h"
 
 #include "km_debug.h"
+#include "km_math.h"
 
 uint64 StringLength(const char* string)
 {

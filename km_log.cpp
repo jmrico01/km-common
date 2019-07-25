@@ -1,6 +1,7 @@
 #include "km_log.h"
 
 #include "km_debug.h"
+#include "km_math.h"
 
 void LogState::PrintFormat(LogCategory logCategory,
 	const char* file, int line, const char* function,
