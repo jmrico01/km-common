@@ -43,7 +43,7 @@ void LogState::PrintFormat(LogCategory logCategory,
         if (logSize < 0 || (uint64)logSize >= freeSpace2) {
             // Not necessarily too big to write, freeSpace1 + freeSpace2 might be big enough
             // But this is easier and probably fine
-            DEBUG_PANIC("Log too big!\n");
+            // DEBUG_PANIC("Log too big!\n"); // TODO bad idea, will call log again
             return;
         }
         MemCopy(buffer + writeIndex, buffer, freeSpace1);
