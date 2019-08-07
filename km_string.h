@@ -13,6 +13,7 @@ bool StringCompare(const char* str1, const char* str2, uint64 n);
 bool StringCompare(const Array<char>& str1, const Array<char>& str2);
 bool StringCompare(const Array<char>& str1, const char* str2);
 bool StringCompare(const char* str1, const char* str2);
+bool StringContains(const Array<char>& str, const char* substring);
 void CatStrings(
 	size_t sourceACount, const char* sourceA,
 	size_t sourceBCount, const char* sourceB,

@@ -39,6 +39,21 @@ bool StringCompare(const char* str1, const char* str2)
     return StringCompare(str1, str2, MaxUInt64(StringLength(str1), StringLength(str2)));
 }
 
+bool StringContains(const Array<char>& str, const char* substring)
+{
+	for (uint64 i = 0; i < str.size; i++) {
+		char c = *substring++;
+		if (c == '\0') {
+			return true;
+		}
+		if (c != str[i]) {
+			return false;
+		}
+	}
+
+	return false;
+}
+
 void CatStrings(
 	size_t sourceACount, const char* sourceA,
 	size_t sourceBCount, const char* sourceB,
