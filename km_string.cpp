@@ -55,6 +55,11 @@ void CatStrings(
 	*dest++ = '\0';
 }
 
+void StringCat(const char* str1, const char* str2, char* dest, uint64 destMaxLength)
+{
+	CatStrings(StringLength(str1), str1, StringLength(str2), str2, destMaxLength, dest);
+}
+
 inline bool32 IsWhitespace(char c)
 {
 	return c == ' ' || c == '\t'

@@ -57,6 +57,7 @@ global_var PlatformFlushLogsFunc* flushLogs_;
 	__FILE__, __LINE__, __func__, format, ##__VA_ARGS__)
 #define LOG_INFO(format, ...) logState_->PrintFormat(LOG_CATEGORY_INFO, \
 	__FILE__, __LINE__, __func__, format, ##__VA_ARGS__)
+#define LOG_FLUSH() flushLogs_(logState_)
 #if GAME_SLOW
 #define LOG_DEBUG(format, ...) logState_->PrintFormat(LOG_CATEGORY_DEBUG, \
     __FILE__, __LINE__, __func__, format, ##__VA_ARGS__)

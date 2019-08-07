@@ -17,6 +17,7 @@ void CatStrings(
 	size_t sourceACount, const char* sourceA,
 	size_t sourceBCount, const char* sourceB,
 	size_t destCount, char* dest);
+void StringCat(const char* str1, const char* str2, char* dest, uint64 destMaxLength);
 
 inline bool32 IsWhitespace(char c);
 void TrimWhitespace(const Array<char>& string, Array<char>* trimmed);
