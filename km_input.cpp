@@ -1,5 +1,6 @@
 #include "km_input.h"
-#include "main_platform.h"
+
+#include <km_platform/main_platform.h>
 
 inline bool32 IsKeyPressed(const GameInput* input, KeyInputCode keyCode)
 {
