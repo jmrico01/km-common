@@ -1,5 +1,8 @@
 #include "km_log.h"
 
+#undef STB_SPRINTF_IMPLEMENTATION
+#include <stb_sprintf.h>
+
 #include "km_debug.h"
 #include "km_math.h"
 
@@ -37,9 +40,9 @@ void LogState::PrintFormat(LogCategory logCategory,
 
     va_list args;
     va_start(args, format);
-    int logSize = vsnprintf(buffer + writeIndex, freeSpace1, format, args);
+    int logSize = stbsp_vsnprintf(buffer + writeIndex, (int)freeSpace1, format, args);
     if (logSize < 0 || (uint64)logSize >= freeSpace1) {
-        logSize = vsnprintf(buffer, freeSpace2, format, args);
+        logSize = stbsp_vsnprintf(buffer, (int)freeSpace2, format, args);
         if (logSize < 0 || (uint64)logSize >= freeSpace2) {
             // Not necessarily too big to write, freeSpace1 + freeSpace2 might be big enough
             // But this is easier and probably fine

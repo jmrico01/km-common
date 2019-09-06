@@ -1,7 +1,7 @@
 #include "km_lib.h"
 
-#include <stdio.h>
 #include <cstring> // memcpy is here... no idea why
+#include <limits.h>
 
 #include "km_debug.h"
 #include "km_math.h"
@@ -11,6 +11,34 @@
 
 #define HASH_TABLE_START_CAPACITY 17
 #define HASH_TABLE_MAX_SIZE_TO_CAPACITY 0.7
+
+int ToIntOrTruncate(uint64 n)
+{
+	if (n > INT_MAX) {
+		return INT_MAX;
+	}
+	else {
+		return (int)n;
+	}
+}
+
+void MemCopy(void* dst, const void* src, uint64 numBytes)
+{
+	DEBUG_ASSERT(((const char*)dst + numBytes <= src)
+		|| (dst >= (const char*)src + numBytes));
+	// TODO maybe see about reimplementing this? would be informative
+	memcpy(dst, src, numBytes);
+}
+
+void MemMove(void* dst, const void* src, uint64 numBytes)
+{
+	memmove(dst, src, numBytes);
+}
+
+void MemSet(void* dst, char value, uint64 numBytes)
+{
+	memset(dst, value, numBytes);
+}
 
 // Very simple string hash ( djb2 hash, source http://www.cse.yorku.ca/~oz/hash.html )
 uint64 KeyHash(const HashKey& key)
@@ -362,22 +390,4 @@ KeyValuePair<V>* HashTable<V>::GetFreeSlot(const HashKey& key)
 	}
 
 	return nullptr;
-}
-
-void MemCopy(void* dst, const void* src, uint64 numBytes)
-{
-	DEBUG_ASSERT(((const char*)dst + numBytes <= src)
-		|| (dst >= (const char*)src + numBytes));
-	// TODO maybe see about reimplementing this? would be informative
-	memcpy(dst, src, numBytes);
-}
-
-void MemMove(void* dst, const void* src, uint64 numBytes)
-{
-	memmove(dst, src, numBytes);
-}
-
-void MemSet(void* dst, char value, uint64 numBytes)
-{
-	memset(dst, value, numBytes);
 }
