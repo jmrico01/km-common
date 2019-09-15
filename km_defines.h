@@ -19,9 +19,6 @@ GAME_SLOW:
 
 GAME_WIN32:
 defined if compiling for Win32 platform
-
-GAME_PLATFORM_CODE:
-defined on the platform-specific compilation unit
 */
 
 #define ARRAY_COUNT(arrayName) (sizeof(arrayName) / sizeof((arrayName)[0]))

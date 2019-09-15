@@ -12,6 +12,26 @@ void MemCopy(void* dst, const void* src, uint64 numBytes);
 void MemMove(void* dst, const void* src, uint64 numBytes);
 void MemSet(void* dst, char value, uint64 numBytes);
 
+// defer C++11 implementation, source: https://www.gingerbill.org/article/2015/08/19/defer-in-cpp/
+template <typename F>
+struct _PrivateDefer
+{
+    F f;
+    _PrivateDefer(F f) : f(f) {}
+    ~_PrivateDefer() { f(); }
+};
+
+template <typename F>
+_PrivateDefer<F> defer_func(F f)
+{
+    return _PrivateDefer<F>(f);
+}
+
+#define DEFER_1(x, y) x##y
+#define DEFER_2(x, y) DEFER_1(x, y)
+#define DEFER_3(x)    DEFER_2(x, __COUNTER__)
+#define defer(code)   auto DEFER_3(_defer_) = defer_func([&](){code;})
+
 template <typename T>
 struct Array
 {

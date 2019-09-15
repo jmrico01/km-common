@@ -13,6 +13,7 @@ inline int AbsInt(int n) {
 inline float32 AbsFloat32(float32 f) {
     return f < 0.0f ? -f : f;
 }
+
 inline int MinInt(int a, int b) {
 	return a < b ? a : b;
 }
@@ -22,6 +23,7 @@ inline int MaxInt(int a, int b) {
 inline int ClampInt(int a, int min, int max) {
 	return MinInt(MaxInt(a, min), max);
 }
+
 inline uint64 MinUInt64(uint64 a, uint64 b) {
     return a < b ? a : b;
 }
@@ -31,6 +33,7 @@ inline uint64 MaxUInt64(uint64 a, uint64 b) {
 inline uint64 ClampUInt64(uint64 a, uint64 min, uint64 max) {
     return MinUInt64(MaxUInt64(a, min), max);
 }
+
 inline float32 MinFloat32(float32 a, float32 b) {
 	return a < b ? a : b;
 }
@@ -40,6 +43,7 @@ inline float32 MaxFloat32(float32 a, float32 b) {
 inline float32 ClampFloat32(float32 a, float32 min, float32 max) {
 	return MinFloat32(MaxFloat32(a, min), max);
 }
+
 // TODO quick and dirty round implementation
 inline int RoundFloat32Fast(float32 a) {
 	if (a < 0.0) {
