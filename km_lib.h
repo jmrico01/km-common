@@ -22,7 +22,7 @@ struct _PrivateDefer
 };
 
 template <typename F>
-_PrivateDefer<F> defer_func(F f)
+_PrivateDefer<F> _DeferFunction(F f)
 {
     return _PrivateDefer<F>(f);
 }
@@ -30,7 +30,7 @@ _PrivateDefer<F> defer_func(F f)
 #define DEFER_1(x, y) x##y
 #define DEFER_2(x, y) DEFER_1(x, y)
 #define DEFER_3(x)    DEFER_2(x, __COUNTER__)
-#define defer(code)   auto DEFER_3(_defer_) = defer_func([&](){code;})
+#define defer(code)   auto DEFER_3(_defer_) = _DeferFunction([&](){code;})
 
 template <typename T>
 struct Array
@@ -100,6 +100,10 @@ struct DynamicArray
 struct HashKey
 {
 	FixedArray<char, STRING_KEY_MAX_LENGTH> string;
+
+	HashKey();
+	HashKey(const Array<char>& str);
+	HashKey(const char* str);
 
 	void WriteString(const Array<char>& str);
 	void WriteString(const char* str);

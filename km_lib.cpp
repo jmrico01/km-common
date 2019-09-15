@@ -265,6 +265,20 @@ inline T& DynamicArray<T>::operator[](uint64 index)
 	return array[index];
 }
 
+HashKey::HashKey()
+{
+}
+
+HashKey::HashKey(const Array<char>& str)
+{
+	WriteString(str);
+}
+
+HashKey::HashKey(const char* str)
+{
+	WriteString(str);
+}
+
 void HashKey::WriteString(const Array<char>& str)
 {
 	DEBUG_ASSERT(str.size <= STRING_KEY_MAX_LENGTH);
