@@ -23,7 +23,7 @@ void LinearAllocator::Free(void* memory)
 	DEBUG_ASSERT(memoryInd < capacity);
 	DEBUG_ASSERT(memoryInd + lastAllocatedSize == used);
 	used = memoryInd;
-	lastAllocatedSize = 0;
+	lastAllocatedSize = 0; // Can't validate more calls to Free after this
 }
 
 LinearAllocatorState LinearAllocator::SaveState()

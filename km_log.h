@@ -45,11 +45,9 @@ struct LogState
 		const char* format, ...);
 };
 
-#define PLATFORM_FLUSH_LOGS_FUNC(name) void name(LogState* logState)
-typedef PLATFORM_FLUSH_LOGS_FUNC(PlatformFlushLogsFunc);
-
 global_var LogState* logState_;
-global_var PlatformFlushLogsFunc* flushLogs_;
+
+void PlatformFlushLogs(LogState* logState);
 
 #define LOG_ERROR(format, ...) logState_->PrintFormat(LOG_CATEGORY_ERROR, \
 	__FILE__, __LINE__, __func__, format, ##__VA_ARGS__)
@@ -57,7 +55,7 @@ global_var PlatformFlushLogsFunc* flushLogs_;
 	__FILE__, __LINE__, __func__, format, ##__VA_ARGS__)
 #define LOG_INFO(format, ...) logState_->PrintFormat(LOG_CATEGORY_INFO, \
 	__FILE__, __LINE__, __func__, format, ##__VA_ARGS__)
-#define LOG_FLUSH() flushLogs_(logState_)
+#define LOG_FLUSH() PlatformFlushLogs(logState_)
 #if GAME_SLOW
 #define LOG_DEBUG(format, ...) logState_->PrintFormat(LOG_CATEGORY_DEBUG, \
     __FILE__, __LINE__, __func__, format, ##__VA_ARGS__)
