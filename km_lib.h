@@ -14,23 +14,21 @@ void MemSet(void* dst, char value, uint64 numBytes);
 
 // defer C++11 implementation, source: https://www.gingerbill.org/article/2015/08/19/defer-in-cpp/
 template <typename F>
-struct _PrivateDefer
+struct _DeferFunctionObject
 {
-    F f;
-    _PrivateDefer(F f) : f(f) {}
-    ~_PrivateDefer() { f(); }
+    F function;
+    _DeferFunctionObject(F function) : function(function) {}
+    ~_DeferFunctionObject() { function(); }
 };
 
 template <typename F>
-_PrivateDefer<F> _DeferFunction(F f)
+_DeferFunctionObject<F> _DeferFunction(F function)
 {
-    return _PrivateDefer<F>(f);
+    return _DeferFunctionObject<F>(function);
 }
 
-#define DEFER_1(x, y) x##y
-#define DEFER_2(x, y) DEFER_1(x, y)
-#define DEFER_3(x)    DEFER_2(x, __COUNTER__)
-#define defer(code)   auto DEFER_3(_defer_) = _DeferFunction([&](){code;})
+#define STRING_JOIN2(x, y) (x##y)
+#define defer(code) auto STRING_JOIN2(_defer_, __COUNTER__) = _DeferFunction([&]() { code; })
 
 template <typename T>
 struct Array
