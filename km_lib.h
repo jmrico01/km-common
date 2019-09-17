@@ -4,7 +4,7 @@
 
 #define C_ARRAY_LENGTH(cArray) (sizeof(cArray) / sizeof(cArray[0]))
 
-#define STRING_KEY_MAX_LENGTH 32
+#define STRING_KEY_MAX_LENGTH 64
 
 int ToIntOrTruncate(uint64 n);
 
