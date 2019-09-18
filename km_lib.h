@@ -1,6 +1,7 @@
 #pragma once
 
 #include "km_defines.h"
+#include "km_memory.h"
 
 #define C_ARRAY_LENGTH(cArray) (sizeof(cArray) / sizeof(cArray[0]))
 
@@ -39,9 +40,9 @@ struct Array
 	void Append(const T& element);
 	void RemoveLast();
 
-	// Slow, linear time
-	void Remove(uint64 index);
+	// slow, linear time
 	void AppendAfter(const T& element, uint64 index);
+	void Remove(uint64 index);
 	
 	inline T operator[](int index) const;
 	inline T operator[](uint64 index) const;
@@ -60,9 +61,9 @@ struct FixedArray
 	void Append(const T& element);
 	void RemoveLast();
 
-	// Slow, linear time
-	void Remove(uint64 index);
+	// slow, linear time
 	void AppendAfter(const T& element, uint64 index);
+	void Remove(uint64 index);
 	
 	inline T operator[](int index) const;
 	inline T operator[](uint64 index) const;
@@ -72,27 +73,25 @@ struct FixedArray
 	inline void operator=(const FixedArray<T, S>& other);
 };
 
-template <typename T>
-struct DynamicArray
+template <typename T, typename Allocator = StandardAllocator>
+struct DynamicArray // TODO figure out where allocator will go
 {
 	uint64 capacity;
+	Allocator* allocator;
 	Array<T> array;
 
-	void Allocate();
-	void Allocate(uint64 capacity);
-	void Free();
+	DynamicArray(uint64 capacity, Allocator* allocator = nullptr);
+	DynamicArray(Allocator* allocator = nullptr);
 
 	void Append(const T& element);
 	void RemoveLast();
-
-	// Slow, linear time
-	void Remove(uint64 index);
-	void AppendAfter(const T& element, uint64 index);
 	
 	inline T operator[](int index) const;
 	inline T operator[](uint64 index) const;
 	inline T& operator[](int index);
 	inline T& operator[](uint64 index);
+
+	void UpdateCapacity(uint64 newCapacity);
 };
 
 struct HashKey
