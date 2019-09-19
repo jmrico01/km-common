@@ -8,6 +8,7 @@
 #include "km_string.h"
 
 #define DYNAMIC_ARRAY_START_CAPACITY 16
+#define DYNAMIC_QUEUE_START_CAPACITY 16
 
 #define HASH_TABLE_START_CAPACITY 17
 #define HASH_TABLE_MAX_SIZE_TO_CAPACITY 0.7
@@ -204,20 +205,36 @@ inline void FixedArray<T, S>::operator=(const FixedArray<T, S>& other)
 	}
 }
 
+// TODO dumb wrappers until I figure out a better way to do this at compile time
+template <typename Allocator>
+void* AllocateOrUseDefaultIfNull(Allocator* allocator, uint64 size)
+{
+	if (allocator == nullptr) {
+		return defaultAllocator_.Allocate(size);
+	}
+	else {
+		return allocator->Allocate(size);
+	}
+}
+template <typename Allocator>
+void* ReAllocateOrUseDefaultIfNull(Allocator* allocator, void* memory, uint64 size)
+{
+	if (allocator == nullptr) {
+		return defaultAllocator_.ReAllocate(memory, size);
+	}
+	else {
+		return allocator->ReAllocate(memory, size);
+	}
+}
+
 template <typename T, typename Allocator>
 DynamicArray<T, Allocator>::DynamicArray(uint64 capacity, Allocator* allocator)
 {
 	this->capacity = capacity;
 	this->allocator = allocator;
 	array.size = 0;
-	if (allocator == nullptr) {
-		array.data = (T*)defaultAllocator_.Allocate(capacity * sizeof(T)); // TODO ugh.. how to C++
-		DEBUG_ASSERT(array.data != nullptr);
-	}
-	else {
-		array.data = (T*)allocator->Allocate(capacity * sizeof(T));
-		DEBUG_ASSERT(array.data != nullptr);
-	}
+	array.data = (T*)AllocateOrUseDefaultIfNull(allocator, capacity * sizeof(T));
+	DEBUG_ASSERT(array.data != nullptr);
 }
 
 template <typename T, typename Allocator>
@@ -231,15 +248,8 @@ void DynamicArray<T, Allocator>::Append(const T& element)
 {
 	if (array.size >= capacity) {
 		uint64 newCapacity = capacity * 2;
-		void* newMemory;
-		if (allocator == nullptr) {
-			newMemory = (T*)defaultAllocator_.ReAllocate(array.data, newCapacity * sizeof(T)); // TODO
-			DEBUG_ASSERT(newMemory != nullptr);
-		}
-		else {
-			newMemory = (T*)allocator->ReAllocate(array.data, newCapacity * sizeof(T));
-			DEBUG_ASSERT(newMemory != nullptr);
-		}
+		void* newMemory = (T*)ReAllocateOrUseDefaultIfNull(allocator, array.data, newCapacity * sizeof(T));
+		DEBUG_ASSERT(newMemory != nullptr);
 		capacity = newCapacity;
 		array.data = (T*)newMemory;
 	}
@@ -280,6 +290,63 @@ template <typename T, typename Allocator>
 inline T& DynamicArray<T, Allocator>::operator[](uint64 index)
 {
 	return array[index];
+}
+
+template <typename T, typename Allocator>
+DynamicQueue<T, Allocator>::DynamicQueue(uint64 capacity, Allocator* allocator)
+{
+	this->start = 0;
+	this->end = 0;
+	this->capacity = capacity;
+	this->allocator = allocator;
+	this->data = (T*)AllocateOrUseDefaultIfNull(allocator, capacity * sizeof(T));
+	DEBUG_ASSERT(this->data != nullptr);
+}
+
+template <typename T, typename Allocator>
+DynamicQueue<T, Allocator>::DynamicQueue(Allocator* allocator)
+	: DynamicQueue(DYNAMIC_QUEUE_START_CAPACITY, allocator)
+{
+}
+
+template <typename T, typename Allocator>
+void DynamicQueue<T, Allocator>::Append(const T& element)
+{
+	uint64 newEnd = end + 1;
+	if (newEnd >= capacity) {
+		newEnd -= capacity;
+	}
+	if (newEnd == start) {
+		// TODO expand
+	}
+
+	data[newEnd] = element;
+	end = newEnd;
+}
+
+template <typename T, typename Allocator>
+const T& DynamicQueue<T, Allocator>::GetFirst()
+{
+	DEBUG_ASSERT(!IsEmpty());
+
+	return data[start];
+}
+
+template <typename T, typename Allocator>
+void DynamicQueue<T, Allocator>::RemoveFirst()
+{
+	DEBUG_ASSERT(!IsEmpty());
+
+	start += 1;
+	if (start >= capacity) {
+		start -= capacity;
+	}
+}
+
+template <typename T, typename Allocator>
+bool DynamicQueue<T, Allocator>::IsEmpty()
+{
+	return start == end;
 }
 
 HashKey::HashKey()

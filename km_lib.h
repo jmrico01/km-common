@@ -95,6 +95,23 @@ struct DynamicArray // TODO figure out where allocator will go
 	void UpdateCapacity(uint64 newCapacity);
 };
 
+template <typename T, typename Allocator = StandardAllocator>
+struct DynamicQueue
+{
+	uint64 start, end;
+	uint64 capacity;
+	Allocator* allocator;
+	T* data;
+
+	DynamicQueue(uint64 capacity, Allocator* allocator = nullptr);
+	DynamicQueue(Allocator* allocator = nullptr);
+
+	void Append(const T& element);
+	const T& GetFirst();
+	void RemoveFirst();
+	bool IsEmpty();
+};
+
 struct HashKey
 {
 	FixedArray<char, STRING_KEY_MAX_LENGTH> string;
