@@ -212,9 +212,11 @@ DynamicArray<T, Allocator>::DynamicArray(uint64 capacity, Allocator* allocator)
 	array.size = 0;
 	if (allocator == nullptr) {
 		array.data = (T*)defaultAllocator_.Allocate(capacity * sizeof(T)); // TODO ugh.. how to C++
+		DEBUG_ASSERT(array.data != nullptr);
 	}
 	else {
 		array.data = (T*)allocator->Allocate(capacity * sizeof(T));
+		DEBUG_ASSERT(array.data != nullptr);
 	}
 }
 
@@ -232,9 +234,11 @@ void DynamicArray<T, Allocator>::Append(const T& element)
 		void* newMemory;
 		if (allocator == nullptr) {
 			newMemory = (T*)defaultAllocator_.ReAllocate(array.data, newCapacity * sizeof(T)); // TODO
+			DEBUG_ASSERT(newMemory != nullptr);
 		}
 		else {
 			newMemory = (T*)allocator->ReAllocate(array.data, newCapacity * sizeof(T));
+			DEBUG_ASSERT(newMemory != nullptr);
 		}
 		capacity = newCapacity;
 		array.data = (T*)newMemory;
@@ -246,6 +250,12 @@ template <typename T, typename Allocator>
 void DynamicArray<T, Allocator>::RemoveLast()
 {
 	array.RemoveLast();
+}
+
+template <typename T, typename Allocator>
+void DynamicArray<T, Allocator>::Clear()
+{
+	array.size = 0;
 }
 
 template <typename T, typename Allocator>

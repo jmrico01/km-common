@@ -85,6 +85,7 @@ struct DynamicArray // TODO figure out where allocator will go
 
 	void Append(const T& element);
 	void RemoveLast();
+	void Clear();
 	
 	inline T operator[](int index) const;
 	inline T operator[](uint64 index) const;
