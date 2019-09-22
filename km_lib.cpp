@@ -226,6 +226,16 @@ void* ReAllocateOrUseDefaultIfNull(Allocator* allocator, void* memory, uint64 si
 		return allocator->ReAllocate(memory, size);
 	}
 }
+template <typename Allocator>
+void FreeOrUseDefautIfNull(Allocator* allocator, void* memory)
+{
+	if (allocator == nullptr) {
+		defaultAllocator_.Free(memory);
+	}
+	else {
+		allocator->Free(memory);
+	}
+}
 
 template <typename T, typename Allocator>
 DynamicArray<T, Allocator>::DynamicArray(uint64 capacity, Allocator* allocator)
@@ -266,6 +276,12 @@ template <typename T, typename Allocator>
 void DynamicArray<T, Allocator>::Clear()
 {
 	array.size = 0;
+}
+
+template <typename T, typename Allocator>
+void DynamicArray<T, Allocator>::Free()
+{
+	FreeOrUseDefautIfNull(allocator, array.data);
 }
 
 template <typename T, typename Allocator>

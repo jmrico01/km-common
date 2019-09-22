@@ -14,14 +14,12 @@ StandardAllocator defaultAllocator_;
 struct LinearAllocatorState
 {
 	uint64 used;
-	uint64 lastAllocatedSize;
 };
 
 struct LinearAllocator
 {
 	uint64 used;
 	uint64 capacity;
-	uint64 lastAllocatedSize;
 	void* data;
 
 	LinearAllocator(uint64 capacity, void* data);
