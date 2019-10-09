@@ -9,12 +9,12 @@
 
 #define FUNCTION_NAME_MAX_LENGTH 128
 
-enum LogCategory
+enum class LogCategory
 {
-	LOG_CATEGORY_ERROR = 0,
-	LOG_CATEGORY_WARNING,
-	LOG_CATEGORY_INFO,
-    LOG_CATEGORY_DEBUG
+	ERROR = 0, // Starts at 0 because it is an index into LOG_CATEGORY_NAMES
+	WARNING,
+	INFO,
+    DEBUG
 };
 
 const char* LOG_CATEGORY_NAMES[] = {
@@ -49,15 +49,15 @@ global_var LogState* logState_;
 
 void PlatformFlushLogs(LogState* logState);
 
-#define LOG_ERROR(format, ...) logState_->PrintFormat(LOG_CATEGORY_ERROR, \
+#define LOG_ERROR(format, ...) logState_->PrintFormat(LogCategory::ERROR, \
 	__FILE__, __LINE__, __func__, format, ##__VA_ARGS__)
-#define LOG_WARN(format, ...) logState_->PrintFormat(LOG_CATEGORY_WARNING, \
+#define LOG_WARN(format, ...) logState_->PrintFormat(LogCategory::WARNING, \
 	__FILE__, __LINE__, __func__, format, ##__VA_ARGS__)
-#define LOG_INFO(format, ...) logState_->PrintFormat(LOG_CATEGORY_INFO, \
+#define LOG_INFO(format, ...) logState_->PrintFormat(LogCategory::INFO, \
 	__FILE__, __LINE__, __func__, format, ##__VA_ARGS__)
 #define LOG_FLUSH() PlatformFlushLogs(logState_)
 #if GAME_SLOW
-#define LOG_DEBUG(format, ...) logState_->PrintFormat(LOG_CATEGORY_DEBUG, \
+#define LOG_DEBUG(format, ...) logState_->PrintFormat(LogCategory::DEBUG, \
     __FILE__, __LINE__, __func__, format, ##__VA_ARGS__)
 #else
 #define LOG_DEBUG(format, ...)
