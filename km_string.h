@@ -20,6 +20,14 @@ void CatStrings(
 	size_t destCount, char* dest);
 void StringCat(const char* str1, const char* str2, char* dest, uint64 destMaxLength);
 
+void InitFromCString(Array<char>* string, const char* cString);
+template <uint64 S>
+void InitFromCString(FixedArray<char, S>* string, const char* cString);
+template <uint64 S>
+bool StringAppend(FixedArray<char, S>* string, const char* toAppend);
+template <uint64 S>
+bool StringAppend(FixedArray<char, S>* string, const Array<char>& toAppend);
+
 inline bool32 IsWhitespace(char c);
 void TrimWhitespace(const Array<char>& string, Array<char>* trimmed);
 bool32 StringToIntBase10(const Array<char>& string, int* intBase10);

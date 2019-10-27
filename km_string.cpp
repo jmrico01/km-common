@@ -75,6 +75,43 @@ void StringCat(const char* str1, const char* str2, char* dest, uint64 destMaxLen
 	CatStrings(StringLength(str1), str1, StringLength(str2), str2, destMaxLength, dest);
 }
 
+void InitFromCString(Array<char>* string, const char* cString)
+{
+	string->data = (char*)cString; // NOTE oof
+	string->size = StringLength(cString);
+}
+
+template <uint64 S>
+void InitFromCString(FixedArray<char, S>* string, const char* cString)
+{
+	uint64 stringLength = StringLength(cString);
+	if (stringLength > S) {
+		stringLength = S;
+	}
+	string->array.size = stringLength;
+	MemCopy(string->fixedArray, cString, stringLength * sizeof(char));
+}
+
+template <uint64 S>
+bool StringAppend(FixedArray<char, S>* string, const char* toAppend)
+{
+	Array<char> toAppendString;
+	InitFromCString(&toAppendString, toAppend);
+	return StringAppend(string, toAppendString);
+}
+
+template <uint64 S>
+bool StringAppend(FixedArray<char, S>* string, const Array<char>& toAppend)
+{
+	uint64 newSize = string->array.size + toAppend.size;
+	if (newSize > S) {
+		return false;
+	}
+	MemCopy(string->array.data + string->array.size, toAppend.data, toAppend.size * sizeof(char));
+	string->array.size = newSize;
+	return true;
+}
+
 inline bool32 IsWhitespace(char c)
 {
 	return c == ' ' || c == '\t'
@@ -179,8 +216,8 @@ bool32 StringToFloat32(const Array<char>& string, float32* f)
 
 uint64 GetLastOccurrence(const Array<char>& string, char c)
 {
-	for (uint64 i = string.size - 1; i >= 0; i--) {
-		if (string[i] == c) {
+	for (uint64 i = string.size; i != 0; i--) {
+		if (string[i - 1] == c) {
 			return i;
 		}
 	}
