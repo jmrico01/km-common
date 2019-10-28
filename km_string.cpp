@@ -13,6 +13,31 @@ uint64 StringLength(const char* string)
 	return length;
 }
 
+Array<char> StringFromCString(const char* cString)
+{
+	Array<char> result;
+	result.data = (char*)cString; // NOTE oof
+	result.size = StringLength(cString);
+	return result;
+}
+
+void InitFromCString(Array<char>* string, const char* cString)
+{
+	string->data = (char*)cString; // NOTE oof
+	string->size = StringLength(cString);
+}
+
+template <uint64 S>
+void InitFromCString(FixedArray<char, S>* string, const char* cString)
+{
+	uint64 stringLength = StringLength(cString);
+	if (stringLength > S) {
+		stringLength = S;
+	}
+	string->array.size = stringLength;
+	MemCopy(string->fixedArray, cString, stringLength * sizeof(char));
+}
+
 bool StringCompare(const char* str1, const char* str2, uint64 n)
 {
 	for (uint64 i = 0; i < n; i++) {
@@ -73,23 +98,6 @@ void CatStrings(
 void StringCat(const char* str1, const char* str2, char* dest, uint64 destMaxLength)
 {
 	CatStrings(StringLength(str1), str1, StringLength(str2), str2, destMaxLength, dest);
-}
-
-void InitFromCString(Array<char>* string, const char* cString)
-{
-	string->data = (char*)cString; // NOTE oof
-	string->size = StringLength(cString);
-}
-
-template <uint64 S>
-void InitFromCString(FixedArray<char, S>* string, const char* cString)
-{
-	uint64 stringLength = StringLength(cString);
-	if (stringLength > S) {
-		stringLength = S;
-	}
-	string->array.size = stringLength;
-	MemCopy(string->fixedArray, cString, stringLength * sizeof(char));
 }
 
 template <uint64 S>

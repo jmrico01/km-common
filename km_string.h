@@ -9,6 +9,12 @@
 #define VALUE_MAX_LENGTH 4096
 
 uint64 StringLength(const char* str);
+
+Array<char> StringFromCString(const char* cString);
+void InitFromCString(Array<char>* string, const char* cString);
+template <uint64 S>
+void InitFromCString(FixedArray<char, S>* string, const char* cString);
+
 bool StringCompare(const char* str1, const char* str2, uint64 n);
 bool StringCompare(const Array<char>& str1, const Array<char>& str2);
 bool StringCompare(const Array<char>& str1, const char* str2);
@@ -19,10 +25,6 @@ void CatStrings(
 	size_t sourceBCount, const char* sourceB,
 	size_t destCount, char* dest);
 void StringCat(const char* str1, const char* str2, char* dest, uint64 destMaxLength);
-
-void InitFromCString(Array<char>* string, const char* cString);
-template <uint64 S>
-void InitFromCString(FixedArray<char, S>* string, const char* cString);
 template <uint64 S>
 bool StringAppend(FixedArray<char, S>* string, const char* toAppend);
 template <uint64 S>
