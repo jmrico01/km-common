@@ -7,6 +7,11 @@
 
 #define STRING_KEY_MAX_LENGTH 64
 
+internal const uint8  UINT8_MAX_VALUE  = 0xff;
+internal const uint16 UINT16_MAX_VALUE = 0xffff;
+internal const uint32 UINT32_MAX_VALUE = 0xffffffff;
+internal const uint64 UINT64_MAX_VALUE = 0xffffffffffffffff;
+
 int ToIntOrTruncate(uint64 n);
 
 void MemCopy(void* dst, const void* src, uint64 numBytes);
@@ -41,6 +46,8 @@ struct Array
 	void RemoveLast();
 
 	Array<T> Slice(uint64 start, uint64 end) const;
+	Array<T> SliceTo(uint64 end) const;
+	Array<T> SliceFrom(uint64 start) const;
 
 	// slow, linear time
 	void AppendAfter(const T& element, uint64 index);

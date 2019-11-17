@@ -93,6 +93,18 @@ Array<T> Array<T>::Slice(uint64 start, uint64 end) const
 }
 
 template <typename T>
+Array<T> Array<T>::SliceTo(uint64 end) const
+{
+	return Slice(0, end);
+}
+
+template <typename T>
+Array<T> Array<T>::SliceFrom(uint64 start) const
+{
+	return Slice(start, size);
+}
+
+template <typename T>
 void Array<T>::AppendAfter(const T& element, uint64 index)
 {
 	DEBUG_ASSERT(index < size);

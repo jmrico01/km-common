@@ -2,10 +2,30 @@
 
 #include <math.h>
 
+#include "km_debug.h"
 #include "km_defines.h"
 
 #define PI_F 3.14159265f
 #define E_F  2.71828182f
+
+inline bool IsEven(int n) {
+	return n % 2 == 0;
+}
+inline bool IsEven(uint64 n) {
+	return n % 2 == 0;
+}
+inline bool IsOdd(int n) {
+	return n % 2 == 1;
+}
+inline bool IsOdd(uint64 n) {
+	return n % 2 == 1;
+}
+
+inline int RoundToPowerOfTwo(int n, int powerOfTwo) {
+	DEBUG_ASSERTF(powerOfTwo && ((powerOfTwo & (powerOfTwo - 1)) == 0), "%d should be power of 2\n",
+		powerOfTwo);
+	return (n + powerOfTwo - 1) & -powerOfTwo;
+}
 
 inline int AbsInt(int n) {
 	return n >= 0 ? n : -n;
