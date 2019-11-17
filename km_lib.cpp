@@ -81,6 +81,18 @@ inline void Array<T>::RemoveLast()
 }
 
 template <typename T>
+Array<T> Array<T>::Slice(uint64 start, uint64 end) const
+{
+	DEBUG_ASSERT(start < size);
+	DEBUG_ASSERT(end <= size);
+	DEBUG_ASSERT(start <= end);
+	Array<T> slice;
+	slice.data = &data[start];
+	slice.size = end - start;
+	return slice;
+}
+
+template <typename T>
 void Array<T>::AppendAfter(const T& element, uint64 index)
 {
 	DEBUG_ASSERT(index < size);
@@ -106,22 +118,6 @@ void Array<T>::Remove(uint64 index)
 }
 
 template <typename T>
-inline T Array<T>::operator[](int index) const
-{
-	DEBUG_ASSERTF(0 <= index && (uint64)index < size,
-		"Array bounds check failed: index %d size %llu\n", index, size);
-	return data[index];
-}
-
-template <typename T>
-inline T Array<T>::operator[](uint64 index) const
-{
-	DEBUG_ASSERTF(index < size,
-		"Array bounds check failed: index %llu, size %llu\n", index, size);
-	return data[index];
-}
-
-template <typename T>
 inline T& Array<T>::operator[](int index)
 {
 	DEBUG_ASSERTF(0 <= index && (uint64)index < size,
@@ -131,6 +127,22 @@ inline T& Array<T>::operator[](int index)
 
 template <typename T>
 inline T& Array<T>::operator[](uint64 index)
+{
+	DEBUG_ASSERTF(index < size,
+		"Array bounds check failed: index %llu, size %llu\n", index, size);
+	return data[index];
+}
+
+template <typename T>
+inline const T& Array<T>::operator[](int index) const
+{
+	DEBUG_ASSERTF(0 <= index && (uint64)index < size,
+		"Array bounds check failed: index %d, size %llu\n", index, size);
+	return data[index];
+}
+
+template <typename T>
+inline const T& Array<T>::operator[](uint64 index) const
 {
 	DEBUG_ASSERTF(index < size,
 		"Array bounds check failed: index %llu, size %llu\n", index, size);
@@ -172,18 +184,6 @@ void FixedArray<T, S>::Remove(uint64 index)
 }
 
 template <typename T, uint64 S>
-inline T FixedArray<T, S>::operator[](int index) const
-{
-	return array[index];
-}
-
-template <typename T, uint64 S>
-inline T FixedArray<T, S>::operator[](uint64 index) const
-{
-	return array[index];
-}
-
-template <typename T, uint64 S>
 inline T& FixedArray<T, S>::operator[](int index)
 {
 	return array[index];
@@ -196,13 +196,24 @@ inline T& FixedArray<T, S>::operator[](uint64 index)
 }
 
 template <typename T, uint64 S>
-inline void FixedArray<T, S>::operator=(const FixedArray<T, S>& other)
+inline const T& FixedArray<T, S>::operator[](int index) const
+{
+	return array[index];
+}
+
+template <typename T, uint64 S>
+inline const T& FixedArray<T, S>::operator[](uint64 index) const
+{
+	return array[index];
+}
+
+template <typename T, uint64 S>
+FixedArray<T, S>& FixedArray<T, S>::operator=(const FixedArray<T, S>& other)
 {
 	array.size = other.array.size;
 	array.data = fixedArray;
-	for (uint64 i = 0; i < other.array.size; i++) {
-		fixedArray[i] = other.fixedArray[i];
-	}
+	MemCopy(fixedArray, other.fixedArray, other.array.size * sizeof(T));
+	return *this;
 }
 
 // TODO dumb wrappers until I figure out a better way to do this at compile time
@@ -285,18 +296,6 @@ void DynamicArray<T, Allocator>::Free()
 }
 
 template <typename T, typename Allocator>
-inline T DynamicArray<T, Allocator>::operator[](int index) const
-{
-	return array[index];
-}
-
-template <typename T, typename Allocator>
-inline T DynamicArray<T, Allocator>::operator[](uint64 index) const
-{
-	return array[index];
-}
-
-template <typename T, typename Allocator>
 inline T& DynamicArray<T, Allocator>::operator[](int index)
 {
 	return array[index];
@@ -304,6 +303,18 @@ inline T& DynamicArray<T, Allocator>::operator[](int index)
 
 template <typename T, typename Allocator>
 inline T& DynamicArray<T, Allocator>::operator[](uint64 index)
+{
+	return array[index];
+}
+
+template <typename T, typename Allocator>
+inline const T& DynamicArray<T, Allocator>::operator[](int index) const
+{
+	return array[index];
+}
+
+template <typename T, typename Allocator>
+inline const T& DynamicArray<T, Allocator>::operator[](uint64 index) const
 {
 	return array[index];
 }
