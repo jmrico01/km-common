@@ -40,14 +40,16 @@ struct Array
 	void Append(const T& element);
 	void RemoveLast();
 
+	Array<T> Slice(uint64 start, uint64 end) const;
+
 	// slow, linear time
 	void AppendAfter(const T& element, uint64 index);
 	void Remove(uint64 index);
-	
-	inline T operator[](int index) const;
-	inline T operator[](uint64 index) const;
+
 	inline T& operator[](int index);
 	inline T& operator[](uint64 index);
+	inline const T& operator[](int index) const;
+	inline const T& operator[](uint64 index) const;
 };
 
 template <typename T, uint64 S>
@@ -64,13 +66,13 @@ struct FixedArray
 	// slow, linear time
 	void AppendAfter(const T& element, uint64 index);
 	void Remove(uint64 index);
-	
-	inline T operator[](int index) const;
-	inline T operator[](uint64 index) const;
+
 	inline T& operator[](int index);
 	inline T& operator[](uint64 index);
+	inline const T& operator[](int index) const;
+	inline const T& operator[](uint64 index) const;
 
-	inline void operator=(const FixedArray<T, S>& other);
+	FixedArray<T, S>& operator=(const FixedArray<T, S>& other);
 };
 
 template <typename T, typename Allocator = StandardAllocator>
@@ -87,11 +89,11 @@ struct DynamicArray // TODO figure out where allocator will go
 	void RemoveLast();
 	void Clear();
 	void Free();
-	
-	inline T operator[](int index) const;
-	inline T operator[](uint64 index) const;
+
 	inline T& operator[](int index);
 	inline T& operator[](uint64 index);
+	inline const T& operator[](int index) const;
+	inline const T& operator[](uint64 index) const;
 
 	void UpdateCapacity(uint64 newCapacity);
 };
