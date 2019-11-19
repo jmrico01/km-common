@@ -10,7 +10,7 @@
 #define DYNAMIC_ARRAY_START_CAPACITY 16
 #define DYNAMIC_QUEUE_START_CAPACITY 16
 
-#define HASH_TABLE_START_CAPACITY 17
+#define HASH_TABLE_START_CAPACITY 89
 #define HASH_TABLE_MAX_SIZE_TO_CAPACITY 0.7
 
 int ToIntOrTruncate(uint64 n)
@@ -429,7 +429,8 @@ void HashTable<V>::Init(uint64 cap)
 {
 	size = 0;
 	capacity = cap;
-	pairs = (KeyValuePair<V>*)malloc(sizeof(KeyValuePair<V>) * cap);
+	uint64 sizeBytes = sizeof(KeyValuePair<V>) * cap;
+	pairs = (KeyValuePair<V>*)malloc(sizeBytes);
 	if (!pairs) {
 		DEBUG_PANIC("ERROR: not enough memory!\n");
 	}
@@ -452,11 +453,10 @@ void HashTable<V>::Add(const HashKey& key, V value)
 			DEBUG_PANIC("ERROR: not enough memory!\n");
 		}
 
-		// TODO revisit this / just take in custom allocators already
 		KeyValuePair<V>* oldPairs = (KeyValuePair<V>*)malloc(sizeof(KeyValuePair<V>) * capacity);
 		MemCopy(oldPairs, pairs, sizeof(KeyValuePair<V>) * capacity);
 		for (uint64 i = 0; i < capacity; i++) {
-			// TODO bleh
+			// TODO rehash, bleh
 		}
 		capacity = newCapacity;
 		free(oldPairs);
@@ -471,9 +471,20 @@ void HashTable<V>::Add(const HashKey& key, V value)
 }
 
 template <typename V>
-V* HashTable<V>::GetValue(const HashKey& key) const
+V* HashTable<V>::GetValue(const HashKey& key)
 {
 	KeyValuePair<V>* pair = GetPair(key);
+	if (pair == nullptr) {
+		return nullptr;
+	}
+
+	return &pair->value;
+}
+
+template <typename V>
+const V* HashTable<V>::GetValue(const HashKey& key) const
+{
+	const KeyValuePair<V>* pair = GetPair(key);
 	if (pair == nullptr) {
 		return nullptr;
 	}

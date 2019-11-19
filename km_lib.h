@@ -5,12 +5,12 @@
 
 #define C_ARRAY_LENGTH(cArray) (sizeof(cArray) / sizeof(cArray[0]))
 
-#define STRING_KEY_MAX_LENGTH 64
+const uint64 STRING_KEY_MAX_LENGTH = 64;
 
-internal const uint8  UINT8_MAX_VALUE  = 0xff;
-internal const uint16 UINT16_MAX_VALUE = 0xffff;
-internal const uint32 UINT32_MAX_VALUE = 0xffffffff;
-internal const uint64 UINT64_MAX_VALUE = 0xffffffffffffffff;
+const uint8  UINT8_MAX_VALUE  = 0xff;
+const uint16 UINT16_MAX_VALUE = 0xffff;
+const uint32 UINT32_MAX_VALUE = 0xffffffff;
+const uint64 UINT64_MAX_VALUE = 0xffffffffffffffff;
 
 int ToIntOrTruncate(uint64 n);
 
@@ -153,7 +153,8 @@ struct HashTable
 	void Init(uint64 capacity);
 
 	void Add(const HashKey& key, V value);
-	V* GetValue(const HashKey& key) const; // const... sure, if it helps you sleep at night
+	V* GetValue(const HashKey& key);
+	const V* GetValue(const HashKey& key) const;
 	bool32 Remove(const HashKey& key);
 
 	void Clear();

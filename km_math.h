@@ -81,7 +81,7 @@ float32 Lerp(float32 a, float32 b, float32 t)
 
 bool IsPrime(uint64 n)
 {
-    for (uint64 i = 0; i < n / 2; i++) {
+    for (uint64 i = 2; i < n / 2; i++) {
         if (n % i == 0) {
             return false;
         }
