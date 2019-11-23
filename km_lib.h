@@ -42,6 +42,7 @@ struct Array
 	uint64 size;
 	T* data;
 
+	T* Append();
 	void Append(const T& element);
 	void RemoveLast();
 
@@ -67,6 +68,7 @@ struct FixedArray
 
 	void Init(); // TODO ew, shouldn't need this
 
+	T* Append();
 	void Append(const T& element);
 	void RemoveLast();
 
@@ -85,13 +87,14 @@ struct FixedArray
 template <typename T, typename Allocator = StandardAllocator>
 struct DynamicArray // TODO figure out where allocator will go
 {
+	Array<T> array;
 	uint64 capacity;
 	Allocator* allocator;
-	Array<T> array;
 
 	DynamicArray(uint64 capacity, Allocator* allocator = nullptr);
 	DynamicArray(Allocator* allocator = nullptr);
 
+	T* Append();
 	void Append(const T& element);
 	void RemoveLast();
 	void Clear();

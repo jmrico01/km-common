@@ -68,13 +68,19 @@ bool32 KeyCompare(const HashKey& key1, const HashKey& key2)
 }
 
 template <typename T>
-inline void Array<T>::Append(const T& element)
+T* Array<T>::Append()
+{
+	return &data[size++];
+}
+
+template <typename T>
+void Array<T>::Append(const T& element)
 {
 	data[size++] = element;
 }
 
 template <typename T>
-inline void Array<T>::RemoveLast()
+void Array<T>::RemoveLast()
 {
 	DEBUG_ASSERT(size > 0);
 	size--;
@@ -168,11 +174,17 @@ void FixedArray<T, S>::Init()
 }
 
 template <typename T, uint64 S>
-void FixedArray<T, S>::Append(const T& element)
+T* FixedArray<T, S>::Append()
 {
 	DEBUG_ASSERTF(array.size < S, "FixedArray: %p, array.data: %p, array.size: %llu, S %llu\n",
 		fixedArray, array.data, array.size, S);
-	array.Append(element);
+	return array.Append();
+}
+
+template <typename T, uint64 S>
+void FixedArray<T, S>::Append(const T& element)
+{
+	*(Append()) = element;
 }
 
 template <typename T, uint64 S>
@@ -263,11 +275,11 @@ void FreeOrUseDefautIfNull(Allocator* allocator, void* memory)
 template <typename T, typename Allocator>
 DynamicArray<T, Allocator>::DynamicArray(uint64 capacity, Allocator* allocator)
 {
-	this->capacity = capacity;
-	this->allocator = allocator;
 	array.size = 0;
 	array.data = (T*)AllocateOrUseDefaultIfNull(allocator, capacity * sizeof(T));
 	DEBUG_ASSERT(array.data != nullptr);
+	this->capacity = capacity;
+	this->allocator = allocator;
 }
 
 template <typename T, typename Allocator>
@@ -277,16 +289,23 @@ DynamicArray<T, Allocator>::DynamicArray(Allocator* allocator)
 }
 
 template <typename T, typename Allocator>
-void DynamicArray<T, Allocator>::Append(const T& element)
+T* DynamicArray<T, Allocator>::Append()
 {
 	if (array.size >= capacity) {
 		uint64 newCapacity = capacity * 2;
-		void* newMemory = (T*)ReAllocateOrUseDefaultIfNull(allocator, array.data, newCapacity * sizeof(T));
+		void* newMemory = ReAllocateOrUseDefaultIfNull(allocator, array.data, newCapacity * sizeof(T));
 		DEBUG_ASSERT(newMemory != nullptr);
 		capacity = newCapacity;
 		array.data = (T*)newMemory;
 	}
-	array.Append(element);
+
+	return array.Append();
+}
+
+template <typename T, typename Allocator>
+void DynamicArray<T, Allocator>::Append(const T& element)
+{
+	*(Append()) = element;
 }
 
 template <typename T, typename Allocator>
