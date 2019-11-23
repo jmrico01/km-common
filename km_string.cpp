@@ -296,10 +296,10 @@ int ReadNextKeywordValue(const Array<char>& string,
 
 	int i = 0;
 
-	keyword->array.size = 0;
+	keyword->size = 0;
 	while (i < string.size && !IsWhitespace(string[i])) {
-		if (keyword->array.size >= KEYWORD_SIZE) {
-			LOG_ERROR("Keyword too long %.*s\n", keyword->array.size, keyword->array.data);
+		if (keyword->size >= KEYWORD_SIZE) {
+			LOG_ERROR("Keyword too long %.*s\n", keyword->size, keyword->data);
 			return -1;
 		}
 		keyword->Append(string[i++]);
@@ -309,29 +309,29 @@ int ReadNextKeywordValue(const Array<char>& string,
 		i++;
 	}
 
-	value->array.size = 0;
+	value->size = 0;
 	bool bracketValue = false;
 	while (i < string.size &&
 	((!bracketValue && string[i] != '\n' && string[i] != '\r')
 	|| (bracketValue && string[i] != '}'))) {
-		if (value->array.size == 0 && string[i] == '{') {
+		if (value->size == 0 && string[i] == '{') {
 			bracketValue = true;
 			i++;
 			continue;
 		}
-		if (value->array.size >= VALUE_SIZE) {
-			LOG_ERROR("Value too long %.*s\n", value->array.size, value->array.data);
+		if (value->size >= VALUE_SIZE) {
+			LOG_ERROR("Value too long %.*s\n", value->size, value->data);
 			return -1;
 		}
-		if (value->array.size == 0 && IsWhitespace(string[i])) {
+		if (value->size == 0 && IsWhitespace(string[i])) {
 			i++;
 			continue;
 		}
 		value->Append(string[i++]);
 	}
 
-	while (value->array.size > 0 && IsWhitespace(value->array.data[value->array.size - 1])) {
-		value->array.size--;
+	while (value->size > 0 && IsWhitespace(value->data[value->size - 1])) {
+		value->size--;
 	}
 
 	while (i < string.size && (IsWhitespace(string[i]) || string[i] == '}')) {

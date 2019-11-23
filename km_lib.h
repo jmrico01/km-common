@@ -50,10 +50,6 @@ struct Array
 	Array<T> SliceTo(uint64 end) const;
 	Array<T> SliceFrom(uint64 start) const;
 
-	// slow, linear time
-	void AppendAfter(const T& element, uint64 index);
-	void Remove(uint64 index);
-
 	inline T& operator[](int index);
 	inline T& operator[](uint64 index);
 	inline const T& operator[](int index) const;
@@ -63,14 +59,15 @@ struct Array
 template <typename T, uint64 S>
 struct FixedArray
 {
-	T fixedArray[S];
-	Array<T> array;
+	uint64 size;
+	T data[S];
 
-	void Init(); // TODO ew, shouldn't need this
+	Array<T> ToArray() const; // NOTE modifying this array's size won't affect the FixedArray size
 
 	T* Append();
 	void Append(const T& element);
 	void RemoveLast();
+	void Clear();
 
 	// slow, linear time
 	void AppendAfter(const T& element, uint64 index);
@@ -152,11 +149,11 @@ struct HashTable
 {
 	uint64 size;
 	uint64 capacity;
-
 	KeyValuePair<V>* pairs;
 
-	void Init();
-	void Init(uint64 capacity);
+	HashTable();
+	HashTable(uint64 capacity);
+	~HashTable();
 
 	void Add(const HashKey& key, V value);
 	V* GetValue(const HashKey& key);

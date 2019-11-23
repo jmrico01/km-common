@@ -58,7 +58,7 @@ uint64 KeyHash(const HashKey& key)
 {
 	uint64 hash = 5381;
 
-	for (uint64 i = 0; i < key.string.array.size; i++) {
+	for (uint64 i = 0; i < key.string.size; i++) {
 		hash = ((hash << 5) + hash) + key.string[i];
 	}
 
@@ -66,11 +66,11 @@ uint64 KeyHash(const HashKey& key)
 }
 bool32 KeyCompare(const HashKey& key1, const HashKey& key2)
 {
-	if (key1.string.array.size != key2.string.array.size) {
+	if (key1.string.size != key2.string.size) {
 		return false;
 	}
 
-	for (uint64 i = 0; i < key1.string.array.size; i++) {
+	for (uint64 i = 0; i < key1.string.size; i++) {
 		if (key1.string[i] != key2.string[i]) {
 			return false;
 		}
@@ -123,31 +123,6 @@ Array<T> Array<T>::SliceFrom(uint64 start) const
 }
 
 template <typename T>
-void Array<T>::AppendAfter(const T& element, uint64 index)
-{
-	DEBUG_ASSERT(index < size);
-
-	uint64 targetIndex = index + 1;
-	for (uint64 i = size; i > targetIndex; i--) {
-		data[i] = data[i - 1];
-	}
-	data[targetIndex] = element;
-	size++;
-}
-
-template <typename T>
-void Array<T>::Remove(uint64 index)
-{
-	DEBUG_ASSERT(size > 0);
-	DEBUG_ASSERT(index < size);
-
-	for (uint64 i = index + 1; i < size; i++) {
-		data[i - 1] = data[i];
-	}
-	size--;
-}
-
-template <typename T>
 inline T& Array<T>::operator[](int index)
 {
 	ArrayBoundsCheck(index, size);
@@ -176,17 +151,20 @@ inline const T& Array<T>::operator[](uint64 index) const
 }
 
 template <typename T, uint64 S>
-void FixedArray<T, S>::Init()
+Array<T> FixedArray<T, S>::ToArray() const
 {
-	array.data = fixedArray;
+	Array<T> array = {
+		.size = size,
+		.data = (T*)data
+	};
+	return array;
 }
 
 template <typename T, uint64 S>
 T* FixedArray<T, S>::Append()
 {
-	DEBUG_ASSERTF(array.size < S, "FixedArray: %p, array.data: %p, array.size: %llu, S %llu\n",
-		fixedArray, array.data, array.size, S);
-	return array.Append();
+	DEBUG_ASSERTF(size < S, "size: %llu, S %llu\n", size, S);
+	return &data[size++];
 }
 
 template <typename T, uint64 S>
@@ -198,53 +176,68 @@ void FixedArray<T, S>::Append(const T& element)
 template <typename T, uint64 S>
 void FixedArray<T, S>::RemoveLast()
 {
-	array.RemoveLast();
+	DEBUG_ASSERT(size > 0);
+	size--;
 }
 
 template <typename T, uint64 S>
 void FixedArray<T, S>::AppendAfter(const T& element, uint64 index)
 {
-	DEBUG_ASSERTF(array.size < S, "FixedArray: %p, array.data: %p, array.size: %llu, S %llu\n",
-		fixedArray, array.data, array.size, S);
-	array.AppendAfter(element, index);
+	DEBUG_ASSERT(index < size);
+	DEBUG_ASSERTF(size < S, "size: %llu, S %llu\n", size, S);
+
+	uint64 targetIndex = index + 1;
+	for (uint64 i = size; i > targetIndex; i--) {
+		data[i] = data[i - 1];
+	}
+	data[targetIndex] = element;
+	size++;
 }
 
 template <typename T, uint64 S>
 void FixedArray<T, S>::Remove(uint64 index)
 {
-	array.Remove(index);
+	DEBUG_ASSERT(size > 0);
+	DEBUG_ASSERT(index < size);
+	for (uint64 i = index + 1; i < size; i++) {
+		data[i - 1] = data[i];
+	}
+	size--;
 }
 
 template <typename T, uint64 S>
 inline T& FixedArray<T, S>::operator[](int index)
 {
-	return array[index];
+	ArrayBoundsCheck(index, size);
+	return data[index];
 }
 
 template <typename T, uint64 S>
 inline T& FixedArray<T, S>::operator[](uint64 index)
 {
-	return array[index];
+	ArrayBoundsCheck(index, size);
+	return data[index];
 }
 
 template <typename T, uint64 S>
 inline const T& FixedArray<T, S>::operator[](int index) const
 {
-	return array[index];
+	ArrayBoundsCheck(index, size);
+	return data[index];
 }
 
 template <typename T, uint64 S>
 inline const T& FixedArray<T, S>::operator[](uint64 index) const
 {
-	return array[index];
+	ArrayBoundsCheck(index, size);
+	return data[index];
 }
 
 template <typename T, uint64 S>
 FixedArray<T, S>& FixedArray<T, S>::operator=(const FixedArray<T, S>& other)
 {
-	array.size = other.array.size;
-	array.data = fixedArray;
-	MemCopy(fixedArray, other.fixedArray, other.array.size * sizeof(T));
+	size = other.size;
+	MemCopy(data, other.data, size * sizeof(T));
 	return *this;
 }
 
@@ -449,9 +442,8 @@ HashKey::HashKey(const char* str)
 void HashKey::WriteString(const Array<char>& str)
 {
 	DEBUG_ASSERT(str.size <= STRING_KEY_MAX_LENGTH);
-	MemCopy(string.fixedArray, str.data, str.size * sizeof(char));
-	string.Init();
-	string.array.size = str.size;
+	MemCopy(string.data, str.data, str.size * sizeof(char));
+	string.size = str.size;
 }
 
 void HashKey::WriteString(const char* str)
@@ -463,13 +455,13 @@ void HashKey::WriteString(const char* str)
 }
 
 template <typename V>
-void HashTable<V>::Init()
+HashTable<V>::HashTable()
+	: HashTable(HASH_TABLE_START_CAPACITY)
 {
-	Init(HASH_TABLE_START_CAPACITY);
 }
 
 template <typename V>
-void HashTable<V>::Init(uint64 cap)
+HashTable<V>::HashTable(uint64 cap)
 {
 	size = 0;
 	capacity = cap;
@@ -480,9 +472,15 @@ void HashTable<V>::Init(uint64 cap)
 	}
 
 	for (uint64 i = 0; i < cap; i++) {
-		pairs[i].key.string.Init();
-		pairs[i].key.string.array.size = 0;
+		pairs[i].key.string.size = 0;
 	}
+}
+
+template <typename V>
+HashTable<V>::~HashTable()
+{
+	// TODO this is double-freeing... being destroyed at unexpected times
+	// free(pairs);
 }
 
 template <typename V>
@@ -562,7 +560,7 @@ KeyValuePair<V>* HashTable<V>::GetPair(const HashKey& key) const
 		if (KeyCompare(pair->key, key)) {
 			return pair;
 		}
-		if (pair->key.string.array.size == 0) {
+		if (pair->key.string.size == 0) {
 			return nullptr;
 		}
 	}
@@ -576,7 +574,7 @@ KeyValuePair<V>* HashTable<V>::GetFreeSlot(const HashKey& key)
 	uint64 hashInd = KeyHash(key) % capacity;
 	for (uint64 i = 0; i < capacity; i++) {
 		KeyValuePair<V>* pair = pairs + hashInd + i;
-		if (pair->key.string.array.size == 0) {
+		if (pair->key.string.size == 0) {
 			return pair;
 		}
 	}
