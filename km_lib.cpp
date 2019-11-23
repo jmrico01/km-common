@@ -13,6 +13,18 @@
 #define HASH_TABLE_START_CAPACITY 89
 #define HASH_TABLE_MAX_SIZE_TO_CAPACITY 0.7
 
+internal inline void ArrayBoundsCheck(int index, uint64 size)
+{
+	DEBUG_ASSERTF(0 <= index && (uint64)index < size,
+		"Array bounds check failed: index %d, size %llu\n", index, size);
+}
+
+internal inline void ArrayBoundsCheck(uint64 index, uint64 size)
+{
+	DEBUG_ASSERTF(index < size,
+		"Array bounds check failed: index %llu, size %llu\n", index, size);
+}
+
 int ToIntOrTruncate(uint64 n)
 {
 	if (n > INT_MAX) {
@@ -138,32 +150,28 @@ void Array<T>::Remove(uint64 index)
 template <typename T>
 inline T& Array<T>::operator[](int index)
 {
-	DEBUG_ASSERTF(0 <= index && (uint64)index < size,
-		"Array bounds check failed: index %d, size %llu\n", index, size);
+	ArrayBoundsCheck(index, size);
 	return data[index];
 }
 
 template <typename T>
 inline T& Array<T>::operator[](uint64 index)
 {
-	DEBUG_ASSERTF(index < size,
-		"Array bounds check failed: index %llu, size %llu\n", index, size);
+	ArrayBoundsCheck(index, size);
 	return data[index];
 }
 
 template <typename T>
 inline const T& Array<T>::operator[](int index) const
 {
-	DEBUG_ASSERTF(0 <= index && (uint64)index < size,
-		"Array bounds check failed: index %d, size %llu\n", index, size);
+	ArrayBoundsCheck(index, size);
 	return data[index];
 }
 
 template <typename T>
 inline const T& Array<T>::operator[](uint64 index) const
 {
-	DEBUG_ASSERTF(index < size,
-		"Array bounds check failed: index %llu, size %llu\n", index, size);
+	ArrayBoundsCheck(index, size);
 	return data[index];
 }
 
@@ -275,9 +283,9 @@ void FreeOrUseDefautIfNull(Allocator* allocator, void* memory)
 template <typename T, typename Allocator>
 DynamicArray<T, Allocator>::DynamicArray(uint64 capacity, Allocator* allocator)
 {
-	array.size = 0;
-	array.data = (T*)AllocateOrUseDefaultIfNull(allocator, capacity * sizeof(T));
-	DEBUG_ASSERT(array.data != nullptr);
+	size = 0;
+	data = (T*)AllocateOrUseDefaultIfNull(allocator, capacity * sizeof(T));
+	DEBUG_ASSERT(data != nullptr);
 	this->capacity = capacity;
 	this->allocator = allocator;
 }
@@ -289,17 +297,29 @@ DynamicArray<T, Allocator>::DynamicArray(Allocator* allocator)
 }
 
 template <typename T, typename Allocator>
+Array<T>& DynamicArray<T, Allocator>::ToArray()
+{
+	return *((Array<T>*)this);
+}
+
+template <typename T, typename Allocator>
+const Array<T>& DynamicArray<T, Allocator>::ToArray() const
+{
+	return *((Array<T>*)this);
+}
+
+template <typename T, typename Allocator>
 T* DynamicArray<T, Allocator>::Append()
 {
-	if (array.size >= capacity) {
+	if (size >= capacity) {
 		uint64 newCapacity = capacity * 2;
-		void* newMemory = ReAllocateOrUseDefaultIfNull(allocator, array.data, newCapacity * sizeof(T));
+		void* newMemory = ReAllocateOrUseDefaultIfNull(allocator, data, newCapacity * sizeof(T));
 		DEBUG_ASSERT(newMemory != nullptr);
 		capacity = newCapacity;
-		array.data = (T*)newMemory;
+		data = (T*)newMemory;
 	}
 
-	return array.Append();
+	return &data[size++];
 }
 
 template <typename T, typename Allocator>
@@ -311,43 +331,48 @@ void DynamicArray<T, Allocator>::Append(const T& element)
 template <typename T, typename Allocator>
 void DynamicArray<T, Allocator>::RemoveLast()
 {
-	array.RemoveLast();
+	DEBUG_ASSERT(size > 0);
+	size--;
 }
 
 template <typename T, typename Allocator>
 void DynamicArray<T, Allocator>::Clear()
 {
-	array.size = 0;
+	size = 0;
 }
 
 template <typename T, typename Allocator>
 void DynamicArray<T, Allocator>::Free()
 {
-	FreeOrUseDefautIfNull(allocator, array.data);
+	FreeOrUseDefautIfNull(allocator, data);
 }
 
 template <typename T, typename Allocator>
 inline T& DynamicArray<T, Allocator>::operator[](int index)
 {
-	return array[index];
+	ArrayBoundsCheck(index, size);
+	return data[index];
 }
 
 template <typename T, typename Allocator>
 inline T& DynamicArray<T, Allocator>::operator[](uint64 index)
 {
-	return array[index];
+	ArrayBoundsCheck(index, size);
+	return data[index];
 }
 
 template <typename T, typename Allocator>
 inline const T& DynamicArray<T, Allocator>::operator[](int index) const
 {
-	return array[index];
+	ArrayBoundsCheck(index, size);
+	return data[index];
 }
 
 template <typename T, typename Allocator>
 inline const T& DynamicArray<T, Allocator>::operator[](uint64 index) const
 {
-	return array[index];
+	ArrayBoundsCheck(index, size);
+	return data[index];
 }
 
 template <typename T, typename Allocator>

@@ -87,12 +87,15 @@ struct FixedArray
 template <typename T, typename Allocator = StandardAllocator>
 struct DynamicArray // TODO figure out where allocator will go
 {
-	Array<T> array;
+	uint64 size;
+	T* data;
 	uint64 capacity;
 	Allocator* allocator;
 
 	DynamicArray(uint64 capacity, Allocator* allocator = nullptr);
 	DynamicArray(Allocator* allocator = nullptr);
+	Array<T>& ToArray();
+	const Array<T>& ToArray() const;
 
 	T* Append();
 	void Append(const T& element);
