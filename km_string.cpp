@@ -13,12 +13,12 @@ uint64 StringLength(const char* string)
 	return length;
 }
 
-Array<char> StringFromCString(const char* cString)
+Array<char> ToString(const char* cString)
 {
-	Array<char> result;
-	result.data = (char*)cString; // NOTE oof
-	result.size = StringLength(cString);
-	return result;
+	return {
+		.size = StringLength(cString),
+		.data = (char*)cString
+	};
 }
 
 void InitFromCString(Array<char>* string, const char* cString)
@@ -245,6 +245,28 @@ void ReadElementInSplitString(Array<char>* element, Array<char>* next, char sepa
 	}
 
 	next->size = 0;
+}
+
+template <typename Allocator>
+Array<char> AllocPrintf(Allocator* allocator, const char* format, ...)
+{
+	int bufferSize = 256;
+	while (true) {
+		char* buffer = (char*)allocator->Allocate(bufferSize * sizeof(char));
+		va_list args;
+		va_start(args, format);
+		int length = stbsp_vsnprintf(buffer, bufferSize, format, args);
+		va_end(args);
+		if (length < 0) {
+			return { .size = 0, .data = nullptr };
+		}
+		else if (length < bufferSize) {
+			return { .size = (uint64)length, .data = buffer };
+		}
+		else {
+			bufferSize *= 2;
+		}
+	}
 }
 
 template <typename T>

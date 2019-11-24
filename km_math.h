@@ -176,16 +176,14 @@ union Vec4
 	float32 e[4];
 };
 
-union Rectangle
+struct Rect
 {
-    struct
-    {
-        Vec2 rangeX, rangeY;
-    };
-    struct
-    {
-        float32 minX, maxX, minY, maxY;
-    };
+	Vec2 min, max;
+};
+
+struct RectInt
+{
+	Vec2Int min, max;
 };
 
 // Column-major 4x4 matrix (columns stored contiguously)
@@ -712,7 +710,16 @@ inline Vec4 Lerp(Vec4 v1, Vec4 v2, float t)
 }
 
 // -------------------- Rect --------------------
+bool IsInside(Vec2 v, Rect rect)
+{
+	return rect.min.x <= v.x && v.x < rect.max.x && rect.min.y <= v.y && v.y < rect.max.y;
+}
 
+// ------------------ RectInt -------------------
+bool IsInside(Vec2Int v, RectInt rect)
+{
+	return rect.min.x <= v.x && v.x < rect.max.x && rect.min.y <= v.y && v.y < rect.max.y;
+}
 
 // -------------------- Mat4 --------------------
 // TODO these functions might be better off not inlined

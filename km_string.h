@@ -10,7 +10,7 @@
 
 uint64 StringLength(const char* str);
 
-Array<char> StringFromCString(const char* cString);
+Array<char> ToString(const char* cString);
 void InitFromCString(Array<char>* string, const char* cString);
 template <uint64 S>
 void InitFromCString(FixedArray<char, S>* string, const char* cString);
@@ -37,6 +37,9 @@ bool32 StringToUInt64Base10(const Array<char>& string, uint64* intBase10);
 bool32 StringToFloat32(const Array<char>& string, float32* f);
 uint64 GetLastOccurrence(const Array<char>& string, char c);
 void ReadElementInSplitString(Array<char>* element, Array<char>* next, char separator);
+
+template <typename Allocator>
+Array<char> AllocPrintf(Allocator* allocator, const char* format, ...);
 
 template <typename T>
 bool32 StringToElementArray(const Array<char>& string, char sep, bool trimElements,
