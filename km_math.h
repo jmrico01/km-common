@@ -339,6 +339,11 @@ inline Vec2 Normalize(Vec2 v)
 	return v / Mag(v);
 }
 
+float32 AngleBetween(Vec2 v1, Vec2 v2)
+{
+	return (float32)(atan2(v2.y, v2.x) - atan2(v1.y, v1.x));
+}
+
 // ------------------ Vec2Int -------------------
 /*const Vec2Int Vec2Int::zero = {
 	0, 0
