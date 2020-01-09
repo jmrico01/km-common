@@ -321,7 +321,7 @@ int ReadNextKeywordValue(const Array<char>& string,
 	keyword->size = 0;
 	while (i < string.size && !IsWhitespace(string[i])) {
 		if (keyword->size >= KEYWORD_SIZE) {
-			LOG_ERROR("Keyword too long %.*s\n", keyword->size, keyword->data);
+			LOG_ERROR("Keyword too long %.*s\n", (int)keyword->size, keyword->data);
 			return -1;
 		}
 		keyword->Append(string[i++]);
@@ -333,30 +333,71 @@ int ReadNextKeywordValue(const Array<char>& string,
 
 	value->size = 0;
 	bool bracketValue = false;
-	while (i < string.size &&
-	((!bracketValue && string[i] != '\n' && string[i] != '\r')
-	|| (bracketValue && string[i] != '}'))) {
-		if (value->size == 0 && string[i] == '{') {
-			bracketValue = true;
+	while (i < string.size) {
+		if (string[i] == '\n' || string[i] == '\r') {
+			// End of inline value
 			i++;
-			continue;
+			break;
+		}
+		if (string[i] == '{' && value->size == 0) {
+			// Start of bracket value, read in separately
+			i++;
+			bracketValue = true;
+			break;
 		}
 		if (value->size >= VALUE_SIZE) {
-			LOG_ERROR("Value too long %.*s\n", value->size, value->data);
+			LOG_ERROR("Value too long %.*s\n", (int)value->size, value->data);
 			return -1;
 		}
 		if (value->size == 0 && IsWhitespace(string[i])) {
+			// Gobble starting whitespace
 			i++;
 			continue;
 		}
+
 		value->Append(string[i++]);
 	}
 
+	if (bracketValue) {
+		int bracketDepth = 1;
+		bool bracketMatched = false;
+		while (i < string.size) {
+			if (string[i] == '{') {
+				bracketDepth++;
+			}
+			else if (string[i] == '}') {
+				bracketDepth--;
+				if (bracketDepth == 0) {
+					i++;
+					bracketMatched = true;
+					break;
+				}
+			}
+			if (value->size >= VALUE_SIZE) {
+				LOG_ERROR("Value too long %.*s\n", (int)value->size, value->data);
+				return -1;
+			}
+			if (value->size == 0 && IsWhitespace(string[i])) {
+				// Gobble starting whitespace
+				i++;
+				continue;
+			}
+
+			value->Append(string[i++]);
+		}
+
+		if (!bracketMatched) {
+			LOG_ERROR("Value bracket unmatched pair\n");
+			return -1;
+		}
+	}
+
+	// Trim trailing whitespace
 	while (value->size > 0 && IsWhitespace(value->data[value->size - 1])) {
 		value->size--;
 	}
 
-	while (i < string.size && (IsWhitespace(string[i]) || string[i] == '}')) {
+	while (i < string.size && IsWhitespace(string[i])) {
 		i++;
 	}
 

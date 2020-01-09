@@ -538,7 +538,7 @@ template <typename V>
 void HashTable<V>::Clear()
 {
 	for (int i = 0; i < capacity; i++) {
-		pairs[i].key.length = 0;
+		pairs[i].key.string.size = 0;
 	}
 }
 

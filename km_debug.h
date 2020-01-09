@@ -3,9 +3,11 @@
 #include <stdlib.h>
 
 #include "km_defines.h"
-#include "km_log.h"
 
 #if GAME_SLOW
+
+#include "km_log.h"
+
 #define DEBUG_ASSERTF(expression, format, ...) if (!(expression)) { \
     LOG_ERROR("Assert failed:\n"); \
     LOG_ERROR(format, ##__VA_ARGS__); \
@@ -17,7 +19,11 @@
 	LOG_ERROR(format, ##__VA_ARGS__); \
 	PlatformFlushLogs(logState_); \
     abort();
+
 #elif GAME_INTERNAL
+
+#include "km_log.h"
+
 #define DEBUG_ASSERTF(expression, format, ...) if (!(expression)) { \
     LOG_ERROR("Assert failed\n"); \
     LOG_ERROR(format, ##__VA_ARGS__); \
@@ -27,6 +33,7 @@
     LOG_ERROR("PANIC!\n"); \
     LOG_ERROR(format, ##__VA_ARGS__); \
     PlatformFlushLogs(logState_);
+
 #else
 // TODO rethink these macros maybe, at least the panic
 #define DEBUG_ASSERTF(expression, format, ...)
