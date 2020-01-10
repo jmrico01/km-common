@@ -10,6 +10,7 @@
 #define DYNAMIC_ARRAY_START_CAPACITY 16
 #define DYNAMIC_QUEUE_START_CAPACITY 16
 
+// TODO pretty high, maybe do lower
 #define HASH_TABLE_START_CAPACITY 89
 #define HASH_TABLE_MAX_SIZE_TO_CAPACITY 0.7
 
@@ -281,6 +282,14 @@ DynamicArray<T, Allocator>::DynamicArray(uint64 capacity, Allocator* allocator)
 	DEBUG_ASSERT(data != nullptr);
 	this->capacity = capacity;
 	this->allocator = allocator;
+}
+
+template <typename T, typename Allocator>
+DynamicArray<T, Allocator>::DynamicArray(const Array<T>& array, Allocator* allocator)
+	: DynamicArray(array.size, allocator)
+{
+	MemCopy(data, array.data, array.size * sizeof(T));
+	size = array.size;
 }
 
 template <typename T, typename Allocator>

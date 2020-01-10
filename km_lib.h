@@ -90,6 +90,7 @@ struct DynamicArray // TODO figure out where allocator will go
 	Allocator* allocator;
 
 	DynamicArray(uint64 capacity, Allocator* allocator = nullptr);
+	DynamicArray(const Array<T>& array, Allocator* allocator = nullptr);
 	DynamicArray(Allocator* allocator = nullptr);
 	Array<T>& ToArray();
 	const Array<T>& ToArray() const;

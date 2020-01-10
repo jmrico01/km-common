@@ -5,6 +5,7 @@
 struct StandardAllocator
 {
 	void* Allocate(uint64 size);
+	template <typename T> T* New();
 	void* ReAllocate(void* memory, uint64 size);
 	void Free(void* memory);
 };
@@ -25,6 +26,7 @@ struct LinearAllocator
 	LinearAllocator(uint64 capacity, void* data);
 
 	void* Allocate(uint64 size);
+	template <typename T> T* New();
 	void* ReAllocate(void* memory, uint64 size);
 	void Free(void* memory);
 	void Clear();

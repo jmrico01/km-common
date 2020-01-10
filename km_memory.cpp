@@ -7,6 +7,11 @@ void* StandardAllocator::Allocate(uint64 size)
 	return malloc(size);
 }
 
+template <typename T> T* StandardAllocator::New()
+{
+	return (T*)Allocate(sizeof(T));
+}
+
 void* StandardAllocator::ReAllocate(void* memory, uint64 size)
 {
 	return realloc(memory, size);
@@ -31,6 +36,11 @@ void* LinearAllocator::Allocate(uint64 size)
 	uint64 start = used;
 	used += size;
 	return (void*)((uint8*)data + start);
+}
+
+template <typename T> T* LinearAllocator::New()
+{
+	return (T*)Allocate(sizeof(T));
 }
 
 void* LinearAllocator::ReAllocate(void* memory, uint64 size)

@@ -310,7 +310,7 @@ bool32 StringToElementArray(const Array<char>& string, char sep, bool trimElemen
 
 template <uint64 KEYWORD_SIZE, uint64 VALUE_SIZE>
 int ReadNextKeywordValue(const Array<char>& string,
-	FixedArray<char, KEYWORD_SIZE>* keyword, FixedArray<char, VALUE_SIZE>* value)
+	FixedArray<char, KEYWORD_SIZE>* outKeyword, FixedArray<char, VALUE_SIZE>* outValue)
 {
 	if (string.size == 0 || string[0] == '\0') {
 		return 0;
@@ -318,20 +318,20 @@ int ReadNextKeywordValue(const Array<char>& string,
 
 	int i = 0;
 
-	keyword->size = 0;
+	outKeyword->size = 0;
 	while (i < string.size && !IsWhitespace(string[i])) {
-		if (keyword->size >= KEYWORD_SIZE) {
-			LOG_ERROR("Keyword too long %.*s\n", (int)keyword->size, keyword->data);
+		if (outKeyword->size >= KEYWORD_SIZE) {
+			LOG_ERROR("Keyword too long %.*s\n", (int)outKeyword->size, outKeyword->data);
 			return -1;
 		}
-		keyword->Append(string[i++]);
+		outKeyword->Append(string[i++]);
 	}
 
 	if (i < string.size && IsWhitespace(string[i])) {
 		i++;
 	}
 
-	value->size = 0;
+	outValue->size = 0;
 	bool bracketValue = false;
 	while (i < string.size) {
 		if (string[i] == '\n' || string[i] == '\r') {
@@ -339,23 +339,22 @@ int ReadNextKeywordValue(const Array<char>& string,
 			i++;
 			break;
 		}
-		if (string[i] == '{' && value->size == 0) {
+		if (string[i] == '{' && outValue->size == 0) {
 			// Start of bracket value, read in separately
 			i++;
 			bracketValue = true;
 			break;
 		}
-		if (value->size >= VALUE_SIZE) {
-			LOG_ERROR("Value too long %.*s\n", (int)value->size, value->data);
+		if (outValue->size >= VALUE_SIZE) {
+			LOG_ERROR("Value too long %.*s\n", (int)outValue->size, outValue->data);
 			return -1;
 		}
-		if (value->size == 0 && IsWhitespace(string[i])) {
-			// Gobble starting whitespace
+		if (outValue->size == 0 && IsWhitespace(string[i])) {
 			i++;
 			continue;
 		}
 
-		value->Append(string[i++]);
+		outValue->Append(string[i++]);
 	}
 
 	if (bracketValue) {
@@ -373,17 +372,17 @@ int ReadNextKeywordValue(const Array<char>& string,
 					break;
 				}
 			}
-			if (value->size >= VALUE_SIZE) {
-				LOG_ERROR("Value too long %.*s\n", (int)value->size, value->data);
+			if (outValue->size >= VALUE_SIZE) {
+				LOG_ERROR("Value too long %.*s\n", (int)outValue->size, outValue->data);
 				return -1;
 			}
-			if (value->size == 0 && IsWhitespace(string[i])) {
+			if (outValue->size == 0 && IsWhitespace(string[i])) {
 				// Gobble starting whitespace
 				i++;
 				continue;
 			}
 
-			value->Append(string[i++]);
+			outValue->Append(string[i++]);
 		}
 
 		if (!bracketMatched) {
@@ -393,8 +392,8 @@ int ReadNextKeywordValue(const Array<char>& string,
 	}
 
 	// Trim trailing whitespace
-	while (value->size > 0 && IsWhitespace(value->data[value->size - 1])) {
-		value->size--;
+	while (outValue->size > 0 && IsWhitespace(outValue->data[outValue->size - 1])) {
+		outValue->size--;
 	}
 
 	while (i < string.size && IsWhitespace(string[i])) {
