@@ -288,8 +288,7 @@ template <typename T, typename Allocator>
 DynamicArray<T, Allocator>::DynamicArray(const Array<T>& array, Allocator* allocator)
 	: DynamicArray(array.size, allocator)
 {
-	MemCopy(data, array.data, array.size * sizeof(T));
-	size = array.size;
+	FromArray(array);
 }
 
 template <typename T, typename Allocator>
@@ -311,14 +310,21 @@ const Array<T>& DynamicArray<T, Allocator>::ToArray() const
 }
 
 template <typename T, typename Allocator>
+void DynamicArray<T, Allocator>::FromArray(const Array<T>& array)
+{
+	if (capacity < array.size) {
+		DEBUG_ASSERT(UpdateCapacity(array.size));
+	}
+
+	MemCopy(data, array.data, array.size * sizeof(T));
+	size = array.size;
+}
+
+template <typename T, typename Allocator>
 T* DynamicArray<T, Allocator>::Append()
 {
 	if (size >= capacity) {
-		uint64 newCapacity = capacity * 2;
-		void* newMemory = ReAllocateOrUseDefaultIfNull(allocator, data, newCapacity * sizeof(T));
-		DEBUG_ASSERT(newMemory != nullptr);
-		capacity = newCapacity;
-		data = (T*)newMemory;
+		DEBUG_ASSERT(UpdateCapacity(capacity * 2));
 	}
 
 	return &data[size++];
@@ -375,6 +381,19 @@ inline const T& DynamicArray<T, Allocator>::operator[](uint64 index) const
 {
 	ArrayBoundsCheck(index, size);
 	return data[index];
+}
+
+template <typename T, typename Allocator>
+bool DynamicArray<T, Allocator>::UpdateCapacity(uint64 newCapacity)
+{
+	void* newMemory = ReAllocateOrUseDefaultIfNull(allocator, data, newCapacity * sizeof(T));
+	if (newMemory == nullptr) {
+		return false;
+	}
+
+	capacity = newCapacity;
+	data = (T*)newMemory;
+	return true;
 }
 
 template <typename T, typename Allocator>

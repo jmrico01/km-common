@@ -81,6 +81,7 @@ struct FixedArray
 	FixedArray<T, S>& operator=(const FixedArray<T, S>& other);
 };
 
+// TODO Assignment (=) of DynamicArray shallow-copies their members. Override the operator, probably
 template <typename T, typename Allocator = StandardAllocator>
 struct DynamicArray // TODO figure out where allocator will go
 {
@@ -94,6 +95,7 @@ struct DynamicArray // TODO figure out where allocator will go
 	DynamicArray(Allocator* allocator = nullptr);
 	Array<T>& ToArray();
 	const Array<T>& ToArray() const;
+	void FromArray(const Array<T>& array);
 
 	T* Append();
 	void Append(const T& element);
@@ -106,7 +108,7 @@ struct DynamicArray // TODO figure out where allocator will go
 	inline const T& operator[](int index) const;
 	inline const T& operator[](uint64 index) const;
 
-	void UpdateCapacity(uint64 newCapacity);
+	bool UpdateCapacity(uint64 newCapacity);
 };
 
 template <typename T, typename Allocator = StandardAllocator>
