@@ -499,8 +499,7 @@ HashTable<V, Allocator>::~HashTable()
 	for (uint64 i = 0; i < capacity; i++) {
 		pairs[i].~KeyValuePair<V>();
 	}
-	// TODO this is double-freeing... being destroyed at unexpected times
-	// allocator->Free(pairs);
+	allocator->Free(pairs);
 }
 
 template <typename V, typename Allocator>
