@@ -100,6 +100,12 @@ void Array<T>::RemoveLast()
 }
 
 template <typename T>
+void Array<T>::Clear()
+{
+	size = 0;
+}
+
+template <typename T>
 Array<T> Array<T>::Slice(uint64 start, uint64 end) const
 {
 	DEBUG_ASSERT(start < size);
@@ -179,6 +185,12 @@ void FixedArray<T, S>::RemoveLast()
 {
 	DEBUG_ASSERT(size > 0);
 	size--;
+}
+
+template <typename T, uint64 S>
+void FixedArray<T, S>::Clear()
+{
+	size = 0;
 }
 
 template <typename T, uint64 S>
@@ -298,6 +310,18 @@ DynamicArray<T, Allocator>::DynamicArray(Allocator* allocator)
 }
 
 template <typename T, typename Allocator>
+DynamicArray<T, Allocator>::DynamicArray()
+	: DynamicArray(nullptr)
+{
+}
+
+template <typename T, typename Allocator>
+DynamicArray<T, Allocator>::~DynamicArray()
+{
+	FreeOrUseDefautIfNull(allocator, data);
+}
+
+template <typename T, typename Allocator>
 Array<T>& DynamicArray<T, Allocator>::ToArray()
 {
 	return *((Array<T>*)this);
@@ -384,6 +408,13 @@ inline const T& DynamicArray<T, Allocator>::operator[](uint64 index) const
 }
 
 template <typename T, typename Allocator>
+DynamicArray<T, Allocator>& DynamicArray<T, Allocator>::operator=(const DynamicArray<T, Allocator>& other)
+{
+	FromArray(other.ToArray());
+	return *this;
+}
+
+template <typename T, typename Allocator>
 bool DynamicArray<T, Allocator>::UpdateCapacity(uint64 newCapacity)
 {
 	void* newMemory = ReAllocateOrUseDefaultIfNull(allocator, data, newCapacity * sizeof(T));
@@ -394,63 +425,6 @@ bool DynamicArray<T, Allocator>::UpdateCapacity(uint64 newCapacity)
 	capacity = newCapacity;
 	data = (T*)newMemory;
 	return true;
-}
-
-template <typename T, typename Allocator>
-DynamicQueue<T, Allocator>::DynamicQueue(uint64 capacity, Allocator* allocator)
-{
-	this->start = 0;
-	this->end = 0;
-	this->capacity = capacity;
-	this->allocator = allocator;
-	this->data = (T*)AllocateOrUseDefaultIfNull(allocator, capacity * sizeof(T));
-	DEBUG_ASSERT(this->data != nullptr);
-}
-
-template <typename T, typename Allocator>
-DynamicQueue<T, Allocator>::DynamicQueue(Allocator* allocator)
-	: DynamicQueue(DYNAMIC_QUEUE_START_CAPACITY, allocator)
-{
-}
-
-template <typename T, typename Allocator>
-void DynamicQueue<T, Allocator>::Append(const T& element)
-{
-	uint64 newEnd = end + 1;
-	if (newEnd >= capacity) {
-		newEnd -= capacity;
-	}
-	if (newEnd == start) {
-		// TODO expand
-	}
-
-	data[newEnd] = element;
-	end = newEnd;
-}
-
-template <typename T, typename Allocator>
-const T& DynamicQueue<T, Allocator>::GetFirst()
-{
-	DEBUG_ASSERT(!IsEmpty());
-
-	return data[start];
-}
-
-template <typename T, typename Allocator>
-void DynamicQueue<T, Allocator>::RemoveFirst()
-{
-	DEBUG_ASSERT(!IsEmpty());
-
-	start += 1;
-	if (start >= capacity) {
-		start -= capacity;
-	}
-}
-
-template <typename T, typename Allocator>
-bool DynamicQueue<T, Allocator>::IsEmpty()
-{
-	return start == end;
 }
 
 HashKey::HashKey()
@@ -467,19 +441,23 @@ HashKey::HashKey(const char* str)
 	WriteString(str);
 }
 
-void HashKey::WriteString(const Array<char>& str)
+bool HashKey::WriteString(const Array<char>& str)
 {
-	DEBUG_ASSERT(str.size <= STRING_KEY_MAX_LENGTH);
+	if (str.size > HASHKEY_MAX_LENGTH) {
+		return false;
+	}
+
 	MemCopy(string.data, str.data, str.size * sizeof(char));
 	string.size = str.size;
+	return true;
 }
 
-void HashKey::WriteString(const char* str)
+bool HashKey::WriteString(const char* str)
 {
 	Array<char> stringArray;
 	stringArray.data = (char*)str;
 	stringArray.size = StringLength(str);
-	WriteString(stringArray);
+	return WriteString(stringArray);
 }
 
 template <typename V>
@@ -501,18 +479,22 @@ HashTable<V>::HashTable(uint64 cap)
 
 	for (uint64 i = 0; i < cap; i++) {
 		pairs[i].key.string.size = 0;
+		new (&pairs[i]) KeyValuePair<V>();
 	}
 }
 
 template <typename V>
 HashTable<V>::~HashTable()
 {
+	for (uint64 i = 0; i < capacity; i++) {
+		pairs[i].~KeyValuePair<V>();
+	}
 	// TODO this is double-freeing... being destroyed at unexpected times
 	// free(pairs);
 }
 
 template <typename V>
-void HashTable<V>::Add(const HashKey& key, V value)
+void HashTable<V>::Add(const HashKey& key, const V& value)
 {
 	DEBUG_ASSERT(GetPair(key) == nullptr);
 
@@ -523,11 +505,12 @@ void HashTable<V>::Add(const HashKey& key, V value)
 			DEBUG_PANIC("ERROR: not enough memory!\n");
 		}
 
+		for (uint64 i = 0; i < capacity; i++) {
+			new (&pairs[i]) KeyValuePair<V>();
+		}
 		KeyValuePair<V>* oldPairs = (KeyValuePair<V>*)malloc(sizeof(KeyValuePair<V>) * capacity);
 		MemCopy(oldPairs, pairs, sizeof(KeyValuePair<V>) * capacity);
-		for (uint64 i = 0; i < capacity; i++) {
-			// TODO rehash, bleh
-		}
+		DEBUG_PANIC("TODO can't resize+rehash yet\n");
 		capacity = newCapacity;
 		free(oldPairs);
 	}

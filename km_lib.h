@@ -5,7 +5,7 @@
 
 #define C_ARRAY_LENGTH(cArray) (sizeof(cArray) / sizeof(cArray[0]))
 
-const uint64 STRING_KEY_MAX_LENGTH = 64;
+const uint64 HASHKEY_MAX_LENGTH = 64;
 
 const uint8  UINT8_MAX_VALUE  = 0xff;
 const uint16 UINT16_MAX_VALUE = 0xffff;
@@ -45,6 +45,7 @@ struct Array
 	T* Append();
 	void Append(const T& element);
 	void RemoveLast();
+	void Clear();
 
 	Array<T> Slice(uint64 start, uint64 end) const;
 	Array<T> SliceTo(uint64 end) const;
@@ -92,7 +93,10 @@ struct DynamicArray // TODO figure out where allocator will go
 
 	DynamicArray(uint64 capacity, Allocator* allocator = nullptr);
 	DynamicArray(const Array<T>& array, Allocator* allocator = nullptr);
-	DynamicArray(Allocator* allocator = nullptr);
+	DynamicArray(Allocator* allocator);
+	DynamicArray();
+	~DynamicArray();
+
 	Array<T>& ToArray();
 	const Array<T>& ToArray() const;
 	void FromArray(const Array<T>& array);
@@ -108,36 +112,21 @@ struct DynamicArray // TODO figure out where allocator will go
 	inline const T& operator[](int index) const;
 	inline const T& operator[](uint64 index) const;
 
+	DynamicArray<T, Allocator>& operator=(const DynamicArray<T, Allocator>& other);
+
 	bool UpdateCapacity(uint64 newCapacity);
-};
-
-template <typename T, typename Allocator = StandardAllocator>
-struct DynamicQueue
-{
-	uint64 start, end;
-	uint64 capacity;
-	Allocator* allocator;
-	T* data;
-
-	DynamicQueue(uint64 capacity, Allocator* allocator = nullptr);
-	DynamicQueue(Allocator* allocator = nullptr);
-
-	void Append(const T& element);
-	const T& GetFirst();
-	void RemoveFirst();
-	bool IsEmpty();
 };
 
 struct HashKey
 {
-	FixedArray<char, STRING_KEY_MAX_LENGTH> string;
+	FixedArray<char, HASHKEY_MAX_LENGTH> string;
 
 	HashKey();
 	HashKey(const Array<char>& str);
 	HashKey(const char* str);
 
-	void WriteString(const Array<char>& str);
-	void WriteString(const char* str);
+	bool WriteString(const Array<char>& str);
+	bool WriteString(const char* str);
 };
 
 template <typename V>
@@ -158,7 +147,7 @@ struct HashTable
 	HashTable(uint64 capacity);
 	~HashTable();
 
-	void Add(const HashKey& key, V value);
+	void Add(const HashKey& key, const V& value);
 	V* GetValue(const HashKey& key);
 	const V* GetValue(const HashKey& key) const;
 	bool32 Remove(const HashKey& key);
