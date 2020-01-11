@@ -157,6 +157,8 @@ struct HashTable
 	void Clear();
 	void Free();
 
+	HashTable<V, Allocator>& operator=(const HashTable<V, Allocator>& other);
+
 private:
 	KeyValuePair<V>* GetPair(const HashKey& key) const;
 	KeyValuePair<V>* GetFreeSlot(const HashKey& key);

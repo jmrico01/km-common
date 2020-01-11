@@ -249,6 +249,7 @@ inline const T& FixedArray<T, S>::operator[](uint64 index) const
 template <typename T, uint64 S>
 FixedArray<T, S>& FixedArray<T, S>::operator=(const FixedArray<T, S>& other)
 {
+	DEBUG_ASSERT(other.size <= S);
 	size = other.size;
 	MemCopy(data, other.data, size * sizeof(T));
 	return *this;
@@ -574,6 +575,15 @@ void HashTable<V, Allocator>::Free()
 
 	capacity = 0;
 	size = 0;
+}
+
+template <typename V, typename Allocator>
+HashTable<V, Allocator>& HashTable<V, Allocator>::operator=(const HashTable<V, Allocator>& other)
+{
+	DEBUG_ASSERT(capacity == other.capacity); // TODO no rehashing, so we do MemCopy-only
+	size = other.size;
+	MemCopy(pairs, other.pairs, other.capacity * sizeof(KeyValuePair<V>));
+	return *this;
 }
 
 template <typename V, typename Allocator>
