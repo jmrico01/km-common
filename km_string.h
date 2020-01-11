@@ -12,7 +12,6 @@ void InitFromCString(Array<char>* string, const char* cString);
 template <uint64 S>
 void InitFromCString(FixedArray<char, S>* string, const char* cString);
 
-bool StringCompare(const char* str1, const char* str2, uint64 n);
 bool StringCompare(const Array<char>& str1, const Array<char>& str2);
 bool StringCompare(const Array<char>& str1, const char* str2);
 bool StringCompare(const char* str1, const char* str2);
@@ -40,10 +39,10 @@ Array<char> AllocPrintf(Allocator* allocator, const char* format, ...);
 
 template <typename T>
 bool32 StringToElementArray(const Array<char>& string, char sep, bool trimElements,
-    bool32 (*conversionFunction)(const Array<char>&, T*),
-    int maxElements, T* array, int* numElements);
+	bool32 (*conversionFunction)(const Array<char>&, T*),
+	int maxElements, T* array, int* numElements);
 
 // TODO this fits more into a km-file-format module. not really a general string lib function
 template <uint64 KEYWORD_SIZE, uint64 VALUE_SIZE>
-bool32 ReadNextKeywordValue(const Array<char>& string,
-    FixedArray<char, KEYWORD_SIZE>* outKeyword, FixedArray<char, VALUE_SIZE>* outValue);
+int ReadNextKeywordValue(const Array<char>& string,
+	FixedArray<char, KEYWORD_SIZE>* outKeyword, FixedArray<char, VALUE_SIZE>* outValue);

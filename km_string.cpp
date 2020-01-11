@@ -38,9 +38,13 @@ void InitFromCString(FixedArray<char, S>* string, const char* cString)
 	MemCopy(string->fixedArray, cString, stringLength * sizeof(char));
 }
 
-bool StringCompare(const char* str1, const char* str2, uint64 n)
+bool StringCompare(const Array<char>& str1, const Array<char>& str2)
 {
-	for (uint64 i = 0; i < n; i++) {
+	if (str1.size != str2.size) {
+		return false;
+	}
+
+	for (uint64 i = 0; i < str1.size; i++) {
 		if (str1[i] != str2[i]) {
 			return false;
 		}
@@ -49,19 +53,16 @@ bool StringCompare(const char* str1, const char* str2, uint64 n)
 	return true;
 }
 
-bool StringCompare(const Array<char>& str1, const Array<char>& str2)
-{
-    return StringCompare(str1.data, str2.data, MaxUInt64(str1.size, str2.size));
-}
-
 bool StringCompare(const Array<char>& str1, const char* str2)
 {
-    return StringCompare(str1.data, str2, MaxUInt64(str1.size, StringLength(str2)));
+	// TODO slow... but it works
+	return StringCompare(str1, ToString(str2));
 }
 
 bool StringCompare(const char* str1, const char* str2)
 {
-    return StringCompare(str1, str2, MaxUInt64(StringLength(str1), StringLength(str2)));
+	// TODO slow... but it works
+	return StringCompare(ToString(str1), ToString(str2));
 }
 
 bool StringContains(const Array<char>& str, const char* substring)
@@ -169,17 +170,17 @@ bool32 StringToIntBase10(const Array<char>& string, int* intBase10)
 
 bool32 StringToUInt64Base10(const Array<char>& string, uint64* intBase10)
 {
-    if (string.size == 0) {
-        return false;
-    }
+	if (string.size == 0) {
+		return false;
+	}
 
-    *intBase10 = 0;
-    for (uint64 i = 0; i < string.size; i++) {
-        char c = string[i];
-        *intBase10 = (*intBase10) * 10 + (uint64)(c - '0');
-    }
+	*intBase10 = 0;
+	for (uint64 i = 0; i < string.size; i++) {
+		char c = string[i];
+		*intBase10 = (*intBase10) * 10 + (uint64)(c - '0');
+	}
 
-    return true;
+	return true;
 }
 
 bool32 StringToFloat32(const Array<char>& string, float32* f)
@@ -318,7 +319,7 @@ int ReadNextKeywordValue(const Array<char>& string,
 
 	int i = 0;
 
-	outKeyword->size = 0;
+	outKeyword->Clear();
 	while (i < string.size && !IsWhitespace(string[i])) {
 		if (outKeyword->size >= KEYWORD_SIZE) {
 			LOG_ERROR("Keyword too long %.*s\n", (int)outKeyword->size, outKeyword->data);
@@ -331,7 +332,7 @@ int ReadNextKeywordValue(const Array<char>& string,
 		i++;
 	}
 
-	outValue->size = 0;
+	outValue->Clear();
 	bool bracketValue = false;
 	while (i < string.size) {
 		if (string[i] == '\n' || string[i] == '\r') {
@@ -393,7 +394,7 @@ int ReadNextKeywordValue(const Array<char>& string,
 
 	// Trim trailing whitespace
 	while (outValue->size > 0 && IsWhitespace(outValue->data[outValue->size - 1])) {
-		outValue->size--;
+		outValue->RemoveLast();
 	}
 
 	while (i < string.size && IsWhitespace(string[i])) {
