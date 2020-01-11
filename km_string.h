@@ -2,15 +2,16 @@
 
 #include "km_lib.h"
 
-// TODO plz standardize file paths
-#define PATH_MAX_LENGTH 128
+// TODO pretty random, but ok
+#define PATH_MAX_LENGTH 256
 
 uint64 StringLength(const char* str);
 
 Array<char> ToString(const char* cString);
-void InitFromCString(Array<char>* string, const char* cString);
 template <uint64 S>
 void InitFromCString(FixedArray<char, S>* string, const char* cString);
+template <typename Allocator>
+char* ToCString(const Array<char>& string, Allocator* allocator);
 
 bool StringCompare(const Array<char>& str1, const Array<char>& str2);
 bool StringCompare(const Array<char>& str1, const char* str2);
@@ -21,10 +22,6 @@ void CatStrings(
 	size_t sourceBCount, const char* sourceB,
 	size_t destCount, char* dest);
 void StringCat(const char* str1, const char* str2, char* dest, uint64 destMaxLength);
-template <uint64 S>
-bool StringAppend(FixedArray<char, S>* string, const char* toAppend);
-template <uint64 S>
-bool StringAppend(FixedArray<char, S>* string, const Array<char>& toAppend);
 
 inline bool32 IsWhitespace(char c);
 void TrimWhitespace(const Array<char>& string, Array<char>* trimmed);

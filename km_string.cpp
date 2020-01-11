@@ -5,8 +5,8 @@
 
 uint64 StringLength(const char* string)
 {
-	int length = 0;
-	while (*string++) {
+	uint64 length = 0;
+	while (*(string++) != '\0') {
 		length++;
 	}
 
@@ -21,12 +21,6 @@ Array<char> ToString(const char* cString)
 	};
 }
 
-void InitFromCString(Array<char>* string, const char* cString)
-{
-	string->data = (char*)cString; // NOTE oof
-	string->size = StringLength(cString);
-}
-
 template <uint64 S>
 void InitFromCString(FixedArray<char, S>* string, const char* cString)
 {
@@ -36,6 +30,15 @@ void InitFromCString(FixedArray<char, S>* string, const char* cString)
 	}
 	string->array.size = stringLength;
 	MemCopy(string->fixedArray, cString, stringLength * sizeof(char));
+}
+
+template <typename Allocator>
+char* ToCString(const Array<char>& string, Allocator* allocator)
+{
+	char* cString = (char*)allocator->Allocate(string.size + 1);
+	MemCopy(cString, string.data, string.size * sizeof(char));
+	cString[string.size] = '\0';
+	return cString;
 }
 
 bool StringCompare(const Array<char>& str1, const Array<char>& str2)
@@ -99,26 +102,6 @@ void CatStrings(
 void StringCat(const char* str1, const char* str2, char* dest, uint64 destMaxLength)
 {
 	CatStrings(StringLength(str1), str1, StringLength(str2), str2, destMaxLength, dest);
-}
-
-template <uint64 S>
-bool StringAppend(FixedArray<char, S>* string, const char* toAppend)
-{
-	Array<char> toAppendString;
-	InitFromCString(&toAppendString, toAppend);
-	return StringAppend(string, toAppendString);
-}
-
-template <uint64 S>
-bool StringAppend(FixedArray<char, S>* string, const Array<char>& toAppend)
-{
-	uint64 newSize = string->array.size + toAppend.size;
-	if (newSize > S) {
-		return false;
-	}
-	MemCopy(string->array.data + string->array.size, toAppend.data, toAppend.size * sizeof(char));
-	string->array.size = newSize;
-	return true;
 }
 
 inline bool32 IsWhitespace(char c)

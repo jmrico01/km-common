@@ -36,6 +36,13 @@ int ToIntOrTruncate(uint64 n)
 	}
 }
 
+inline uint32 SafeTruncateUInt64(uint64 value)
+{
+	DEBUG_ASSERT(value <= 0xFFFFFFFF);
+	uint32 result = (uint32)value;
+	return result;
+}
+
 void MemCopy(void* dst, const void* src, uint64 numBytes)
 {
 	DEBUG_ASSERT(((const char*)dst + numBytes <= src)
@@ -78,18 +85,6 @@ bool32 KeyCompare(const HashKey& key1, const HashKey& key2)
 	}
 
 	return true;
-}
-
-template <typename T>
-T* Array<T>::Append()
-{
-	return &data[size++];
-}
-
-template <typename T>
-void Array<T>::Append(const T& element)
-{
-	data[size++] = element;
 }
 
 template <typename T>
@@ -170,7 +165,7 @@ Array<T> FixedArray<T, S>::ToArray() const
 template <typename T, uint64 S>
 T* FixedArray<T, S>::Append()
 {
-	DEBUG_ASSERTF(size < S, "size: %llu, S %llu\n", size, S);
+	DEBUG_ASSERTF(size < S, "size %llu, S %llu\n", size, S);
 	return &data[size++];
 }
 
@@ -178,6 +173,16 @@ template <typename T, uint64 S>
 void FixedArray<T, S>::Append(const T& element)
 {
 	*(Append()) = element;
+}
+
+template <typename T, uint64 S>
+void FixedArray<T, S>::Append(const Array<T>& array)
+{
+	uint64 newSize = size + array.size;
+	DEBUG_ASSERTF(newSize <= S, "size %llu, S %llu, array.size %llu\n", size, S, array.size);
+
+	MemCopy(data + size, array.data, array.size * sizeof(T));
+	size = newSize;
 }
 
 template <typename T, uint64 S>
@@ -197,7 +202,7 @@ template <typename T, uint64 S>
 void FixedArray<T, S>::AppendAfter(const T& element, uint64 index)
 {
 	DEBUG_ASSERT(index < size);
-	DEBUG_ASSERTF(size < S, "size: %llu, S %llu\n", size, S);
+	DEBUG_ASSERTF(size < S, "size %llu, S %llu\n", size, S);
 
 	uint64 targetIndex = index + 1;
 	for (uint64 i = size; i > targetIndex; i--) {
@@ -359,6 +364,12 @@ template <typename T, typename Allocator>
 void DynamicArray<T, Allocator>::Append(const T& element)
 {
 	*(Append()) = element;
+}
+
+template <typename T, typename Allocator>
+void DynamicArray<T, Allocator>::Append(const Array<T>& array)
+{
+	DEBUG_PANIC("not implemented\n");
 }
 
 template <typename T, typename Allocator>

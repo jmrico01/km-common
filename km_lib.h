@@ -13,6 +13,7 @@ const uint32 UINT32_MAX_VALUE = 0xffffffff;
 const uint64 UINT64_MAX_VALUE = 0xffffffffffffffff;
 
 int ToIntOrTruncate(uint64 n);
+uint32 SafeTruncateUInt64(uint64 value);
 
 void MemCopy(void* dst, const void* src, uint64 numBytes);
 void MemMove(void* dst, const void* src, uint64 numBytes);
@@ -42,8 +43,6 @@ struct Array
 	uint64 size;
 	T* data;
 
-	T* Append();
-	void Append(const T& element);
 	void RemoveLast();
 	void Clear();
 
@@ -67,6 +66,7 @@ struct FixedArray
 
 	T* Append();
 	void Append(const T& element);
+	void Append(const Array<T>& array);
 	void RemoveLast();
 	void Clear();
 
@@ -103,6 +103,7 @@ struct DynamicArray // TODO figure out where allocator will go
 
 	T* Append();
 	void Append(const T& element);
+	void Append(const Array<T>& array);
 	void RemoveLast();
 	void Clear();
 	void Free();
