@@ -287,13 +287,15 @@ void FreeOrUseDefautIfNull(Allocator* allocator, void* memory)
 }
 
 template <typename T, typename Allocator>
-DynamicArray<T, Allocator>::DynamicArray(uint64 capacity, Allocator* allocator)
+DynamicArray<T, Allocator>::DynamicArray()
+	: DynamicArray(nullptr)
 {
-	size = 0;
-	data = (T*)AllocateOrUseDefaultIfNull(allocator, capacity * sizeof(T));
-	DEBUG_ASSERT(data != nullptr);
-	this->capacity = capacity;
-	this->allocator = allocator;
+}
+
+template <typename T, typename Allocator>
+DynamicArray<T, Allocator>::DynamicArray(Allocator* allocator)
+	: DynamicArray(DYNAMIC_ARRAY_START_CAPACITY, allocator)
+{
 }
 
 template <typename T, typename Allocator>
@@ -304,15 +306,13 @@ DynamicArray<T, Allocator>::DynamicArray(const Array<T>& array, Allocator* alloc
 }
 
 template <typename T, typename Allocator>
-DynamicArray<T, Allocator>::DynamicArray(Allocator* allocator)
-	: DynamicArray(DYNAMIC_ARRAY_START_CAPACITY, allocator)
+DynamicArray<T, Allocator>::DynamicArray(uint64 capacity, Allocator* allocator)
 {
-}
-
-template <typename T, typename Allocator>
-DynamicArray<T, Allocator>::DynamicArray()
-	: DynamicArray(nullptr)
-{
+	size = 0;
+	data = (T*)AllocateOrUseDefaultIfNull(allocator, capacity * sizeof(T));
+	DEBUG_ASSERT(data != nullptr);
+	this->capacity = capacity;
+	this->allocator = allocator;
 }
 
 template <typename T, typename Allocator>
@@ -417,6 +417,8 @@ DynamicArray<T, Allocator>& DynamicArray<T, Allocator>::operator=(const DynamicA
 template <typename T, typename Allocator>
 bool DynamicArray<T, Allocator>::UpdateCapacity(uint64 newCapacity)
 {
+	DEBUG_ASSERT(capacity != 0);
+	DEBUG_ASSERT(newCapacity != 0);
 	void* newMemory = ReAllocateOrUseDefaultIfNull(allocator, data, newCapacity * sizeof(T));
 	if (newMemory == nullptr) {
 		return false;
@@ -460,59 +462,72 @@ bool HashKey::WriteString(const char* str)
 	return WriteString(stringArray);
 }
 
-template <typename V>
-HashTable<V>::HashTable()
-	: HashTable(HASH_TABLE_START_CAPACITY)
+template <typename V, typename Allocator>
+HashTable<V, Allocator>::HashTable()
+	: HashTable(nullptr)
 {
 }
 
-template <typename V>
-HashTable<V>::HashTable(uint64 cap)
+template <typename V, typename Allocator>
+HashTable<V, Allocator>::HashTable(Allocator* allocator)
+	: HashTable(HASH_TABLE_START_CAPACITY, allocator)
+{
+}
+
+template <typename V, typename Allocator>
+HashTable<V, Allocator>::HashTable(uint64 capacity, Allocator* allocator)
 {
 	size = 0;
-	capacity = cap;
-	uint64 sizeBytes = sizeof(KeyValuePair<V>) * cap;
-	pairs = (KeyValuePair<V>*)malloc(sizeBytes);
-	if (!pairs) {
+	uint64 sizeBytes = sizeof(KeyValuePair<V>) * capacity;
+	pairs = (KeyValuePair<V>*)allocator->Allocate(sizeBytes);
+	if (pairs == nullptr) {
 		DEBUG_PANIC("ERROR: not enough memory!\n");
 	}
 
-	for (uint64 i = 0; i < cap; i++) {
+	for (uint64 i = 0; i < capacity; i++) {
 		pairs[i].key.string.size = 0;
 		new (&pairs[i]) KeyValuePair<V>();
 	}
+
+	this->capacity = capacity;
+	this->allocator = allocator;
 }
 
-template <typename V>
-HashTable<V>::~HashTable()
+template <typename V, typename Allocator>
+HashTable<V, Allocator>::~HashTable()
 {
 	for (uint64 i = 0; i < capacity; i++) {
 		pairs[i].~KeyValuePair<V>();
 	}
 	// TODO this is double-freeing... being destroyed at unexpected times
-	// free(pairs);
+	// allocator->Free(pairs);
 }
 
-template <typename V>
-void HashTable<V>::Add(const HashKey& key, const V& value)
+template <typename V, typename Allocator>
+void HashTable<V, Allocator>::Add(const HashKey& key, const V& value)
 {
 	DEBUG_ASSERT(GetPair(key) == nullptr);
 
 	if (size >= (uint64)((float32)capacity * HASH_TABLE_MAX_SIZE_TO_CAPACITY)) {
 		uint64 newCapacity = NextPrime(capacity * 2);
-		pairs = (KeyValuePair<V>*)realloc(pairs, sizeof(KeyValuePair<V>) * newCapacity);
-		if (!pairs) {
-			DEBUG_PANIC("ERROR: not enough memory!\n");
+		pairs = (KeyValuePair<V>*)allocator->ReAllocate(pairs, sizeof(KeyValuePair<V>) * newCapacity);
+		if (pairs == nullptr) {
+			DEBUG_PANIC("not enough memory for HashTable resize (pairs allocation)\n");
 		}
 
 		for (uint64 i = 0; i < capacity; i++) {
-			new (&pairs[i]) KeyValuePair<V>();
+			// Don't placement new here, probably? Because it'll reset everything...
+			// new (&pairs[i]) KeyValuePair<V>();
 		}
-		KeyValuePair<V>* oldPairs = (KeyValuePair<V>*)malloc(sizeof(KeyValuePair<V>) * capacity);
+		KeyValuePair<V>* oldPairs = (KeyValuePair<V>*)allocator->Allocate(sizeof(KeyValuePair<V>) * capacity);
+		if (oldPairs == nullptr) {
+			DEBUG_PANIC("not enough memory for HashTable resize (oldPairs allocation)\n");
+		}
+		defer(allocator->Free(oldPairs));
 		MemCopy(oldPairs, pairs, sizeof(KeyValuePair<V>) * capacity);
 		DEBUG_PANIC("TODO can't resize+rehash yet\n");
+
 		capacity = newCapacity;
-		free(oldPairs);
 	}
 
 	KeyValuePair<V>* pair = GetFreeSlot(key);
@@ -523,8 +538,8 @@ void HashTable<V>::Add(const HashKey& key, const V& value)
 	size++;
 }
 
-template <typename V>
-V* HashTable<V>::GetValue(const HashKey& key)
+template <typename V, typename Allocator>
+V* HashTable<V, Allocator>::GetValue(const HashKey& key)
 {
 	KeyValuePair<V>* pair = GetPair(key);
 	if (pair == nullptr) {
@@ -534,8 +549,8 @@ V* HashTable<V>::GetValue(const HashKey& key)
 	return &pair->value;
 }
 
-template <typename V>
-const V* HashTable<V>::GetValue(const HashKey& key) const
+template <typename V, typename Allocator>
+const V* HashTable<V, Allocator>::GetValue(const HashKey& key) const
 {
 	const KeyValuePair<V>* pair = GetPair(key);
 	if (pair == nullptr) {
@@ -545,25 +560,25 @@ const V* HashTable<V>::GetValue(const HashKey& key) const
 	return &pair->value;
 }
 
-template <typename V>
-void HashTable<V>::Clear()
+template <typename V, typename Allocator>
+void HashTable<V, Allocator>::Clear()
 {
 	for (int i = 0; i < capacity; i++) {
 		pairs[i].key.string.size = 0;
 	}
 }
 
-template <typename V>
-void HashTable<V>::Free()
+template <typename V, typename Allocator>
+void HashTable<V, Allocator>::Free()
 {
-	free(pairs);
+	allocator->Free(pairs);
 
 	capacity = 0;
 	size = 0;
 }
 
-template <typename V>
-KeyValuePair<V>* HashTable<V>::GetPair(const HashKey& key) const
+template <typename V, typename Allocator>
+KeyValuePair<V>* HashTable<V, Allocator>::GetPair(const HashKey& key) const
 {
 	uint64 hashInd = KeyHash(key) % capacity;
 	for (uint64 i = 0; i < capacity; i++) {
@@ -579,8 +594,8 @@ KeyValuePair<V>* HashTable<V>::GetPair(const HashKey& key) const
 	return nullptr;
 }
 
-template <typename V>
-KeyValuePair<V>* HashTable<V>::GetFreeSlot(const HashKey& key)
+template <typename V, typename Allocator>
+KeyValuePair<V>* HashTable<V, Allocator>::GetFreeSlot(const HashKey& key)
 {
 	uint64 hashInd = KeyHash(key) % capacity;
 	for (uint64 i = 0; i < capacity; i++) {

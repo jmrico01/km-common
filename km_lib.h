@@ -91,10 +91,10 @@ struct DynamicArray // TODO figure out where allocator will go
 	uint64 capacity;
 	Allocator* allocator;
 
-	DynamicArray(uint64 capacity, Allocator* allocator = nullptr);
-	DynamicArray(const Array<T>& array, Allocator* allocator = nullptr);
-	DynamicArray(Allocator* allocator);
 	DynamicArray();
+	DynamicArray(Allocator* allocator);
+	DynamicArray(const Array<T>& array, Allocator* allocator = nullptr);
+	DynamicArray(uint64 capacity, Allocator* allocator = nullptr);
 	~DynamicArray();
 
 	Array<T>& ToArray();
@@ -136,15 +136,17 @@ struct KeyValuePair
 	V value;
 };
 
-template <typename V>
+template <typename V, typename Allocator = StandardAllocator>
 struct HashTable
 {
 	uint64 size;
 	uint64 capacity;
 	KeyValuePair<V>* pairs;
+	Allocator* allocator;
 
 	HashTable();
-	HashTable(uint64 capacity);
+	HashTable(Allocator* allocator);
+	HashTable(uint64 capacity, Allocator* allocator = nullptr);
 	~HashTable();
 
 	void Add(const HashKey& key, const V& value);
