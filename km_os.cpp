@@ -8,9 +8,10 @@ template <typename Allocator>
 Array<uint8> LoadEntireFile(const Array<char>& filePath, Allocator* allocator)
 {
 	Array<uint8> file;
-	char* cFilePath = ToCString(filePath, allocator);
 
 #if GAME_WIN32
+	char* cFilePath = ToCString(filePath, allocator);
+
 	HANDLE hFile = CreateFile(cFilePath, GENERIC_READ, FILE_SHARE_READ,
 		NULL, OPEN_EXISTING, NULL, NULL);
 	allocator->Free(cFilePath);

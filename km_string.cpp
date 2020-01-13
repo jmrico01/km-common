@@ -1,6 +1,9 @@
 #include "km_string.h"
 
+#include <cstdarg>
 #include <locale>
+#undef STB_SPRINTF_IMPLEMENTATION
+#include <stb_sprintf.h>
 
 #include "km_debug.h"
 #include "km_math.h"
@@ -357,9 +360,8 @@ int ReadNextKeywordValue(const Array<char>& string,
 	}
 
 	int i = 0;
-
 	outKeyword->Clear();
-	while (i < string.size && !IsWhitespace(string[i])) {
+	while (i < (int)string.size && !IsWhitespace(string[i])) {
 		if (outKeyword->size >= KEYWORD_SIZE) {
 			LOG_ERROR("Keyword too long %.*s\n", (int)outKeyword->size, outKeyword->data);
 			return -1;
@@ -367,13 +369,13 @@ int ReadNextKeywordValue(const Array<char>& string,
 		outKeyword->Append(string[i++]);
 	}
 
-	if (i < string.size && IsWhitespace(string[i])) {
+	if (i < (int)string.size && IsWhitespace(string[i])) {
 		i++;
 	}
 
 	outValue->Clear();
 	bool bracketValue = false;
-	while (i < string.size) {
+	while (i < (int)string.size) {
 		if (string[i] == '\n' || string[i] == '\r') {
 			// End of inline value
 			i++;
@@ -400,7 +402,7 @@ int ReadNextKeywordValue(const Array<char>& string,
 	if (bracketValue) {
 		int bracketDepth = 1;
 		bool bracketMatched = false;
-		while (i < string.size) {
+		while (i < (int)string.size) {
 			if (string[i] == '{') {
 				bracketDepth++;
 			}
@@ -436,7 +438,7 @@ int ReadNextKeywordValue(const Array<char>& string,
 		outValue->RemoveLast();
 	}
 
-	while (i < string.size && IsWhitespace(string[i])) {
+	while (i < (int)string.size && IsWhitespace(string[i])) {
 		i++;
 	}
 

@@ -17,13 +17,13 @@
 internal inline void ArrayBoundsCheck(int index, uint64 size)
 {
 	DEBUG_ASSERTF(0 <= index && (uint64)index < size,
-		"Array bounds check failed: index %d, size %llu\n", index, size);
+		"Array bounds check failed: index %d, size %lu\n", index, size);
 }
 
 internal inline void ArrayBoundsCheck(uint64 index, uint64 size)
 {
 	DEBUG_ASSERTF(index < size,
-		"Array bounds check failed: index %llu, size %llu\n", index, size);
+		"Array bounds check failed: index %lu, size %lu\n", index, size);
 }
 
 int ToIntOrTruncate(uint64 n)
@@ -165,7 +165,7 @@ Array<T> FixedArray<T, S>::ToArray() const
 template <typename T, uint64 S>
 T* FixedArray<T, S>::Append()
 {
-	DEBUG_ASSERTF(size < S, "size %llu, S %llu\n", size, S);
+	DEBUG_ASSERTF(size < S, "size %lu, S %lu\n", size, S);
 	return &data[size++];
 }
 
@@ -179,7 +179,7 @@ template <typename T, uint64 S>
 void FixedArray<T, S>::Append(const Array<T>& array)
 {
 	uint64 newSize = size + array.size;
-	DEBUG_ASSERTF(newSize <= S, "size %llu, S %llu, array.size %llu\n", size, S, array.size);
+	DEBUG_ASSERTF(newSize <= S, "size %lu, S %lu, array.size %lu\n", size, S, array.size);
 
 	MemCopy(data + size, array.data, array.size * sizeof(T));
 	size = newSize;
@@ -202,7 +202,7 @@ template <typename T, uint64 S>
 void FixedArray<T, S>::AppendAfter(const T& element, uint64 index)
 {
 	DEBUG_ASSERT(index < size);
-	DEBUG_ASSERTF(size < S, "size %llu, S %llu\n", size, S);
+	DEBUG_ASSERTF(size < S, "size %lu, S %lu\n", size, S);
 
 	uint64 targetIndex = index + 1;
 	for (uint64 i = size; i > targetIndex; i--) {
@@ -574,7 +574,7 @@ const V* HashTable<V, Allocator>::GetValue(const HashKey& key) const
 template <typename V, typename Allocator>
 void HashTable<V, Allocator>::Clear()
 {
-	for (int i = 0; i < capacity; i++) {
+	for (uint64 i = 0; i < capacity; i++) {
 		pairs[i].key.string.size = 0;
 	}
 }

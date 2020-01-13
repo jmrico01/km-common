@@ -84,7 +84,8 @@ internal bool LoadKmkvRecursive(Array<char> string, Allocator* allocator,
 		if (StringCompare(kmkvValueItem.keywordTag.ToArray(), "kmkv")) {
 			kmkvValueItem.isString = false;
 			// "placement new" - allocate with custom allocator, but still call constructor
-			kmkvValueItem.hashTablePtr = allocator->New<HashTable<KmkvItem<Allocator>>>();
+			// Also, oh my god... C++ SUCKS
+			kmkvValueItem.hashTablePtr = allocator->template New<HashTable<KmkvItem<Allocator>, Allocator>>();
 			if (kmkvValueItem.hashTablePtr == nullptr) {
 				return false;
 			}
@@ -94,7 +95,8 @@ internal bool LoadKmkvRecursive(Array<char> string, Allocator* allocator,
 		else {
 			kmkvValueItem.isString = true;
 			// "placement new" - allocate with custom allocator, but still call constructor
-			kmkvValueItem.dynamicStringPtr = allocator->New<DynamicArray<char>>();
+			// Also, oh my god... C++ SUCKS
+			kmkvValueItem.dynamicStringPtr = allocator->template New<DynamicArray<char>>();
 			if (kmkvValueItem.dynamicStringPtr == nullptr) {
 				return false;
 			}
