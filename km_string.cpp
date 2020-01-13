@@ -1,5 +1,7 @@
 #include "km_string.h"
 
+#include <locale>
+
 #include "km_debug.h"
 #include "km_math.h"
 
@@ -104,7 +106,7 @@ void StringCat(const char* str1, const char* str2, char* dest, uint64 destMaxLen
 	CatStrings(StringLength(str1), str1, StringLength(str2), str2, destMaxLength, dest);
 }
 
-inline bool32 IsWhitespace(char c)
+inline bool IsWhitespace(char c)
 {
 	return c == ' ' || c == '\t'
 		|| c == '\n' || c == '\v' || c == '\f' || c == '\r';
@@ -125,13 +127,13 @@ void TrimWhitespace(const Array<char>& string, Array<char>* trimmed)
 	trimmed->size = end - start;
 }
 
-bool32 StringToIntBase10(const Array<char>& string, int* intBase10)
+bool StringToIntBase10(const Array<char>& string, int* intBase10)
 {
 	if (string.size == 0) {
 		return false;
 	}
 
-	bool32 negative = false;
+	bool negative = false;
 	*intBase10 = 0;
 	for (uint64 i = 0; i < string.size; i++) {
 		char c = string[i];
@@ -151,7 +153,7 @@ bool32 StringToIntBase10(const Array<char>& string, int* intBase10)
 	return true;
 }
 
-bool32 StringToUInt64Base10(const Array<char>& string, uint64* intBase10)
+bool StringToUInt64Base10(const Array<char>& string, uint64* intBase10)
 {
 	if (string.size == 0) {
 		return false;
@@ -166,7 +168,7 @@ bool32 StringToUInt64Base10(const Array<char>& string, uint64* intBase10)
 	return true;
 }
 
-bool32 StringToFloat32(const Array<char>& string, float32* f)
+bool StringToFloat32(const Array<char>& string, float32* f)
 {
 	uint64 dotIndex = 0;
 	while (dotIndex < string.size && string[dotIndex] != '.') {
@@ -232,6 +234,61 @@ void ReadElementInSplitString(Array<char>* element, Array<char>* next, char sepa
 }
 
 template <typename Allocator>
+bool Utf8ToUppercase(const Array<char>& utf8String, DynamicArray<char, Allocator>* outString)
+{
+	const uint8 MASK_BIT_8 = 0b10000000;
+	const uint8 MASK_BIT_7 = 0b01000000;
+	const uint8 MASK_BIT_6 = 0b00100000;
+	const uint32 UTF8_MAX_2_BYTE_CHAR = 0x07ff;
+
+	std::locale locale = std::locale("");
+
+	outString->Clear();
+	for (uint64 i = 0; i < utf8String.size; i++) {
+		uint8 byte1 = (uint8)utf8String[i];
+		if ((byte1 & MASK_BIT_8) == 0) {
+			outString->Append((char)std::toupper((char)byte1, locale));
+		}
+		else if ((byte1 & MASK_BIT_7) != 0 && (byte1 & MASK_BIT_6) == 0) {
+			if (i + 1 >= utf8String.size) {
+				return false;
+			}
+			uint8 byte2 = (uint8)utf8String[++i];
+			if ((byte2 & MASK_BIT_8) == 0 || (byte2 & MASK_BIT_7) != 0) {
+				fprintf(stderr, "Bad 2-byte character in UTF-8 string\n");
+				return false;
+			}
+			uint16 charUtf16 = (byte2 & 0b00111111) + ((byte1 & 0b00011111) << 6);
+			uint16 charUtf16Upper = std::toupper(charUtf16, locale);
+			printf("%d -> %d\n", charUtf16, charUtf16Upper);
+			if (charUtf16Upper > UTF8_MAX_2_BYTE_CHAR) {
+				fprintf(stderr, "Unsupported UTF-8 character (> 2 bytes) after toupper\n");
+				return false;
+			}
+
+			uint32 byte1Upper = 0b11000000 + ((charUtf16Upper & 0b11111000000) >> 6);
+			uint32 byte2Upper = 0b10000000 +  (charUtf16Upper & 0b00000111111);
+			if (byte1Upper > 255) {
+				fprintf(stderr, "Error forming byte1Upper: %d\n", byte1Upper);
+				return false;
+			}
+			if (byte2Upper > 255) {
+				fprintf(stderr, "Error forming byte2Upper: %d\n", byte2Upper);
+				return false;
+			}
+			outString->Append((char)byte1Upper);
+			outString->Append((char)byte2Upper);
+		}
+		else {
+			fprintf(stderr, "Unsupported UTF-8 character (> 2 bytes)\n");
+			return false;
+		}
+	}
+
+	return true;
+}
+
+template <typename Allocator>
 Array<char> AllocPrintf(Allocator* allocator, const char* format, ...)
 {
 	int bufferSize = 256;
@@ -254,8 +311,8 @@ Array<char> AllocPrintf(Allocator* allocator, const char* format, ...)
 }
 
 template <typename T>
-bool32 StringToElementArray(const Array<char>& string, char sep, bool trimElements,
-	bool32 (*conversionFunction)(const Array<char>&, T*),
+bool StringToElementArray(const Array<char>& string, char sep, bool trimElements,
+	bool (*conversionFunction)(const Array<char>&, T*),
 	int maxElements, T* array, int* numElements)
 {
 	int elementInd = 0;

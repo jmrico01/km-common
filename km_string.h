@@ -23,20 +23,23 @@ void CatStrings(
 	size_t destCount, char* dest);
 void StringCat(const char* str1, const char* str2, char* dest, uint64 destMaxLength);
 
-inline bool32 IsWhitespace(char c);
+inline bool IsWhitespace(char c);
 void TrimWhitespace(const Array<char>& string, Array<char>* trimmed);
-bool32 StringToIntBase10(const Array<char>& string, int* intBase10);
-bool32 StringToUInt64Base10(const Array<char>& string, uint64* intBase10);
-bool32 StringToFloat32(const Array<char>& string, float32* f);
+bool StringToIntBase10(const Array<char>& string, int* intBase10);
+bool StringToUInt64Base10(const Array<char>& string, uint64* intBase10);
+bool StringToFloat32(const Array<char>& string, float32* f);
 uint64 GetLastOccurrence(const Array<char>& string, char c);
 void ReadElementInSplitString(Array<char>* element, Array<char>* next, char separator);
+
+template <typename Allocator>
+bool Utf8ToUppercase(const Array<char>& utf8String, DynamicArray<char, Allocator>* outString);
 
 template <typename Allocator>
 Array<char> AllocPrintf(Allocator* allocator, const char* format, ...);
 
 template <typename T>
-bool32 StringToElementArray(const Array<char>& string, char sep, bool trimElements,
-	bool32 (*conversionFunction)(const Array<char>&, T*),
+bool StringToElementArray(const Array<char>& string, char sep, bool trimElements,
+	bool (*conversionFunction)(const Array<char>&, T*),
 	int maxElements, T* array, int* numElements);
 
 // TODO this fits more into a km-file-format module. not really a general string lib function
