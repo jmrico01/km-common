@@ -1,7 +1,8 @@
 #pragma once
 
-#include <stdint.h>
 #include <cstddef>
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
 
 // STATIC REDEFINES
 #define internal        static
