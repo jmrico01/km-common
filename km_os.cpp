@@ -8,9 +8,9 @@ template <typename Allocator>
 Array<uint8> LoadEntireFile(const Array<char>& filePath, Allocator* allocator)
 {
 	Array<uint8> file;
+	char* cFilePath = ToCString(filePath, allocator);
 
 #if GAME_WIN32
-	char* cFilePath = ToCString(filePath, allocator);
 
 	HANDLE hFile = CreateFile(cFilePath, GENERIC_READ, FILE_SHARE_READ,
 		NULL, OPEN_EXISTING, NULL, NULL);
@@ -41,6 +41,24 @@ Array<uint8> LoadEntireFile(const Array<char>& filePath, Allocator* allocator)
 
 	file.size = fileSize32;
 	CloseHandle(hFile);
+
+#elif GAME_LINUX
+
+	FILE* filePtr = fopen(cFilePath, "rb");
+	fseek(filePtr, 0, SEEK_END);
+	uint64 size = ftell(filePtr);
+	rewind(filePtr);
+
+	file.data = (uint8*)allocator->Allocate(size);
+	if (file.data == nullptr) {
+		return file;
+	}
+
+	fread(file.data, size, 1, filePtr);
+
+	file.size = size;
+	fclose(filePtr);
+
 #else
 	#error "LoadEntireFile not implemented on this platform"
 #endif
@@ -58,9 +76,10 @@ template <typename Allocator>
 FixedArray<char, PATH_MAX_LENGTH> GetExecutablePath(Allocator* allocator)
 {
 	FixedArray<char, PATH_MAX_LENGTH> path;
-	path.size = 0;
+	path.Clear();
 
 #if GAME_WIN32
+
 	DWORD size = GetModuleFileName(NULL, path.data, PATH_MAX_LENGTH);
 	if (size == 0) {
 		return path;
@@ -73,6 +92,12 @@ FixedArray<char, PATH_MAX_LENGTH> GetExecutablePath(Allocator* allocator)
 			path[i] = '/';
 		}
 	}
+
+#elif GAME_LINUX
+
+	// TODO lol stop
+	path.Append(ToString("./build/"));
+
 #else
 	#error "GetExecutablePath not implemented on this platform"
 #endif

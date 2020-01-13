@@ -262,6 +262,7 @@ bool Utf8ToUppercase(const Array<char>& utf8String, DynamicArray<char, Allocator
 				return false;
 			}
 			uint16 charUtf16 = (byte2 & 0b00111111) + ((byte1 & 0b00011111) << 6);
+			// TODO fix this, crashes on Linux bc locale yada yada
 			uint16 charUtf16Upper = std::toupper(charUtf16, locale);
 			if (charUtf16Upper > UTF8_MAX_2_BYTE_CHAR) {
 				LOG_ERROR("Unsupported UTF-8 character (> 2 bytes) after toupper\n");
