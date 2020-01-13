@@ -255,32 +255,31 @@ bool Utf8ToUppercase(const Array<char>& utf8String, DynamicArray<char, Allocator
 			}
 			uint8 byte2 = (uint8)utf8String[++i];
 			if ((byte2 & MASK_BIT_8) == 0 || (byte2 & MASK_BIT_7) != 0) {
-				fprintf(stderr, "Bad 2-byte character in UTF-8 string\n");
+				LOG_ERROR("Bad 2-byte character in UTF-8 string\n");
 				return false;
 			}
 			uint16 charUtf16 = (byte2 & 0b00111111) + ((byte1 & 0b00011111) << 6);
 			uint16 charUtf16Upper = std::toupper(charUtf16, locale);
-			printf("%d -> %d\n", charUtf16, charUtf16Upper);
 			if (charUtf16Upper > UTF8_MAX_2_BYTE_CHAR) {
-				fprintf(stderr, "Unsupported UTF-8 character (> 2 bytes) after toupper\n");
+				LOG_ERROR("Unsupported UTF-8 character (> 2 bytes) after toupper\n");
 				return false;
 			}
 
 			uint32 byte1Upper = 0b11000000 + ((charUtf16Upper & 0b11111000000) >> 6);
 			uint32 byte2Upper = 0b10000000 +  (charUtf16Upper & 0b00000111111);
 			if (byte1Upper > 255) {
-				fprintf(stderr, "Error forming byte1Upper: %d\n", byte1Upper);
+				LOG_ERROR("Error forming byte1Upper: %d\n", byte1Upper);
 				return false;
 			}
 			if (byte2Upper > 255) {
-				fprintf(stderr, "Error forming byte2Upper: %d\n", byte2Upper);
+				LOG_ERROR("Error forming byte2Upper: %d\n", byte2Upper);
 				return false;
 			}
 			outString->Append((char)byte1Upper);
 			outString->Append((char)byte2Upper);
 		}
 		else {
-			fprintf(stderr, "Unsupported UTF-8 character (> 2 bytes)\n");
+			LOG_ERROR("Unsupported UTF-8 character (> 2 bytes)\n");
 			return false;
 		}
 	}
