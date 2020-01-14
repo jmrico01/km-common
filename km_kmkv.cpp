@@ -30,6 +30,108 @@ const HashTable<KmkvItem<Allocator>>* GetKmkvItemObjValue(
 	return itemValuePtr->hashTablePtr;
 }
 
+template <uint64 KEYWORD_SIZE, uint64 VALUE_SIZE>
+int ReadNextKeywordValue(const Array<char>& string,
+	FixedArray<char, KEYWORD_SIZE>* outKeyword, FixedArray<char, VALUE_SIZE>* outValue)
+{
+	if (string.size == 0 || string[0] == '\0') {
+		return 0;
+	}
+
+	int i = 0;
+	outKeyword->Clear();
+	while (i < (int)string.size && !IsWhitespace(string[i])) {
+		if (outKeyword->size >= KEYWORD_SIZE) {
+			LOG_ERROR("Keyword too long %.*s\n", (int)outKeyword->size, outKeyword->data);
+			return -1;
+		}
+		outKeyword->Append(string[i++]);
+	}
+
+	if (i < (int)string.size && IsWhitespace(string[i])) {
+		i++;
+	}
+
+	outValue->Clear();
+	bool bracketValue = false;
+	while (i < (int)string.size) {
+		if (IsNewline(string[i])) {
+			// End of inline value
+			i++;
+			break;
+		}
+		if (string[i] == '{' && outValue->size == 0) {
+			// Start of bracket value, read in separately
+			i++;
+			bracketValue = true;
+			break;
+		}
+		if (outValue->size >= VALUE_SIZE) {
+			LOG_ERROR("Value too long %.*s\n", (int)outValue->size, outValue->data);
+			return -1;
+		}
+		if (outValue->size == 0 && IsWhitespace(string[i])) {
+			i++;
+			continue;
+		}
+
+		outValue->Append(string[i++]);
+	}
+
+	if (bracketValue) {
+		int bracketDepth = 1;
+		bool prevNewline = false;
+		bool bracketMatched = false;
+		while (i < (int)string.size) {
+			if (string[i] == '{' && (i + 1 < (int)string.size) && IsNewline(string[i + 1])) {
+				bracketDepth++;
+			}
+			else if (string[i] == '}' && prevNewline) {
+				bracketDepth--;
+				if (bracketDepth == 0) {
+					i++;
+					bracketMatched = true;
+					break;
+				}
+			}
+			if (IsNewline(string[i])) {
+				prevNewline = true;
+			}
+			else if (prevNewline && !IsWhitespace(string[i])) {
+				prevNewline = false;
+			}
+			if (outValue->size >= VALUE_SIZE) {
+				LOG_ERROR("Value too long %.*s\n", (int)outValue->size, outValue->data);
+				return -1;
+			}
+			if (outValue->size == 0 && IsWhitespace(string[i])) {
+				// Gobble starting whitespace
+				i++;
+				continue;
+			}
+
+			outValue->Append(string[i++]);
+		}
+
+		if (!bracketMatched) {
+			LOG_ERROR("Value bracket unmatched pair for keyword %.*s\n",
+				(int)outKeyword->size, outKeyword->data);
+			return -1;
+		}
+	}
+
+	// Trim trailing whitespace
+	while (outValue->size > 0 && IsWhitespace(outValue->data[outValue->size - 1])) {
+		outValue->RemoveLast();
+	}
+
+	while (i < (int)string.size && IsWhitespace(string[i])) {
+		i++;
+	}
+
+	return i;
+}
+
 template <typename Allocator>
 internal bool LoadKmkvRecursive(Array<char> string, Allocator* allocator,
 	HashTable<KmkvItem<Allocator>>* outHashTable)
@@ -38,8 +140,6 @@ internal bool LoadKmkvRecursive(Array<char> string, Allocator* allocator,
 	FixedArray<char, KEYWORD_MAX_LENGTH> keyword;
 	KmkvItem<Allocator> kmkvValueItem;
 	while (true) {
-		// TODO sometimes string changes after this function call. Hmmm...
-		// Maybe it's when value and string are pointing to the same buffer area thing.
 		int read = ReadNextKeywordValue(string, &keyword, &kmkvValue_);
 		if (read < 0) {
 			fprintf(stderr, "kmkv file keyword/value error\n");

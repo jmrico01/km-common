@@ -21,6 +21,10 @@ template <typename Allocator>
 const HashTable<KmkvItem<Allocator>>* GetKmkvItemObjValue(
 	const HashTable<KmkvItem<Allocator>>& kmkv, const HashKey& itemKey);
 
+template <uint64 KEYWORD_SIZE, uint64 VALUE_SIZE>
+int ReadNextKeywordValue(const Array<char>& string,
+	FixedArray<char, KEYWORD_SIZE>* outKeyword, FixedArray<char, VALUE_SIZE>* outValue);
+
 template <typename Allocator>
 internal bool LoadKmkv(const Array<char>& filePath, Allocator* allocator,
 	HashTable<KmkvItem<Allocator>>* outHashTable);

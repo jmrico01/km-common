@@ -109,6 +109,11 @@ void StringCat(const char* str1, const char* str2, char* dest, uint64 destMaxLen
 	CatStrings(StringLength(str1), str1, StringLength(str2), str2, destMaxLength, dest);
 }
 
+inline bool IsNewline(char c)
+{
+	return c == '\n' || c == '\r';
+}
+
 inline bool IsWhitespace(char c)
 {
 	return c == ' ' || c == '\t'
@@ -350,98 +355,4 @@ bool StringToElementArray(const Array<char>& string, char sep, bool trimElements
 
 	*numElements = elementInd + 1;
 	return true;
-}
-
-template <uint64 KEYWORD_SIZE, uint64 VALUE_SIZE>
-int ReadNextKeywordValue(const Array<char>& string,
-	FixedArray<char, KEYWORD_SIZE>* outKeyword, FixedArray<char, VALUE_SIZE>* outValue)
-{
-	if (string.size == 0 || string[0] == '\0') {
-		return 0;
-	}
-
-	int i = 0;
-	outKeyword->Clear();
-	while (i < (int)string.size && !IsWhitespace(string[i])) {
-		if (outKeyword->size >= KEYWORD_SIZE) {
-			LOG_ERROR("Keyword too long %.*s\n", (int)outKeyword->size, outKeyword->data);
-			return -1;
-		}
-		outKeyword->Append(string[i++]);
-	}
-
-	if (i < (int)string.size && IsWhitespace(string[i])) {
-		i++;
-	}
-
-	outValue->Clear();
-	bool bracketValue = false;
-	while (i < (int)string.size) {
-		if (string[i] == '\n' || string[i] == '\r') {
-			// End of inline value
-			i++;
-			break;
-		}
-		if (string[i] == '{' && outValue->size == 0) {
-			// Start of bracket value, read in separately
-			i++;
-			bracketValue = true;
-			break;
-		}
-		if (outValue->size >= VALUE_SIZE) {
-			LOG_ERROR("Value too long %.*s\n", (int)outValue->size, outValue->data);
-			return -1;
-		}
-		if (outValue->size == 0 && IsWhitespace(string[i])) {
-			i++;
-			continue;
-		}
-
-		outValue->Append(string[i++]);
-	}
-
-	if (bracketValue) {
-		int bracketDepth = 1;
-		bool bracketMatched = false;
-		while (i < (int)string.size) {
-			if (string[i] == '{') {
-				bracketDepth++;
-			}
-			else if (string[i] == '}') {
-				bracketDepth--;
-				if (bracketDepth == 0) {
-					i++;
-					bracketMatched = true;
-					break;
-				}
-			}
-			if (outValue->size >= VALUE_SIZE) {
-				LOG_ERROR("Value too long %.*s\n", (int)outValue->size, outValue->data);
-				return -1;
-			}
-			if (outValue->size == 0 && IsWhitespace(string[i])) {
-				// Gobble starting whitespace
-				i++;
-				continue;
-			}
-
-			outValue->Append(string[i++]);
-		}
-
-		if (!bracketMatched) {
-			LOG_ERROR("Value bracket unmatched pair\n");
-			return -1;
-		}
-	}
-
-	// Trim trailing whitespace
-	while (outValue->size > 0 && IsWhitespace(outValue->data[outValue->size - 1])) {
-		outValue->RemoveLast();
-	}
-
-	while (i < (int)string.size && IsWhitespace(string[i])) {
-		i++;
-	}
-
-	return i;
 }

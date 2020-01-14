@@ -23,7 +23,8 @@ void CatStrings(
 	size_t destCount, char* dest);
 void StringCat(const char* str1, const char* str2, char* dest, uint64 destMaxLength);
 
-inline bool IsWhitespace(char c);
+bool IsNewline(char c);
+bool IsWhitespace(char c);
 void TrimWhitespace(const Array<char>& string, Array<char>* trimmed);
 bool StringToIntBase10(const Array<char>& string, int* intBase10);
 bool StringToUInt64Base10(const Array<char>& string, uint64* intBase10);
@@ -41,8 +42,3 @@ template <typename T>
 bool StringToElementArray(const Array<char>& string, char sep, bool trimElements,
 	bool (*conversionFunction)(const Array<char>&, T*),
 	int maxElements, T* array, int* numElements);
-
-// TODO this fits more into a km-file-format module. not really a general string lib function
-template <uint64 KEYWORD_SIZE, uint64 VALUE_SIZE>
-int ReadNextKeywordValue(const Array<char>& string,
-	FixedArray<char, KEYWORD_SIZE>* outKeyword, FixedArray<char, VALUE_SIZE>* outValue);
