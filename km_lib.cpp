@@ -179,7 +179,8 @@ template <typename T, uint64 S>
 void FixedArray<T, S>::Append(const Array<T>& array)
 {
 	uint64 newSize = size + array.size;
-	DEBUG_ASSERTF(newSize <= S, "size %" PRIu64 ", S %" PRIu64 ", array.size %" PRIu64 "\n", size, S, array.size);
+	DEBUG_ASSERTF(newSize <= S, "size %" PRIu64 ", S %" PRIu64 ", array.size %" PRIu64 "\n",
+		size, S, array.size);
 
 	MemCopy(data + size, array.data, array.size * sizeof(T));
 	size = newSize;
@@ -343,6 +344,7 @@ template <typename T, typename Allocator>
 void DynamicArray<T, Allocator>::FromArray(const Array<T>& array)
 {
 	if (capacity < array.size) {
+		// TODO round to largest power of 2?
 		DEBUG_ASSERT(UpdateCapacity(array.size));
 	}
 
@@ -369,7 +371,14 @@ void DynamicArray<T, Allocator>::Append(const T& element)
 template <typename T, typename Allocator>
 void DynamicArray<T, Allocator>::Append(const Array<T>& array)
 {
-	DEBUG_PANIC("not implemented\n");
+	uint64 newSize = size + array.size;
+	if (capacity < newSize) {
+		// TODO round to largest power of 2?
+		DEBUG_ASSERT(UpdateCapacity(newSize));
+	}
+
+	MemCopy(data + size, array.data, array.size * sizeof(T));
+	size = newSize;
 }
 
 template <typename T, typename Allocator>

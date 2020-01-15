@@ -95,6 +95,7 @@ struct DynamicArray // TODO figure out where allocator will go
 	DynamicArray(Allocator* allocator);
 	DynamicArray(const Array<T>& array, Allocator* allocator = nullptr);
 	DynamicArray(uint64 capacity, Allocator* allocator = nullptr);
+	DynamicArray(const DynamicArray<T>& other) = delete;
 	~DynamicArray();
 
 	Array<T>& ToArray();
@@ -148,6 +149,7 @@ struct HashTable
 	HashTable();
 	HashTable(Allocator* allocator);
 	HashTable(uint64 capacity, Allocator* allocator = nullptr);
+	HashTable(const HashTable<V, Allocator>& other) = delete;
 	~HashTable();
 
 	void Add(const HashKey& key, const V& value);
