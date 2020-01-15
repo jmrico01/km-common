@@ -1,7 +1,9 @@
 #include "km_string.h"
 
+#undef internal
 #include <cstdarg>
 #include <locale>
+#define internal static
 #undef STB_SPRINTF_IMPLEMENTATION
 #include <stb_sprintf.h>
 
