@@ -153,6 +153,7 @@ struct HashTable
 	~HashTable();
 
 	void Add(const HashKey& key, const V& value);
+	V* Add(const HashKey& key);
 	V* GetValue(const HashKey& key);
 	const V* GetValue(const HashKey& key) const;
 	bool32 Remove(const HashKey& key);

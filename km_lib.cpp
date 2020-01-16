@@ -524,7 +524,7 @@ HashTable<V, Allocator>::~HashTable()
 }
 
 template <typename V, typename Allocator>
-void HashTable<V, Allocator>::Add(const HashKey& key, const V& value)
+V* HashTable<V, Allocator>::Add(const HashKey& key)
 {
 	DEBUG_ASSERT(GetPair(key) == nullptr);
 
@@ -554,8 +554,15 @@ void HashTable<V, Allocator>::Add(const HashKey& key, const V& value)
 	DEBUG_ASSERT(pair != nullptr);
 
 	pair->key = key;
-	pair->value = value;
 	size++;
+
+	return &(pair->value);
+}
+
+template <typename V, typename Allocator>
+void HashTable<V, Allocator>::Add(const HashKey& key, const V& value)
+{
+	*(Add(key)) = value;
 }
 
 template <typename V, typename Allocator>
