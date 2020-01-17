@@ -242,9 +242,17 @@ internal bool KmkvToJsonRecursive(const HashTable<KmkvItem<Allocator>>& kmkv,
 		outJson->Append(':');
 		const KmkvItem<Allocator>& item = kmkv.pairs[i].value;
 		if (item.isString) {
-			outJson->Append('"');
+			bool isArray = StringCompare(item.keywordTag.ToArray(), "array");
+			if (!isArray) {
+				outJson->Append('"');
+			}
 			const DynamicArray<char, Allocator>& itemString = *item.dynamicStringPtr;
 			for (uint64 j = 0; j < itemString.size; j++) {
+				if (isArray) {
+					outJson->Append(itemString[j]);
+					continue;
+				}
+
 				switch (itemString[j]) {
 				case '\b': {
 					outJson->Append('\\');
@@ -279,7 +287,9 @@ internal bool KmkvToJsonRecursive(const HashTable<KmkvItem<Allocator>>& kmkv,
 				} break;
 				}
 			}
-			outJson->Append('"');
+			if (!isArray) {
+				outJson->Append('"');
+			}
 		}
 		else {
 			outJson->Append('{');

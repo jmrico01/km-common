@@ -307,7 +307,7 @@ DynamicArray<T, Allocator>::DynamicArray(Allocator* allocator)
 
 template <typename T, typename Allocator>
 DynamicArray<T, Allocator>::DynamicArray(const Array<T>& array, Allocator* allocator)
-	: DynamicArray(array.size, allocator)
+	: DynamicArray(array.size < DYNAMIC_ARRAY_START_CAPACITY ? DYNAMIC_ARRAY_START_CAPACITY : array.size, allocator)
 {
 	FromArray(array);
 }
@@ -344,7 +344,7 @@ template <typename T, typename Allocator>
 void DynamicArray<T, Allocator>::FromArray(const Array<T>& array)
 {
 	if (capacity < array.size) {
-		// TODO round to largest power of 2?
+		// TODO round to nearest power of 2?
 		DEBUG_ASSERT(UpdateCapacity(array.size));
 	}
 
@@ -373,7 +373,7 @@ void DynamicArray<T, Allocator>::Append(const Array<T>& array)
 {
 	uint64 newSize = size + array.size;
 	if (capacity < newSize) {
-		// TODO round to largest power of 2?
+		// TODO round to nearest power of 2?
 		DEBUG_ASSERT(UpdateCapacity(newSize));
 	}
 
