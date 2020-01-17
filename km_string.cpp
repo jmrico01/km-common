@@ -111,6 +111,29 @@ void StringCat(const char* str1, const char* str2, char* dest, uint64 destMaxLen
 	CatStrings(StringLength(str1), str1, StringLength(str2), str2, destMaxLength, dest);
 }
 
+uint64 SubstringSearch(const Array<char>& string, const Array<char>& substring)
+{
+	for (uint64 i = 0; i < string.size; i++) {
+		bool match = true;
+		for (uint64 j = 0; j < substring.size; j++) {
+			uint64 ind = i + j;
+			if (ind >= string.size) {
+				match = false;
+				break;
+			}
+			if (string[i + j] != substring[j]) {
+				match = false;
+				break;
+			}
+		}
+		if (match) {
+			return i;
+		}
+	}
+
+	return string.size;
+}
+
 inline bool IsNewline(char c)
 {
 	return c == '\n' || c == '\r';

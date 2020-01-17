@@ -23,6 +23,8 @@ void CatStrings(
 	size_t destCount, char* dest);
 void StringCat(const char* str1, const char* str2, char* dest, uint64 destMaxLength);
 
+uint64 SubstringSearch(const Array<char>& string, const Array<char>& substring);
+
 bool IsNewline(char c);
 bool IsWhitespace(char c);
 void TrimWhitespace(const Array<char>& string, Array<char>* trimmed);
