@@ -40,6 +40,8 @@ _DeferFunctionObject<F> _DeferFunction(F function) {
 template <typename T>
 struct Array
 {
+	const static Array<T> empty;
+
 	uint64 size;
 	T* data;
 

@@ -87,6 +87,8 @@ bool32 KeyCompare(const HashKey& key1, const HashKey& key2)
 	return true;
 }
 
+template <typename T> const Array<T> Array<T>::empty = { .size = 0, .data = nullptr };
+
 template <typename T>
 void Array<T>::RemoveLast()
 {
