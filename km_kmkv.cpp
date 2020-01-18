@@ -312,8 +312,6 @@ internal bool KmkvToJsonRecursive(const HashTable<KmkvItem<Allocator>>& kmkv,
 template <typename Allocator>
 bool KmkvToJson(const HashTable<KmkvItem<Allocator>>& kmkv, DynamicArray<char, Allocator>* outJson)
 {
-	outJson->Clear();
-
 	outJson->Append('{');
 	if (!KmkvToJsonRecursive(kmkv, outJson)) {
 		return false;
