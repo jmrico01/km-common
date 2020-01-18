@@ -156,14 +156,20 @@ union Vec3
 	float32 e[3];
 };
 
+const Vec3 Vec3::zero  = { 0.0f, 0.0f, 0.0f };
+const Vec3 Vec3::one   = { 1.0f, 1.0f, 1.0f };
+const Vec3 Vec3::unitX = { 1.0f, 0.0f, 0.0f };
+const Vec3 Vec3::unitY = { 0.0f, 1.0f, 0.0f };
+const Vec3 Vec3::unitZ = { 0.0f, 0.0f, 1.0f };
+
 union Vec4
 {
 	const static Vec4 zero;
 	const static Vec4 one;
-	const static Vec4 black;
-	const static Vec4 red;
-	const static Vec4 green;
-	const static Vec4 blue;
+	const static Vec4 unitX;
+	const static Vec4 unitY;
+	const static Vec4 unitZ;
+	const static Vec4 unitW;
 
 	struct
 	{
@@ -175,6 +181,13 @@ union Vec4
 	};
 	float32 e[4];
 };
+
+const Vec4 Vec4::zero  = { 0.0f, 0.0f, 0.0f, 0.0f };
+const Vec4 Vec4::one   = { 1.0f, 1.0f, 1.0f, 1.0f };
+const Vec4 Vec4::unitX = { 1.0f, 0.0f, 0.0f, 0.0f };
+const Vec4 Vec4::unitY = { 0.0f, 1.0f, 0.0f, 0.0f };
+const Vec4 Vec4::unitZ = { 0.0f, 0.0f, 1.0f, 0.0f };
+const Vec4 Vec4::unitW = { 0.0f, 0.0f, 0.0f, 1.0f };
 
 struct Rect
 {
@@ -215,19 +228,6 @@ struct Quat
 // ========== OPERATORS & FUNCTIONS ==========
 
 // -------------------- Vec2 --------------------
-/*const Vec2 Vec2::zero = {
-	0.0f, 0.0f
-};
-const Vec2 Vec2::one = {
-	1.0f, 1.0f
-};
-const Vec2 Vec2::unitX = {
-	1.0f, 0.0f
-};
-const Vec2 Vec2::unitY = {
-	0.0f, 1.0f
-};*/
-
 inline Vec2Int ToVec2Int(Vec2 v)
 {
 	return Vec2Int { (int)v.x, (int)v.y };
@@ -345,16 +345,6 @@ float32 AngleBetween(Vec2 v1, Vec2 v2)
 }
 
 // ------------------ Vec2Int -------------------
-/*const Vec2Int Vec2Int::zero = {
-	0, 0
-};
-const Vec2Int Vec2Int::unitX = {
-	1, 0
-};
-const Vec2Int Vec2Int::unitY = {
-	0, 1
-};*/
-
 inline Vec2 ToVec2(Vec2Int v)
 {
 	return Vec2 { (float32)v.x, (float32)v.y };
@@ -461,22 +451,6 @@ inline int Mag(Vec2Int v)
 }
 
 // -------------------- Vec3 --------------------
-const Vec3 Vec3::zero = {
-	0.0f, 0.0f, 0.0f
-};
-const Vec3 Vec3::one = {
-	1.0f, 1.0f, 1.0f
-};
-const Vec3 Vec3::unitX = {
-	1.0f, 0.0f, 0.0f
-};
-const Vec3 Vec3::unitY = {
-	0.0f, 1.0f, 0.0f
-};
-const Vec3 Vec3::unitZ = {
-	0.0f, 0.0f, 1.0f
-};
-
 inline Vec2 ToVec2(Vec3 v)
 {
 	Vec2 result;
@@ -605,25 +579,6 @@ inline Vec3 Normalize(Vec3 v)
 }
 
 // -------------------- Vec4 --------------------
-const Vec4 Vec4::zero = {
-	0.0f, 0.0f, 0.0f, 0.0f
-};
-const Vec4 Vec4::one = {
-	1.0f, 1.0f, 1.0f, 1.0f
-};
-const Vec4 Vec4::black = {
-	0.0f, 0.0f, 0.0f, 1.0f
-};
-const Vec4 Vec4::red = {
-	1.0f, 0.0f, 0.0f, 1.0f
-};
-const Vec4 Vec4::green = {
-	0.0f, 1.0f, 0.0f, 1.0f
-};
-const Vec4 Vec4::blue = {
-	0.0f, 0.0f, 1.0f, 1.0f
-};
-
 inline Vec4 operator-(Vec4 v)
 {
 	Vec4 result;
