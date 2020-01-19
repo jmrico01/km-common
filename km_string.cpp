@@ -282,7 +282,7 @@ bool Utf8ToUppercase(const Array<char>& utf8String, DynamicArray<char, Allocator
 
 		int32 codePointUpper = utf8proc_toupper(codePoint);
 		utf8proc_ssize_t codePointUpperBytes = utf8proc_encode_char(codePointUpper,
-			(uint8*)&utf8Buffer[0]);
+			(uint8*)utf8Buffer.data);
 		if (codePointUpperBytes == 0) {
 			LOG_ERROR("Failed to write UTF-8 codePointUpper\n");
 			return false;
