@@ -1,6 +1,5 @@
 #include "km_log.h"
 
-#undef STB_SPRINTF_IMPLEMENTATION
 #include <stb_sprintf.h>
 
 #include "km_debug.h"
