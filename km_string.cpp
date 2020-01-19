@@ -1,11 +1,10 @@
 #include "km_string.h"
 
-#undef internal
-#include <cstdarg>
-#include <locale>
-#define internal static
+#include <ctype.h>
 #undef STB_SPRINTF_IMPLEMENTATION
 #include <stb_sprintf.h>
+#define UTF8PROC_STATIC
+#include <utf8proc.h>
 
 #include "km_debug.h"
 #include "km_math.h"
@@ -269,53 +268,27 @@ void ReadElementInSplitString(Array<char>* element, Array<char>* next, char sepa
 template <typename Allocator>
 bool Utf8ToUppercase(const Array<char>& utf8String, DynamicArray<char, Allocator>* outString)
 {
-	const uint8 MASK_BIT_8 = 0b10000000;
-	const uint8 MASK_BIT_7 = 0b01000000;
-	const uint8 MASK_BIT_6 = 0b00100000;
-	const uint32 UTF8_MAX_2_BYTE_CHAR = 0x07ff;
-
-	std::locale locale = std::locale("");
-
-	outString->Clear();
-	for (uint64 i = 0; i < utf8String.size; i++) {
-		uint8 byte1 = (uint8)utf8String[i];
-		if ((byte1 & MASK_BIT_8) == 0) {
-			outString->Append((char)std::toupper((char)byte1, locale));
-		}
-		else if ((byte1 & MASK_BIT_7) != 0 && (byte1 & MASK_BIT_6) == 0) {
-			if (i + 1 >= utf8String.size) {
-				return false;
-			}
-			uint8 byte2 = (uint8)utf8String[++i];
-			if ((byte2 & MASK_BIT_8) == 0 || (byte2 & MASK_BIT_7) != 0) {
-				LOG_ERROR("Bad 2-byte character in UTF-8 string\n");
-				return false;
-			}
-			uint16 charUtf16 = (byte2 & 0b00111111) + ((byte1 & 0b00011111) << 6);
-			// TODO fix this, crashes on Linux bc locale yada yada
-			uint16 charUtf16Upper = std::toupper(charUtf16, locale);
-			if (charUtf16Upper > UTF8_MAX_2_BYTE_CHAR) {
-				LOG_ERROR("Unsupported UTF-8 character (> 2 bytes) after toupper\n");
-				return false;
-			}
-
-			uint32 byte1Upper = 0b11000000 + ((charUtf16Upper & 0b11111000000) >> 6);
-			uint32 byte2Upper = 0b10000000 +  (charUtf16Upper & 0b00000111111);
-			if (byte1Upper > 255) {
-				LOG_ERROR("Error forming byte1Upper: %d\n", byte1Upper);
-				return false;
-			}
-			if (byte2Upper > 255) {
-				LOG_ERROR("Error forming byte2Upper: %d\n", byte2Upper);
-				return false;
-			}
-			outString->Append((char)byte1Upper);
-			outString->Append((char)byte2Upper);
-		}
-		else {
-			LOG_ERROR("Unsupported UTF-8 character (> 2 bytes)\n");
+	FixedArray<char, 4> utf8Buffer;
+	uint64 i = 0;
+	while (i < utf8String.size) {
+		int32 codePoint;
+		utf8proc_ssize_t codePointBytes = utf8proc_iterate((uint8*)&utf8String[i],
+			utf8String.size - i, &codePoint);
+		if (codePointBytes < 0) {
+			LOG_ERROR("Invalid UTF-8 bytes\n");
 			return false;
 		}
+		i += codePointBytes;
+
+		int32 codePointUpper = utf8proc_toupper(codePoint);
+		utf8proc_ssize_t codePointUpperBytes = utf8proc_encode_char(codePointUpper,
+			(uint8*)&utf8Buffer[0]);
+		if (codePointUpperBytes == 0) {
+			LOG_ERROR("Failed to write UTF-8 codePointUpper\n");
+			return false;
+		}
+		utf8Buffer.size = codePointUpperBytes;
+		outString->Append(utf8Buffer.ToArray());
 	}
 
 	return true;
