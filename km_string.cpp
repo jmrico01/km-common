@@ -81,16 +81,6 @@ bool StringEquals(const Array<char>& str1, const Array<char>& str2)
 
 	return true;
 }
-bool StringEquals(const Array<char>& str1, const char* str2)
-{
-	// TODO slow... but it works
-	return StringEquals(str1, ToString(str2));
-}
-bool StringEquals(const char* str1, const char* str2)
-{
-	// TODO slow... but it works
-	return StringEquals(ToString(str1), ToString(str2));
-}
 
 void CatStrings(
 	size_t sourceACount, const char* sourceA,
@@ -139,10 +129,6 @@ uint64 SubstringSearch(const Array<char>& string, const Array<char>& substring)
 bool StringContains(const Array<char>& string, const Array<char>& substring)
 {
 	return SubstringSearch(string, substring) != string.size;
-}
-bool StringContains(const Array<char>& string, const char* substring)
-{
-	return StringContains(string, ToString(substring));
 }
 
 inline bool IsNewline(char c)

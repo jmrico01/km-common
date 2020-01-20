@@ -15,8 +15,6 @@ char* ToCString(const Array<char>& string, Allocator* allocator);
 
 int StringCompare(const Array<char>& str1, const Array<char>& str2);
 bool StringEquals(const Array<char>& str1, const Array<char>& str2);
-bool StringEquals(const Array<char>& str1, const char* str2);
-bool StringEquals(const char* str1, const char* str2);
 
 void CatStrings(
 	size_t sourceACount, const char* sourceA,
@@ -26,7 +24,6 @@ void StringCat(const char* str1, const char* str2, char* dest, uint64 destMaxLen
 
 uint64 SubstringSearch(const Array<char>& string, const Array<char>& substring);
 bool StringContains(const Array<char>& string, const Array<char>& substring);
-bool StringContains(const Array<char>& string, const char* substring);
 
 bool IsNewline(char c);
 bool IsWhitespace(char c);
