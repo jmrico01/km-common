@@ -31,7 +31,7 @@ const HashTable<KmkvItem<Allocator>>* GetKmkvItemObjValue(
 }
 
 template <uint64 KEYWORD_SIZE, typename Allocator>
-internal int ReadNextKeywordValue(const Array<char>& string,
+int ReadNextKeywordValue(const Array<char>& string,
 	FixedArray<char, KEYWORD_SIZE>* outKeyword, DynamicArray<char, Allocator>* outValue)
 {
 	if (string.size == 0 || string[0] == '\0') {

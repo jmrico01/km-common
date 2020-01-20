@@ -1,7 +1,6 @@
 #include "km_string.h"
 
 #include <ctype.h>
-#undef STB_SPRINTF_IMPLEMENTATION
 #include <stb_sprintf.h>
 #define UTF8PROC_STATIC
 #include <utf8proc.h>

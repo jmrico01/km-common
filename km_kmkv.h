@@ -13,6 +13,9 @@ struct KmkvItem
 	HashTable<KmkvItem<Allocator>>* hashTablePtr;
 };
 
+template <uint64 KEYWORD_SIZE, typename Allocator>
+int ReadNextKeywordValue(const Array<char>& string,
+	FixedArray<char, KEYWORD_SIZE>* outKeyword, DynamicArray<char, Allocator>* outValue);
 
 template <typename Allocator>
 const DynamicArray<char, Allocator>* GetKmkvItemStrValue(
