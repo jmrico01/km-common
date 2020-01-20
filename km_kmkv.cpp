@@ -174,7 +174,7 @@ internal bool LoadKmkvRecursive(Array<char> string, Allocator* allocator,
 				return false;
 			}
 		}
-		if (StringEquals(kmkvValueItem.keywordTag.ToArray(), "kmkv")) {
+		if (StringEquals(kmkvValueItem.keywordTag.ToArray(), ToString("kmkv"))) {
 			kmkvValueItem.isString = false;
 			// "placement new" - allocate with custom allocator, but still call constructor
 			// Also, oh my god... C++ SUCKS
@@ -242,7 +242,7 @@ internal bool KmkvToJsonRecursive(const HashTable<KmkvItem<Allocator>>& kmkv,
 		outJson->Append(':');
 		const KmkvItem<Allocator>& item = kmkv.pairs[i].value;
 		if (item.isString) {
-			bool isArray = StringEquals(item.keywordTag.ToArray(), "array");
+			bool isArray = StringEquals(item.keywordTag.ToArray(), ToString("array"));
 			if (!isArray) {
 				outJson->Append('"');
 			}
