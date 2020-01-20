@@ -361,6 +361,7 @@ T* DynamicArray<T, Allocator>::Append()
 		DEBUG_ASSERT(UpdateCapacity(capacity * 2));
 	}
 
+	new (&data[size]) T();
 	return &data[size++];
 }
 
