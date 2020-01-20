@@ -13,10 +13,11 @@ void InitFromCString(FixedArray<char, S>* string, const char* cString);
 template <typename Allocator>
 char* ToCString(const Array<char>& string, Allocator* allocator);
 
-bool StringCompare(const Array<char>& str1, const Array<char>& str2);
-bool StringCompare(const Array<char>& str1, const char* str2);
-bool StringCompare(const char* str1, const char* str2);
-bool StringContains(const Array<char>& str, const char* substring);
+int StringCompare(const Array<char>& str1, const Array<char>& str2);
+bool StringEquals(const Array<char>& str1, const Array<char>& str2);
+bool StringEquals(const Array<char>& str1, const char* str2);
+bool StringEquals(const char* str1, const char* str2);
+
 void CatStrings(
 	size_t sourceACount, const char* sourceA,
 	size_t sourceBCount, const char* sourceB,
@@ -24,6 +25,8 @@ void CatStrings(
 void StringCat(const char* str1, const char* str2, char* dest, uint64 destMaxLength);
 
 uint64 SubstringSearch(const Array<char>& string, const Array<char>& substring);
+bool StringContains(const Array<char>& string, const Array<char>& substring);
+bool StringContains(const Array<char>& string, const char* substring);
 
 bool IsNewline(char c);
 bool IsWhitespace(char c);

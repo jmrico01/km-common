@@ -47,7 +47,28 @@ char* ToCString(const Array<char>& string, Allocator* allocator)
 	return cString;
 }
 
-bool StringCompare(const Array<char>& str1, const Array<char>& str2)
+int StringCompare(const Array<char>& str1, const Array<char>& str2)
+{
+	uint64 minSize = MinUInt64(str1.size, str2.size);
+	for (uint64 i = 0; i < minSize; i++) {
+		if (str1[i] < str2[i]) {
+			return -1;
+		}
+		else if (str1[i] > str2[i]) {
+			return 1;
+		}
+	}
+
+	if (str1.size < str2.size) {
+		return -1;
+	}
+	else if (str1.size > str2.size) {
+		return 1;
+	}
+	return 0;
+}
+
+bool StringEquals(const Array<char>& str1, const Array<char>& str2)
 {
 	if (str1.size != str2.size) {
 		return false;
@@ -61,32 +82,15 @@ bool StringCompare(const Array<char>& str1, const Array<char>& str2)
 
 	return true;
 }
-
-bool StringCompare(const Array<char>& str1, const char* str2)
+bool StringEquals(const Array<char>& str1, const char* str2)
 {
 	// TODO slow... but it works
-	return StringCompare(str1, ToString(str2));
+	return StringEquals(str1, ToString(str2));
 }
-
-bool StringCompare(const char* str1, const char* str2)
+bool StringEquals(const char* str1, const char* str2)
 {
 	// TODO slow... but it works
-	return StringCompare(ToString(str1), ToString(str2));
-}
-
-bool StringContains(const Array<char>& str, const char* substring)
-{
-	for (uint64 i = 0; i < str.size; i++) {
-		char c = *substring++;
-		if (c == '\0') {
-			return true;
-		}
-		if (c != str[i]) {
-			return false;
-		}
-	}
-
-	return false;
+	return StringEquals(ToString(str1), ToString(str2));
 }
 
 void CatStrings(
@@ -131,6 +135,15 @@ uint64 SubstringSearch(const Array<char>& string, const Array<char>& substring)
 	}
 
 	return string.size;
+}
+
+bool StringContains(const Array<char>& string, const Array<char>& substring)
+{
+	return SubstringSearch(string, substring) != string.size;
+}
+bool StringContains(const Array<char>& string, const char* substring)
+{
+	return StringContains(string, ToString(substring));
 }
 
 inline bool IsNewline(char c)
