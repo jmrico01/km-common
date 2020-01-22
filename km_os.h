@@ -9,5 +9,7 @@ Array<uint8> LoadEntireFile(const Array<char>& filePath, Allocator* allocator);
 template <typename Allocator>
 void FreeFile(const Array<uint8>& outFile, Allocator* allocator);
 
+bool WriteFile(const Array<char>& filePath, const Array<uint8>& data, bool append);
+
 template <typename Allocator>
 FixedArray<char, PATH_MAX_LENGTH> GetExecutablePath(Allocator* allocator);

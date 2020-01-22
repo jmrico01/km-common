@@ -9,12 +9,12 @@ Array<uint8> LoadEntireFile(const Array<char>& filePath, Allocator* allocator)
 {
 	Array<uint8> file;
 	char* cFilePath = ToCString(filePath, allocator);
+	defer(allocator->Free(cFilePath));
 
 #if GAME_WIN32
 
 	HANDLE hFile = CreateFile(cFilePath, GENERIC_READ, FILE_SHARE_READ,
 		NULL, OPEN_EXISTING, NULL, NULL);
-	allocator->Free(cFilePath);
 	if (hFile == INVALID_HANDLE_VALUE) {
 		file.data = nullptr;
 		return file;
@@ -70,6 +70,48 @@ template <typename Allocator>
 void FreeFile(const Array<uint8>& outFile, Allocator* allocator)
 {
 	allocator->Free(outFile.data);
+}
+
+bool WriteFile(const Array<char>& filePath, const Array<uint8>& data, bool append)
+{
+	char* cFilePath = ToCString(filePath, &defaultAllocator_);
+	defer(defaultAllocator_.Free(cFilePath));
+
+#if GAME_WIN32
+
+	HANDLE hFile = CreateFile(cFilePath, GENERIC_WRITE, NULL, NULL, OPEN_ALWAYS, NULL, NULL);
+	if (hFile == INVALID_HANDLE_VALUE) {
+		return false;
+	}
+
+	if (append) {
+		DWORD dwPos = SetFilePointer(hFile, 0, NULL, FILE_END);
+		if (dwPos == INVALID_SET_FILE_POINTER) {
+			return false;
+		}
+	}
+	else {
+		DWORD dwPos = SetFilePointer(hFile, 0, NULL, FILE_BEGIN);
+		if (dwPos == INVALID_SET_FILE_POINTER) {
+			return false;
+		}
+		if (SetEndOfFile(hFile) == 0) {
+			return false;
+		}
+	}
+
+	DWORD bytesWritten;
+	if (!WriteFile(hFile, data.data, (DWORD)data.size, &bytesWritten, NULL)) {
+		// TODO log
+		return false;
+	}
+
+	CloseHandle(hFile);
+	return bytesWritten == (DWORD)data.size;
+
+#else
+	#error "WriteFile not implemented on this platform"
+#endif
 }
 
 template <typename Allocator>
