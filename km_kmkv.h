@@ -28,7 +28,16 @@ template <typename Allocator>
 bool LoadKmkv(const Array<char>& filePath, Allocator* allocator,
 	HashTable<KmkvItem<Allocator>>* outKmkv);
 template <typename Allocator>
-void FreeKmkv(const HashTable<KmkvItem<Allocator>>& kmkv); // TODO implement
+void FreeKmkv(const HashTable<KmkvItem<Allocator>>& kmkv);
 
 template <typename Allocator>
+bool KmkvToString(const HashTable<KmkvItem<Allocator>>& kmkv,
+	DynamicArray<char, Allocator>* outString);
+
+#ifdef KM_KMKV_JSON
+template <typename Allocator>
 bool KmkvToJson(const HashTable<KmkvItem<Allocator>>& kmkv, DynamicArray<char, Allocator>* outJson);
+template <typename Allocator>
+bool JsonToKmkv(const Array<char>& jsonString, Allocator* allocator,
+	HashTable<KmkvItem<Allocator>>* outKmkv);
+#endif

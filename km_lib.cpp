@@ -103,6 +103,17 @@ void Array<T>::Clear()
 }
 
 template <typename T>
+uint64 Array<T>::IndexOf(const T& value)
+{
+	for (uint64 i = 0; i < size; i++) {
+		if (data[i] == value) {
+			return i;
+		}
+	}
+	return size;
+}
+
+template <typename T>
 Array<T> Array<T>::Slice(uint64 start, uint64 end) const
 {
 	DEBUG_ASSERT(start < size);
@@ -199,6 +210,17 @@ template <typename T, uint64 S>
 void FixedArray<T, S>::Clear()
 {
 	size = 0;
+}
+
+template <typename T, uint64 S>
+uint64 FixedArray<T, S>::IndexOf(const T& value)
+{
+	for (uint64 i = 0; i < size; i++) {
+		if (data[i] == value) {
+			return i;
+		}
+	}
+	return size;
 }
 
 template <typename T, uint64 S>
@@ -395,6 +417,17 @@ template <typename T, typename Allocator>
 void DynamicArray<T, Allocator>::Clear()
 {
 	size = 0;
+}
+
+template <typename T, typename Allocator>
+uint64 DynamicArray<T, Allocator>::IndexOf(const T& value)
+{
+	for (uint64 i = 0; i < size; i++) {
+		if (data[i] == value) {
+			return i;
+		}
+	}
+	return size;
 }
 
 template <typename T, typename Allocator>

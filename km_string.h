@@ -35,12 +35,14 @@ uint64 GetLastOccurrence(const Array<char>& string, char c);
 void ReadElementInSplitString(Array<char>* element, Array<char>* next, char separator);
 
 template <typename Allocator>
-bool Utf8ToUppercase(const Array<char>& utf8String, DynamicArray<char, Allocator>* outString);
-
-template <typename Allocator>
 Array<char> AllocPrintf(Allocator* allocator, const char* format, ...);
 
 template <typename T>
 bool StringToElementArray(const Array<char>& string, char sep, bool trimElements,
 	bool (*conversionFunction)(const Array<char>&, T*),
 	int maxElements, T* array, int* numElements);
+
+#ifdef KM_UTF8
+template <typename Allocator>
+bool Utf8ToUppercase(const Array<char>& utf8String, DynamicArray<char, Allocator>* outString);
+#endif

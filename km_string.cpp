@@ -264,35 +264,6 @@ void ReadElementInSplitString(Array<char>* element, Array<char>* next, char sepa
 }
 
 template <typename Allocator>
-bool Utf8ToUppercase(const Array<char>& utf8String, DynamicArray<char, Allocator>* outString)
-{
-	FixedArray<char, 4> utf8Buffer;
-	uint64 i = 0;
-	while (i < utf8String.size) {
-		int32 codePoint;
-		utf8proc_ssize_t codePointBytes = utf8proc_iterate((uint8*)&utf8String[i],
-			utf8String.size - i, &codePoint);
-		if (codePointBytes < 0) {
-			LOG_ERROR("Invalid UTF-8 bytes\n");
-			return false;
-		}
-		i += codePointBytes;
-
-		int32 codePointUpper = utf8proc_toupper(codePoint);
-		utf8proc_ssize_t codePointUpperBytes = utf8proc_encode_char(codePointUpper,
-			(uint8*)utf8Buffer.data);
-		if (codePointUpperBytes == 0) {
-			LOG_ERROR("Failed to write UTF-8 codePointUpper\n");
-			return false;
-		}
-		utf8Buffer.size = codePointUpperBytes;
-		outString->Append(utf8Buffer.ToArray());
-	}
-
-	return true;
-}
-
-template <typename Allocator>
 Array<char> AllocPrintf(Allocator* allocator, const char* format, ...)
 {
 	int bufferSize = 256;
@@ -352,3 +323,34 @@ bool StringToElementArray(const Array<char>& string, char sep, bool trimElements
 	*numElements = elementInd + 1;
 	return true;
 }
+
+#ifdef KM_UTF8
+template <typename Allocator>
+bool Utf8ToUppercase(const Array<char>& utf8String, DynamicArray<char, Allocator>* outString)
+{
+	FixedArray<char, 4> utf8Buffer;
+	uint64 i = 0;
+	while (i < utf8String.size) {
+		int32 codePoint;
+		utf8proc_ssize_t codePointBytes = utf8proc_iterate((uint8*)&utf8String[i],
+			utf8String.size - i, &codePoint);
+		if (codePointBytes < 0) {
+			LOG_ERROR("Invalid UTF-8 bytes\n");
+			return false;
+		}
+		i += codePointBytes;
+
+		int32 codePointUpper = utf8proc_toupper(codePoint);
+		utf8proc_ssize_t codePointUpperBytes = utf8proc_encode_char(codePointUpper,
+			(uint8*)utf8Buffer.data);
+		if (codePointUpperBytes == 0) {
+			LOG_ERROR("Failed to write UTF-8 codePointUpper\n");
+			return false;
+		}
+		utf8Buffer.size = codePointUpperBytes;
+		outString->Append(utf8Buffer.ToArray());
+	}
+
+	return true;
+}
+#endif

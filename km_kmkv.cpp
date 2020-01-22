@@ -1,5 +1,9 @@
 #include "km_kmkv.h"
 
+#ifdef KM_KMKV_JSON
+#include <cJSON.h>
+#endif
+
 #include "km_string.h"
 
 template <typename Allocator>
@@ -177,7 +181,7 @@ internal bool LoadKmkvRecursive(Array<char> string, Allocator* allocator,
 		if (StringEquals(kmkvValueItem.keywordTag.ToArray(), ToString("kmkv"))) {
 			kmkvValueItem.isString = false;
 			// "placement new" - allocate with custom allocator, but still call constructor
-			// Also, oh my god... C++ SUCKS
+			// Also, oh my god... that "template" keyword... C++ SUCKS
 			kmkvValueItem.hashTablePtr = allocator->template New<HashTable<KmkvItem<Allocator>, Allocator>>();
 			if (kmkvValueItem.hashTablePtr == nullptr) {
 				return false;
@@ -190,7 +194,7 @@ internal bool LoadKmkvRecursive(Array<char> string, Allocator* allocator,
 		else {
 			kmkvValueItem.isString = true;
 			// "placement new" - allocate with custom allocator, but still call constructor
-			// Also, oh my god... C++ SUCKS
+			// Also, oh my god... that "template" keyword... C++ SUCKS
 			kmkvValueItem.dynamicStringPtr = allocator->template New<DynamicArray<char>>();
 			if (kmkvValueItem.dynamicStringPtr == nullptr) {
 				return false;
@@ -226,6 +230,66 @@ bool LoadKmkv(const Array<char>& filePath, Allocator* allocator,
 	return LoadKmkvRecursive(fileString, allocator, outKmkv);
 }
 
+template <typename Allocator>
+void FreeKmkv(const HashTable<KmkvItem<Allocator>>& kmkv)
+{
+	// TODO implement
+}
+
+template <typename Allocator>
+internal bool KmkvToStringRecursive(const HashTable<KmkvItem<Allocator>>& kmkv, int indentSpaces,
+	DynamicArray<char, Allocator>* outString)
+{
+	for (uint64 i = 0; i < kmkv.capacity; i++) {
+		const HashKey& key = kmkv.pairs[i].key;
+		if (key.string.size == 0) {
+			continue;
+		}
+
+		for (int i = 0; i < indentSpaces; i++) outString->Append(' ');
+		outString->Append(key.string.ToArray());
+		const KmkvItem<Allocator>& item = kmkv.pairs[i].value;
+		if (item.isString) {
+			if (item.keywordTag.size > 0) {
+				outString->Append('{');
+				outString->Append(item.keywordTag.ToArray());
+				outString->Append('}');
+			}
+			outString->Append(' ');
+
+			bool inlineValue = item.dynamicStringPtr->IndexOf('\n') == item.dynamicStringPtr->size;
+			if (!inlineValue) {
+				outString->Append('{');
+				outString->Append('\n');
+			}
+			outString->Append(item.dynamicStringPtr->ToArray());
+			if (!inlineValue) {
+				outString->Append('}');
+			}
+		}
+		else {
+			outString->Append(ToString("{kmkv} {\n"));
+			if (!KmkvToStringRecursive(*item.hashTablePtr, indentSpaces + 4, outString)) {
+				fprintf(stderr, "Failed to convert nested kmkv to string, key %.*s\n",
+					(int)key.string.size, key.string.data);
+			}
+			outString->Append('}');
+		}
+
+		outString->Append('\n');
+	}
+
+	return true;
+}
+
+template <typename Allocator>
+bool KmkvToString(const HashTable<KmkvItem<Allocator>>& kmkv,
+	DynamicArray<char, Allocator>* outString)
+{
+	return KmkvToStringRecursive(kmkv, 0, outString);
+}
+
+#ifdef KM_KMKV_JSON
 template <typename Allocator>
 internal bool KmkvToJsonRecursive(const HashTable<KmkvItem<Allocator>>& kmkv,
 	DynamicArray<char, Allocator>* outJson)
@@ -320,3 +384,80 @@ bool KmkvToJson(const HashTable<KmkvItem<Allocator>>& kmkv, DynamicArray<char, A
 
 	return true;
 }
+
+template <typename Allocator>
+internal bool JsonToKmkvRecursive(const cJSON* json, Allocator* allocator,
+	HashTable<KmkvItem<Allocator>>* outKmkv)
+{
+	const cJSON* child = json->child;
+	while (child != NULL && child->string != NULL) {
+		KmkvItem<Allocator>* item = outKmkv->Add(child->string);
+		if (cJSON_IsObject(child)) {
+			item->isString = false;
+			item->hashTablePtr = allocator->template New<HashTable<KmkvItem<Allocator>, Allocator>>();
+			DEBUG_ASSERT(item->hashTablePtr != nullptr);
+			new (item->hashTablePtr) HashTable<KmkvItem<Allocator>, Allocator>();
+			if (!JsonToKmkvRecursive(child, allocator, item->hashTablePtr)) {
+				fprintf(stderr, "Failed to parse child JSON object, key %s\n", child->string);
+				return false;
+			}
+		}
+		else if (cJSON_IsString(child)) {
+			item->isString = true;
+			item->dynamicStringPtr = allocator->template New<DynamicArray<char, Allocator>>();
+			DEBUG_ASSERT(item->dynamicStringPtr != nullptr);
+			new (item->dynamicStringPtr) DynamicArray<char, Allocator>(ToString(child->valuestring));
+		}
+		else if (cJSON_IsArray(child)) {
+			item->isString = true;
+			item->dynamicStringPtr = allocator->template New<DynamicArray<char, Allocator>>();
+			DEBUG_ASSERT(item->dynamicStringPtr != nullptr);
+			new (item->dynamicStringPtr) DynamicArray<char, Allocator>();
+
+			const cJSON* arrayItem;
+			cJSON_ArrayForEach(arrayItem, child) {
+				if (!cJSON_IsString(arrayItem)) {
+					fprintf(stderr, "JSON array item not a string, key %s\n", child->string);
+					return false;
+				}
+				item->dynamicStringPtr->Append(ToString(arrayItem->valuestring));
+				item->dynamicStringPtr->Append(',');
+			}
+			if (cJSON_GetArraySize(child) > 0) {
+				item->dynamicStringPtr->RemoveLast();
+			}
+			item->keywordTag.Append(ToString("array"));
+		}
+		else {
+			fprintf(stderr, "Unhandled JSON type: %d\n", child->type);
+			return false;
+		}
+
+		child = child->next;
+	}
+
+	return true;
+}
+
+template <typename Allocator>
+bool JsonToKmkv(const Array<char>& jsonString, Allocator* allocator,
+	HashTable<KmkvItem<Allocator>>* outKmkv)
+{
+	const char* jsonCString = ToCString(jsonString, allocator);
+	cJSON* json = cJSON_Parse(jsonCString);
+	if (json == NULL) {
+		const char *errorPtr = cJSON_GetErrorPtr();
+		if (errorPtr != NULL) {
+			fprintf(stderr, "Error parsing JSON before: %s\n", errorPtr);
+		}
+		return false;
+	}
+	defer(cJSON_Delete(json));
+
+	if (!cJSON_IsObject(json)) {
+		printf("Top-level json not object type: %s\n", jsonCString);
+		return false;
+	}
+	return JsonToKmkvRecursive(json, allocator, outKmkv);
+}
+#endif

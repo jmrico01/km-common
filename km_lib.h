@@ -47,6 +47,7 @@ struct Array
 
 	void RemoveLast();
 	void Clear();
+	uint64 IndexOf(const T& value);
 
 	Array<T> Slice(uint64 start, uint64 end) const;
 	Array<T> SliceTo(uint64 end) const;
@@ -71,6 +72,7 @@ struct FixedArray
 	void Append(const Array<T>& array);
 	void RemoveLast();
 	void Clear();
+	uint64 IndexOf(const T& value);
 
 	// slow, linear time
 	void AppendAfter(const T& element, uint64 index);
@@ -109,6 +111,7 @@ struct DynamicArray // TODO figure out where allocator will go
 	void Append(const Array<T>& array);
 	void RemoveLast();
 	void Clear();
+	uint64 IndexOf(const T& value);
 	void Free();
 
 	inline T& operator[](int index);
