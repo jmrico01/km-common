@@ -3,7 +3,9 @@
 #include <ctype.h>
 #include <stb_sprintf.h>
 #define UTF8PROC_STATIC
+#ifdef KM_UTF8
 #include <utf8proc.h>
+#endif
 
 #include "km_debug.h"
 #include "km_math.h"
