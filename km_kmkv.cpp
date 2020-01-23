@@ -7,8 +7,8 @@
 #include "km_string.h"
 
 template <typename Allocator>
-const DynamicArray<char, Allocator>* GetKmkvItemStrValue(
-	const HashTable<KmkvItem<Allocator>>& kmkv, const HashKey& itemKey)
+DynamicArray<char, Allocator>* GetKmkvItemStrValue(
+	HashTable<KmkvItem<Allocator>>& kmkv, const HashKey& itemKey)
 {
 	const KmkvItem<Allocator>* itemValuePtr = kmkv.GetValue(itemKey);
 	if (itemValuePtr == nullptr) {
@@ -21,8 +21,15 @@ const DynamicArray<char, Allocator>* GetKmkvItemStrValue(
 }
 
 template <typename Allocator>
-const HashTable<KmkvItem<Allocator>>* GetKmkvItemObjValue(
+const DynamicArray<char, Allocator>* GetKmkvItemStrValue(
 	const HashTable<KmkvItem<Allocator>>& kmkv, const HashKey& itemKey)
+{
+	return GetKmkvItemStrValue(const_cast<HashTable<KmkvItem<Allocator>>&>(kmkv), itemKey);
+}
+
+template <typename Allocator>
+HashTable<KmkvItem<Allocator>>* GetKmkvItemObjValue(
+	HashTable<KmkvItem<Allocator>>& kmkv, const HashKey& itemKey)
 {
 	const KmkvItem<Allocator>* itemValuePtr = kmkv.GetValue(itemKey);
 	if (itemValuePtr == nullptr) {
@@ -32,6 +39,13 @@ const HashTable<KmkvItem<Allocator>>* GetKmkvItemObjValue(
 		return nullptr;
 	}
 	return itemValuePtr->hashTablePtr;
+}
+
+template <typename Allocator>
+const DynamicArray<char, Allocator>* GetKmkvItemObjValue(
+	const HashTable<KmkvItem<Allocator>>& kmkv, const HashKey& itemKey)
+{
+	return GetKmkvItemObjValue(const_cast<HashTable<KmkvItem<Allocator>>&>(kmkv), itemKey);
 }
 
 template <uint64 KEYWORD_SIZE, typename Allocator>

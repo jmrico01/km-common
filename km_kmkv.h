@@ -18,8 +18,14 @@ int ReadNextKeywordValue(const Array<char>& string,
 	FixedArray<char, KEYWORD_SIZE>* outKeyword, DynamicArray<char, Allocator>* outValue);
 
 template <typename Allocator>
+DynamicArray<char, Allocator>* GetKmkvItemStrValue(
+	HashTable<KmkvItem<Allocator>>& kmkv, const HashKey& itemKey);
+template <typename Allocator>
 const DynamicArray<char, Allocator>* GetKmkvItemStrValue(
 	const HashTable<KmkvItem<Allocator>>& kmkv, const HashKey& itemKey);
+template <typename Allocator>
+HashTable<KmkvItem<Allocator>>* GetKmkvItemObjValue(
+	HashTable<KmkvItem<Allocator>>& kmkv, const HashKey& itemKey);
 template <typename Allocator>
 const HashTable<KmkvItem<Allocator>>* GetKmkvItemObjValue(
 	const HashTable<KmkvItem<Allocator>>& kmkv, const HashKey& itemKey);
