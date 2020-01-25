@@ -278,6 +278,7 @@ internal bool KmkvToStringRecursive(const HashTable<KmkvItem<Allocator>>& kmkv, 
 			}
 			outString->Append(item.dynamicStringPtr->ToArray());
 			if (!inlineValue) {
+				outString->Append('\n');
 				outString->Append('}');
 			}
 		}
