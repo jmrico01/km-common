@@ -2,6 +2,10 @@
 
 #include "km_lib.h"
 
+// TODO I could be even more strict/precise about const in these functions.
+// Typically, when I say "const Array<char>", I really mean "Array<const char>".
+// Not sure how pedantic that will get, and how much it will affect readability of usage code.
+
 // TODO pretty random, but ok
 #define PATH_MAX_LENGTH 256
 
@@ -27,11 +31,14 @@ bool StringContains(const Array<char>& string, const Array<char>& substring);
 
 bool IsNewline(char c);
 bool IsWhitespace(char c);
+bool IsAlphanumeric(char c);
 void TrimWhitespace(const Array<char>& string, Array<char>* trimmed);
 bool StringToIntBase10(const Array<char>& string, int* intBase10);
 bool StringToUInt64Base10(const Array<char>& string, uint64* intBase10);
 bool StringToFloat32(const Array<char>& string, float32* f);
-uint64 GetLastOccurrence(const Array<char>& string, char c);
+
+template <typename Allocator>
+void StringSplit(const Array<char>& string, char c, DynamicArray<Array<char>, Allocator>* outSplit);
 void ReadElementInSplitString(Array<char>* element, Array<char>* next, char separator);
 
 template <typename Allocator>

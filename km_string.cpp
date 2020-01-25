@@ -144,6 +144,11 @@ inline bool IsWhitespace(char c)
 		|| c == '\n' || c == '\v' || c == '\f' || c == '\r';
 }
 
+inline bool IsAlphanumeric(char c)
+{
+	return isalnum(c) != 0;
+}
+
 void TrimWhitespace(const Array<char>& string, Array<char>* trimmed)
 {
 	uint64 start = 0;
@@ -240,15 +245,25 @@ bool StringToFloat32(const Array<char>& string, float32* f)
 	return true;
 }
 
-uint64 GetLastOccurrence(const Array<char>& string, char c)
+template <typename Allocator>
+void StringSplit(const Array<char>& string, char c, DynamicArray<Array<char>, Allocator>* outSplit)
 {
-	for (uint64 i = string.size; i != 0; i--) {
-		if (string[i - 1] == c) {
-			return i;
-		}
-	}
+	outSplit->Clear();
 
-	return string.size;
+	Array<char> str = string;
+	while (true) {
+		uint64 next = str.FindFirst(c);
+		if (next == str.size) {
+			outSplit->Append(str);
+			break;
+		}
+		uint64 newSize = str.size - next - 1;
+		str.size = next;
+		outSplit->Append(str);
+
+		str.data += next + 1;
+		str.size = newSize;
+	}
 }
 
 void ReadElementInSplitString(Array<char>* element, Array<char>* next, char separator)
