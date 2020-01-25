@@ -10,6 +10,7 @@ template <typename Allocator>
 Array<uint8> LoadEntireFile(const Array<char>& filePath, Allocator* allocator)
 {
 	Array<uint8> file;
+	file.data = nullptr;
 	char* cFilePath = ToCString(filePath, allocator);
 	defer(allocator->Free(cFilePath));
 
@@ -17,13 +18,11 @@ Array<uint8> LoadEntireFile(const Array<char>& filePath, Allocator* allocator)
 	HANDLE hFile = CreateFile(cFilePath, GENERIC_READ, FILE_SHARE_READ,
 		NULL, OPEN_EXISTING, NULL, NULL);
 	if (hFile == INVALID_HANDLE_VALUE) {
-		file.data = nullptr;
 		return file;
 	}
 
 	LARGE_INTEGER fileSize;
 	if (!GetFileSizeEx(hFile, &fileSize)) {
-		file.data = nullptr;
 		return file;
 	}
 
@@ -44,6 +43,9 @@ Array<uint8> LoadEntireFile(const Array<char>& filePath, Allocator* allocator)
 	CloseHandle(hFile);
 #elif GAME_LINUX
 	FILE* filePtr = fopen(cFilePath, "rb");
+	if (filePtr == NULL) {
+		return file;
+	}
 	fseek(filePtr, 0, SEEK_END);
 	uint64 size = ftell(filePtr);
 	rewind(filePtr);
@@ -99,7 +101,6 @@ bool WriteFile(const Array<char>& filePath, const Array<uint8>& data, bool appen
 
 	DWORD bytesWritten;
 	if (!WriteFile(hFile, data.data, (DWORD)data.size, &bytesWritten, NULL)) {
-		// TODO log
 		return false;
 	}
 
@@ -117,7 +118,7 @@ bool WriteFile(const Array<char>& filePath, const Array<uint8>& data, bool appen
 	size_t written = fwrite(data.data, data.size, 1, filePtr);
 	fclose(filePtr);
 
-	return written == data.size;
+	return written == 1;
 #else
 #error "WriteFile not implemented on this platform"
 #endif
@@ -203,19 +204,21 @@ FixedArray<char, PATH_MAX_LENGTH> GetExecutablePath(Allocator* allocator)
 		return path;
 	}
 	path.size = size;
-	path.size = path.ToArray().FindLast('\\') + 1;
-
 	for (uint64 i = 0; i < path.size; i++) {
 		if (path[i] == '\\') {
 			path[i] = '/';
 		}
 	}
 #elif GAME_LINUX
-	// TODO lol stop. ok, actually gotta fix this now...
-	path.Append(ToString("./build/"));
+	ssize_t count = readlink("/proc/self/exe", path.data, PATH_MAX_LENGTH);
+	if (count == -1) {
+		return path;
+	}
+	path.size = count;
 #else
 #error "GetExecutablePath not implemented on this platform"
 #endif
 
+	path.size = path.ToArray().FindLast('/') + 1;
 	return path;
 }
