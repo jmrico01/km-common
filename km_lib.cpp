@@ -103,11 +103,22 @@ void Array<T>::Clear()
 }
 
 template <typename T>
-uint64 Array<T>::IndexOf(const T& value)
+uint64 Array<T>::FindFirst(const T& value, uint64 start) const
 {
-	for (uint64 i = 0; i < size; i++) {
+	for (uint64 i = start; i < size; i++) {
 		if (data[i] == value) {
 			return i;
+		}
+	}
+	return size;
+}
+
+template <typename T>
+uint64 Array<T>::FindLast(const T& value) const
+{
+	for (uint64 i = size; i != 0; i--) {
+		if (data[i - 1] == value) {
+			return i - 1;
 		}
 	}
 	return size;

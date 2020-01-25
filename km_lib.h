@@ -47,7 +47,8 @@ struct Array
 
 	void RemoveLast();
 	void Clear();
-	uint64 IndexOf(const T& value);
+	uint64 FindFirst(const T& value, uint64 start = 0) const;
+	uint64 FindLast(const T& value) const;
 
 	Array<T> Slice(uint64 start, uint64 end) const;
 	Array<T> SliceTo(uint64 end) const;
