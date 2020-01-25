@@ -28,6 +28,16 @@ Array<char> ToString(const char* cString)
 	};
 }
 
+#ifdef KM_CPP_STD
+Array<char> ToString(const std::string& string)
+{
+	return {
+		.size = string.size(),
+		.data = (char*)string.c_str()
+	};
+}
+#endif
+
 template <uint64 S>
 void InitFromCString(FixedArray<char, S>* string, const char* cString)
 {

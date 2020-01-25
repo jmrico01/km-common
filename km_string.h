@@ -12,6 +12,10 @@
 uint64 StringLength(const char* str);
 
 Array<char> ToString(const char* cString);
+#ifdef KM_CPP_STD
+#include <string>
+Array<char> ToString(const std::string& string);
+#endif
 template <uint64 S>
 void InitFromCString(FixedArray<char, S>* string, const char* cString);
 template <typename Allocator>
