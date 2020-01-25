@@ -2,6 +2,8 @@
 
 #if GAME_WIN32
 #include <Windows.h>
+#elif GAME_LINUX
+#include <sys/stat.h>
 #endif
 
 template <typename Allocator>
@@ -12,7 +14,6 @@ Array<uint8> LoadEntireFile(const Array<char>& filePath, Allocator* allocator)
 	defer(allocator->Free(cFilePath));
 
 #if GAME_WIN32
-
 	HANDLE hFile = CreateFile(cFilePath, GENERIC_READ, FILE_SHARE_READ,
 		NULL, OPEN_EXISTING, NULL, NULL);
 	if (hFile == INVALID_HANDLE_VALUE) {
@@ -41,9 +42,7 @@ Array<uint8> LoadEntireFile(const Array<char>& filePath, Allocator* allocator)
 
 	file.size = fileSize32;
 	CloseHandle(hFile);
-
 #elif GAME_LINUX
-
 	FILE* filePtr = fopen(cFilePath, "rb");
 	fseek(filePtr, 0, SEEK_END);
 	uint64 size = ftell(filePtr);
@@ -58,7 +57,6 @@ Array<uint8> LoadEntireFile(const Array<char>& filePath, Allocator* allocator)
 
 	file.size = size;
 	fclose(filePtr);
-
 #else
 #error "LoadEntireFile not implemented on this platform"
 #endif
@@ -78,7 +76,6 @@ bool WriteFile(const Array<char>& filePath, const Array<uint8>& data, bool appen
 	defer(defaultAllocator_.Free(cFilePath));
 
 #if GAME_WIN32
-
 	HANDLE hFile = CreateFile(cFilePath, GENERIC_WRITE, NULL, NULL, OPEN_ALWAYS, NULL, NULL);
 	if (hFile == INVALID_HANDLE_VALUE) {
 		return false;
@@ -108,7 +105,19 @@ bool WriteFile(const Array<char>& filePath, const Array<uint8>& data, bool appen
 
 	CloseHandle(hFile);
 	return bytesWritten == (DWORD)data.size;
+#elif GAME_LINUX
+	FILE* filePtr;
+	if (append) {
+		filePtr = fopen(cFilePath, "ab");
+	}
+	else {
+		filePtr = fopen(cFilePath, "w");
+	}
 
+	size_t written = fwrite(data.data, data.size, 1, filePtr);
+	fclose(filePtr);
+
+	return written == data.size;
 #else
 #error "WriteFile not implemented on this platform"
 #endif
@@ -120,7 +129,6 @@ bool DeleteFile(const Array<char>& filePath, bool errorIfNotFound)
 	defer(defaultAllocator_.Free(cFilePath));
 
 #if GAME_WIN32
-
 	BOOL result = DeleteFileA(cFilePath);
 	if (result == 0) {
 		DWORD error = GetLastError();
@@ -131,7 +139,16 @@ bool DeleteFile(const Array<char>& filePath, bool errorIfNotFound)
 			return false;
 		}
 	}
-
+#elif GAME_LINUX
+	int result = unlink(cFilePath);
+	if (result == -1) {
+		if (errno != ENOENT) {
+			return false;
+		}
+		if (errorIfNotFound) {
+			return false;
+		}
+	}
 #else
 #error "DeleteFile not implemented on this platform"
 #endif
@@ -159,6 +176,13 @@ bool CreateDirRecursive(const Array<char>& dir)
 				return false;
 			}
 		}
+#elif GAME_LINUX
+		int result = mkdir(path.data, ACCESSPERMS);
+		if (result == -1) {
+			if (errno != EEXIST) {
+				return false;
+			}
+		}
 #else
 #error "CreateDirRecursive not implemented on this platform"
 #endif
@@ -174,7 +198,6 @@ FixedArray<char, PATH_MAX_LENGTH> GetExecutablePath(Allocator* allocator)
 	path.Clear();
 
 #if GAME_WIN32
-
 	DWORD size = GetModuleFileName(NULL, path.data, PATH_MAX_LENGTH);
 	if (size == 0) {
 		return path;
@@ -187,12 +210,9 @@ FixedArray<char, PATH_MAX_LENGTH> GetExecutablePath(Allocator* allocator)
 			path[i] = '/';
 		}
 	}
-
 #elif GAME_LINUX
-
-	// TODO lol stop
+	// TODO lol stop. ok, actually gotta fix this now...
 	path.Append(ToString("./build/"));
-
 #else
 #error "GetExecutablePath not implemented on this platform"
 #endif
