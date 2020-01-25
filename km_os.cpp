@@ -114,6 +114,31 @@ bool WriteFile(const Array<char>& filePath, const Array<uint8>& data, bool appen
 #endif
 }
 
+bool DeleteFile(const Array<char>& filePath, bool errorIfNotFound)
+{
+	char* cFilePath = ToCString(filePath, &defaultAllocator_);
+	defer(defaultAllocator_.Free(cFilePath));
+
+#if GAME_WIN32
+
+	BOOL result = DeleteFileA(cFilePath);
+	if (result == 0) {
+		DWORD error = GetLastError();
+		if (error != ERROR_FILE_NOT_FOUND) {
+			return false;
+		}
+		if (errorIfNotFound) {
+			return false;
+		}
+	}
+
+#else
+#error "DeleteFile not implemented on this platform"
+#endif
+
+	return true;
+}
+
 bool CreateDirRecursive(const Array<char>& dir)
 {
 	FixedArray<char, PATH_MAX_LENGTH> path;

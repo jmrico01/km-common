@@ -10,6 +10,8 @@ void FreeFile(const Array<uint8>& outFile, Allocator* allocator);
 
 bool WriteFile(const Array<char>& filePath, const Array<uint8>& data, bool append);
 
+bool DeleteFile(const Array<char>& filePath, bool errorIfNotFound);
+
 bool CreateDirRecursive(const Array<char>& dir);
 
 template <typename Allocator>
