@@ -60,7 +60,7 @@ Array<uint8> LoadEntireFile(const Array<char>& filePath, Allocator* allocator)
 	fclose(filePtr);
 
 #else
-	#error "LoadEntireFile not implemented on this platform"
+#error "LoadEntireFile not implemented on this platform"
 #endif
 
 	return file;
@@ -110,8 +110,36 @@ bool WriteFile(const Array<char>& filePath, const Array<uint8>& data, bool appen
 	return bytesWritten == (DWORD)data.size;
 
 #else
-	#error "WriteFile not implemented on this platform"
+#error "WriteFile not implemented on this platform"
 #endif
+}
+
+bool CreateDirRecursive(const Array<char>& dir)
+{
+	FixedArray<char, PATH_MAX_LENGTH> path;
+	uint64 nextSlash = 0;
+	while (true) {
+		nextSlash = dir.FindFirst('/', nextSlash + 1);
+		if (nextSlash == dir.size) {
+			break;
+		}
+		path.Clear();
+		path.Append(dir.SliceTo(nextSlash));
+		path.Append('\0');
+#if GAME_WIN32
+		BOOL result = CreateDirectoryA(path.data, NULL);
+		if (result == 0) {
+			DWORD error = GetLastError();
+			if (error != ERROR_ALREADY_EXISTS) {
+				return false;
+			}
+		}
+#else
+#error "CreateDirRecursive not implemented on this platform"
+#endif
+	}
+
+	return true;
 }
 
 template <typename Allocator>
@@ -127,7 +155,7 @@ FixedArray<char, PATH_MAX_LENGTH> GetExecutablePath(Allocator* allocator)
 		return path;
 	}
 	path.size = size;
-	path.size = GetLastOccurrence(path.ToArray(), '\\');
+	path.size = path.ToArray().FindLast('\\') + 1;
 
 	for (uint64 i = 0; i < path.size; i++) {
 		if (path[i] == '\\') {
@@ -141,7 +169,7 @@ FixedArray<char, PATH_MAX_LENGTH> GetExecutablePath(Allocator* allocator)
 	path.Append(ToString("./build/"));
 
 #else
-	#error "GetExecutablePath not implemented on this platform"
+#error "GetExecutablePath not implemented on this platform"
 #endif
 
 	return path;
