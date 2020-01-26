@@ -69,7 +69,7 @@ struct FixedArray
 	Array<T> ToArray() const; // NOTE modifying this array's size won't affect the FixedArray size
 
 	T* Append();
-	void Append(const T& element);
+	T* Append(const T& element);
 	void Append(const Array<T>& array);
 	void RemoveLast();
 	void Clear();
@@ -108,7 +108,7 @@ struct DynamicArray // TODO figure out where allocator will go
 	void FromArray(const Array<T>& array);
 
 	T* Append();
-	void Append(const T& element);
+	T* Append(const T& element);
 	void Append(const Array<T>& array);
 	void RemoveLast();
 	void Clear();

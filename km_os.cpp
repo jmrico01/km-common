@@ -228,9 +228,9 @@ bool RunCommand(const Array<char>& command)
 {
 	char* commandCString = ToCString(command, &defaultAllocator_);
 
-#if GAME_WIN32
-	ShellExecuteA(NULL, commandCString, "file/path", "parameters", "dir/ectory", SW_HIDE);
-#elif GAME_LINUX
+#if GAME_WIN32 || GAME_LINUX
+	//HINSTANCE hInstance = ShellExecuteA(NULL, commandCString, NULL, NULL, NULL, SW_HIDE);
+//#elif GAME_LINUX
 	int result = system(commandCString);
 	if (result != 0) {
 		fprintf(stderr, "RunCommand system(...) call returned %d\n", result);

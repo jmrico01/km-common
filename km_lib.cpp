@@ -194,9 +194,11 @@ T* FixedArray<T, S>::Append()
 }
 
 template <typename T, uint64 S>
-void FixedArray<T, S>::Append(const T& element)
+T* FixedArray<T, S>::Append(const T& element)
 {
-	*(Append()) = element;
+	T* slot = Append();
+	*slot = element;
+	return slot;
 }
 
 template <typename T, uint64 S>
@@ -399,9 +401,11 @@ T* DynamicArray<T, Allocator>::Append()
 }
 
 template <typename T, typename Allocator>
-void DynamicArray<T, Allocator>::Append(const T& element)
+T* DynamicArray<T, Allocator>::Append(const T& element)
 {
-	*(Append()) = element;
+	T* slot = Append();
+	*slot = element;
+	return slot;
 }
 
 template <typename T, typename Allocator>
