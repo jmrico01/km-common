@@ -3,6 +3,7 @@
 #if GAME_WIN32
 #include <Windows.h>
 #elif GAME_LINUX
+#include <stdlib.h>
 #include <sys/stat.h>
 #endif
 
@@ -221,4 +222,23 @@ FixedArray<char, PATH_MAX_LENGTH> GetExecutablePath(Allocator* allocator)
 
 	path.size = path.ToArray().FindLast('/') + 1;
 	return path;
+}
+
+bool RunCommand(const Array<char>& command)
+{
+	char* commandCString = ToCString(command, &defaultAllocator_);
+
+#if GAME_WIN32
+	ShellExecuteA(NULL, commandCString, "file/path", "parameters", "dir/ectory", SW_HIDE);
+#elif GAME_LINUX
+	int result = system(commandCString);
+	if (result != 0) {
+		fprintf(stderr, "RunCommand system(...) call returned %d\n", result);
+		return false;
+	}
+#else
+#error "GetExecutablePath not implemented on this platform"
+#endif
+
+	return true;
 }

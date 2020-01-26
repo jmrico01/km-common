@@ -16,3 +16,5 @@ bool CreateDirRecursive(const Array<char>& dir);
 
 template <typename Allocator>
 FixedArray<char, PATH_MAX_LENGTH> GetExecutablePath(Allocator* allocator);
+
+bool RunCommand(const Array<char>& command);
