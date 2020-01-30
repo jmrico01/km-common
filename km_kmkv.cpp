@@ -306,6 +306,46 @@ bool KmkvToString(const HashTable<KmkvItem<Allocator>>& kmkv,
 
 #ifdef KM_KMKV_JSON
 template <typename Allocator>
+void AddAndMaybeEscapeJson(const Array<char>& string, DynamicArray<char, Allocator>* outJson)
+{
+	for (uint64 i = 0; i < string.size; i++) {
+		switch (string[i]) {
+		case '\b': {
+			outJson->Append('\\');
+			outJson->Append('b');
+		} break;
+		case '\f': {
+			outJson->Append('\\');
+			outJson->Append('f');
+		} break;
+		case '\n': {
+			outJson->Append('\\');
+			outJson->Append('n');
+		} break;
+		case '\r': {
+			outJson->Append('\\');
+			outJson->Append('r');
+		} break;
+		case '\t': {
+			outJson->Append('\\');
+			outJson->Append('t');
+		} break;
+		case '\"': {
+			outJson->Append('\\');
+			outJson->Append('"');
+		} break;
+		case '\\': {
+			outJson->Append('\\');
+			outJson->Append('\\');
+		} break;
+		default: {
+			outJson->Append(string[i]);
+		} break;
+		}
+	}
+}
+
+template <typename Allocator>
 internal bool KmkvToJsonRecursive(const HashTable<KmkvItem<Allocator>>& kmkv,
 	DynamicArray<char, Allocator>* outJson)
 {
@@ -321,52 +361,26 @@ internal bool KmkvToJsonRecursive(const HashTable<KmkvItem<Allocator>>& kmkv,
 		outJson->Append(':');
 		const KmkvItem<Allocator>& item = kmkv.pairs[i].value;
 		if (item.isString) {
-			bool isArray = StringEquals(item.keywordTag.ToArray(), ToString("array"));
-			if (!isArray) {
-				outJson->Append('"');
-			}
-			const DynamicArray<char, Allocator>& itemString = *item.dynamicStringPtr;
-			for (uint64 j = 0; j < itemString.size; j++) {
-				if (isArray) {
-					outJson->Append(itemString[j]);
-					continue;
-				}
-
-				switch (itemString[j]) {
-				case '\b': {
-					outJson->Append('\\');
-					outJson->Append('b');
-				} break;
-				case '\f': {
-					outJson->Append('\\');
-					outJson->Append('f');
-				} break;
-				case '\n': {
-					outJson->Append('\\');
-					outJson->Append('n');
-				} break;
-				case '\r': {
-					outJson->Append('\\');
-					outJson->Append('r');
-				} break;
-				case '\t': {
-					outJson->Append('\\');
-					outJson->Append('t');
-				} break;
-				case '\"': {
-					outJson->Append('\\');
+			if (StringEquals(item.keywordTag.ToArray(), ToString("array"))) {
+				outJson->Append('[');
+				Array<char> arrayString = item.dynamicStringPtr->ToArray();
+				bool atLeastOne = arrayString.size > 0;
+				while (arrayString.size > 0) {
+					Array<char> split = NextSplitElement(&arrayString, ',');
+					split = TrimWhitespace(split);
 					outJson->Append('"');
-				} break;
-				case '\\': {
-					outJson->Append('\\');
-					outJson->Append('\\');
-				} break;
-				default: {
-					outJson->Append(itemString[j]);
-				} break;
+					AddAndMaybeEscapeJson(split, outJson);
+					outJson->Append('"');
+					outJson->Append(',');
 				}
+				if (atLeastOne) {
+					outJson->RemoveLast();
+				}
+				outJson->Append(']');
 			}
-			if (!isArray) {
+			else {
+				outJson->Append('"');
+				AddAndMaybeEscapeJson(item.dynamicStringPtr->ToArray(), outJson);
 				outJson->Append('"');
 			}
 		}
