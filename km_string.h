@@ -36,6 +36,7 @@ bool StringContains(const Array<char>& string, const Array<char>& substring);
 bool IsNewline(char c);
 bool IsWhitespace(char c);
 bool IsAlphanumeric(char c);
+Array<char> TrimWhitespace(const Array<char>& string);
 void TrimWhitespace(const Array<char>& string, Array<char>* trimmed);
 bool StringToIntBase10(const Array<char>& string, int* intBase10);
 bool StringToUInt64Base10(const Array<char>& string, uint64* intBase10);
@@ -43,6 +44,7 @@ bool StringToFloat32(const Array<char>& string, float32* f);
 
 template <typename Allocator>
 void StringSplit(const Array<char>& string, char c, DynamicArray<Array<char>, Allocator>* outSplit);
+Array<char> NextSplitElement(Array<char>* string, char separator);
 void ReadElementInSplitString(Array<char>* element, Array<char>* next, char separator);
 
 template <typename Allocator>

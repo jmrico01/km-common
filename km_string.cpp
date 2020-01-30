@@ -159,7 +159,7 @@ inline bool IsAlphanumeric(char c)
 	return isalnum(c) != 0;
 }
 
-void TrimWhitespace(const Array<char>& string, Array<char>* trimmed)
+Array<char> TrimWhitespace(const Array<char>& string)
 {
 	uint64 start = 0;
 	while (start < string.size && IsWhitespace(string[start])) {
@@ -170,8 +170,12 @@ void TrimWhitespace(const Array<char>& string, Array<char>* trimmed)
 		end--;
 	}
 
-	trimmed->data = string.data + start;
-	trimmed->size = end - start;
+	return { .size = end - start, .data = string.data + start };
+}
+
+void TrimWhitespace(const Array<char>& string, Array<char>* trimmed)
+{
+	*trimmed = TrimWhitespace(string);
 }
 
 bool StringToIntBase10(const Array<char>& string, int* intBase10)
@@ -274,6 +278,22 @@ void StringSplit(const Array<char>& string, char c, DynamicArray<Array<char>, Al
 		str.data += next + 1;
 		str.size = newSize;
 	}
+}
+
+Array<char> NextSplitElement(Array<char>* string, char separator)
+{
+	Array<char> next = *string;
+	for (uint64 i = 0; i < string->size; i++) {
+		if ((*string)[i] == separator) {
+			next.size = i;
+			string->size--;
+			break;
+		}
+	}
+
+	string->size -= next.size;
+	string->data += next.size + 1;
+	return next;
 }
 
 void ReadElementInSplitString(Array<char>* element, Array<char>* next, char separator)
