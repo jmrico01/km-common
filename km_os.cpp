@@ -56,8 +56,7 @@ Array<uint8> LoadEntireFile(const Array<char>& filePath, Allocator* allocator)
 		return file;
 	}
 
-	size_t bytesRead = fread(file.data, size, 1, filePtr);
-	if (bytesRead != size) {
+	if (fread(file.data, size, 1, filePtr) != 1) {
 		allocator->Free(file.data);
 		file.data = nullptr;
 		return file;
