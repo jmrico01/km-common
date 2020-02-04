@@ -597,8 +597,7 @@ V* HashTable<V, Allocator>::Add(const HashKey& key)
 		defer(allocator->Free(oldPairs));
 		MemCopy(oldPairs, pairs, sizeof(KeyValuePair<V>) * capacity);
 		DEBUG_PANIC("TODO can't resize+rehash yet\n");
-
-		capacity = newCapacity;
+		// capacity = newCapacity;
 	}
 
 	KeyValuePair<V>* pair = GetFreeSlot(key);
