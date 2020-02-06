@@ -6,6 +6,7 @@
 
 #if GAME_SLOW
 
+// TODO review this log dependency
 #include "km_log.h"
 
 #define DEBUG_ASSERTF(expression, format, ...) if (!(expression)) { \

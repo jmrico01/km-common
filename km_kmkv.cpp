@@ -153,7 +153,7 @@ internal bool LoadKmkvRecursive(Array<char> string, Allocator* allocator,
 	while (true) {
 		int read = ReadNextKeywordValue(string, &keyword, &valueBuffer);
 		if (read < 0) {
-			fprintf(stderr, "kmkv file keyword/value error\n");
+			LOG_ERROR("kmkv file keyword/value error\n");
 			return false;
 		}
 		else if (read == 0) {
@@ -183,11 +183,11 @@ internal bool LoadKmkvRecursive(Array<char> string, Allocator* allocator,
 				kmkvValueItem.keywordTag.Append(keyword[keywordTagInd++]);
 			}
 			if (!bracketMatched) {
-				fprintf(stderr, "kmkv keyword tag unmatched bracket\n");
+				LOG_ERROR("kmkv keyword tag unmatched bracket\n");
 				return false;
 			}
 			if (bracketMatched && keywordTagInd != keyword.size - 1) {
-				fprintf(stderr, "found characters after kmkv keyword tag bracket, keyword %.*s\n",
+				LOG_ERROR("found characters after kmkv keyword tag bracket, keyword %.*s\n",
 					(int)keyword.size, keyword.data);
 				return false;
 			}
@@ -231,7 +231,7 @@ bool LoadKmkv(const Array<char>& filePath, Allocator* allocator,
 {
 	Array<uint8> kmkvFile = LoadEntireFile(filePath, allocator);
 	if (kmkvFile.data == nullptr) {
-		fprintf(stderr, "Failed to load file %.*s\n", (int)filePath.size, filePath.data);
+		LOG_ERROR("Failed to load file %.*s\n", (int)filePath.size, filePath.data);
 		return false;
 	}
 	defer(FreeFile(kmkvFile, allocator));
@@ -285,7 +285,7 @@ internal bool KmkvToStringRecursive(const HashTable<KmkvItem<Allocator>>& kmkv, 
 		else {
 			outString->Append(ToString("{kmkv} {\n"));
 			if (!KmkvToStringRecursive(*item.hashTablePtr, indentSpaces + 4, outString)) {
-				fprintf(stderr, "Failed to convert nested kmkv to string, key %.*s\n",
+				LOG_ERROR("Failed to convert nested kmkv to string, key %.*s\n",
 					(int)key.string.size, key.string.data);
 			}
 			outString->Append('}');
@@ -427,7 +427,7 @@ internal bool JsonToKmkvRecursive(const cJSON* json, Allocator* allocator,
 			DEBUG_ASSERT(item->hashTablePtr != nullptr);
 			new (item->hashTablePtr) HashTable<KmkvItem<Allocator>, Allocator>();
 			if (!JsonToKmkvRecursive(child, allocator, item->hashTablePtr)) {
-				fprintf(stderr, "Failed to parse child JSON object, key %s\n", child->string);
+				LOG_ERROR("Failed to parse child JSON object, key %s\n", child->string);
 				return false;
 			}
 		}
@@ -446,7 +446,7 @@ internal bool JsonToKmkvRecursive(const cJSON* json, Allocator* allocator,
 			const cJSON* arrayItem;
 			cJSON_ArrayForEach(arrayItem, child) {
 				if (!cJSON_IsString(arrayItem)) {
-					fprintf(stderr, "JSON array item not a string, key %s\n", child->string);
+					LOG_ERROR("JSON array item not a string, key %s\n", child->string);
 					return false;
 				}
 				item->dynamicStringPtr->Append(ToString(arrayItem->valuestring));
@@ -458,7 +458,7 @@ internal bool JsonToKmkvRecursive(const cJSON* json, Allocator* allocator,
 			item->keywordTag.Append(ToString("array"));
 		}
 		else {
-			fprintf(stderr, "Unhandled JSON type: %d\n", child->type);
+			LOG_ERROR("Unhandled JSON type: %d\n", child->type);
 			return false;
 		}
 
@@ -477,14 +477,14 @@ bool JsonToKmkv(const Array<char>& jsonString, Allocator* allocator,
 	if (json == NULL) {
 		const char *errorPtr = cJSON_GetErrorPtr();
 		if (errorPtr != NULL) {
-			fprintf(stderr, "Error parsing JSON before: %s\n", errorPtr);
+			LOG_ERROR("Error parsing JSON before: %s\n", errorPtr);
 		}
 		return false;
 	}
 	defer(cJSON_Delete(json));
 
 	if (!cJSON_IsObject(json)) {
-		printf("Top-level json not object type: %s\n", jsonCString);
+		LOG_ERROR("Top-level json not object type: %s\n", jsonCString);
 		return false;
 	}
 	return JsonToKmkvRecursive(json, allocator, outKmkv);
