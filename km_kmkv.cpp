@@ -192,6 +192,15 @@ internal bool LoadKmkvRecursive(Array<char> string, Allocator* allocator,
 				return false;
 			}
 		}
+		Array<char> keywordArray = keyword.ToArray();
+		if (keywordHasTag) {
+			keywordArray = keywordArray.SliceTo(keywordArray.size - kmkvValueItem.keywordTag.size - 2);
+		}
+		if (outKmkv->GetValue(keywordArray)) {
+			LOG_ERROR("kmkv duplicate keyword: %.*s\n", (int)keywordArray.size, keywordArray.data);
+			return false;
+		}
+
 		if (StringEquals(kmkvValueItem.keywordTag.ToArray(), ToString("kmkv"))) {
 			kmkvValueItem.isString = false;
 			// "placement new" - allocate with custom allocator, but still call constructor
@@ -214,10 +223,6 @@ internal bool LoadKmkvRecursive(Array<char> string, Allocator* allocator,
 				return false;
 			}
 			new (kmkvValueItem.dynamicStringPtr) DynamicArray<char>(valueBuffer.ToArray());
-		}
-		Array<char> keywordArray = keyword.ToArray();
-		if (keywordHasTag) {
-			keywordArray = keywordArray.SliceTo(keywordArray.size - 2 - kmkvValueItem.keywordTag.size);
 		}
 		outKmkv->Add(keywordArray, kmkvValueItem);
 	}
