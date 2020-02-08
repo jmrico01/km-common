@@ -284,6 +284,7 @@ internal bool KmkvToStringRecursive(const HashTable<KmkvItem<Allocator>>& kmkv, 
 			outString->Append(item.dynamicStringPtr->ToArray());
 			if (!inlineValue) {
 				outString->Append('\n');
+				for (int i = 0; i < indentSpaces; i++) outString->Append(' ');
 				outString->Append('}');
 			}
 		}
@@ -293,6 +294,7 @@ internal bool KmkvToStringRecursive(const HashTable<KmkvItem<Allocator>>& kmkv, 
 				LOG_ERROR("Failed to convert nested kmkv to string, key %.*s\n",
 					(int)key.string.size, key.string.data);
 			}
+			for (int i = 0; i < indentSpaces; i++) outString->Append(' ');
 			outString->Append('}');
 		}
 
