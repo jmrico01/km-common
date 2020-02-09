@@ -20,6 +20,8 @@ KmkvItem<Allocator>& KmkvItem<Allocator>::operator=(const KmkvItem<Allocator>& o
 
 	// TODO fix this allocator-passing madness
 	switch (other.type) {
+	case KmkvItemType::NONE: {
+	} break;
 	case KmkvItemType::STRING: {
 		dynamicStringPtr = defaultAllocator_.template New<DynamicArray<char>>();
 		DEBUG_ASSERT(dynamicStringPtr);
@@ -41,6 +43,8 @@ KmkvItem<Allocator>::~KmkvItem()
 {
 	// TODO fix this allocator-passing madness
 	switch (type) {
+	case KmkvItemType::NONE: {
+	} break;
 	case KmkvItemType::STRING: {
 		dynamicStringPtr->~DynamicArray();
 		defaultAllocator_.Free(dynamicStringPtr);
@@ -316,6 +320,8 @@ internal bool KmkvToStringRecursive(const HashTable<KmkvItem<Allocator>>& kmkv, 
 		outString->Append(key.string.ToArray());
 		const KmkvItem<Allocator>& item = kmkv.pairs[i].value;
 		switch (item.type) {
+		case KmkvItemType::NONE: {
+		} break;
 		case KmkvItemType::STRING: {
 			if (item.keywordTag.size > 0) {
 				outString->Append('{');
@@ -417,6 +423,8 @@ internal bool KmkvToJsonRecursive(const HashTable<KmkvItem<Allocator>>& kmkv,
 		outJson->Append(':');
 		const KmkvItem<Allocator>& item = kmkv.pairs[i].value;
 		switch (item.type) {
+		case KmkvItemType::NONE: {
+		} break;
 		case KmkvItemType::STRING: {
 			if (StringEquals(item.keywordTag.ToArray(), ToString("array"))) {
 				outJson->Append('[');

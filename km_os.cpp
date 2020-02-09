@@ -193,6 +193,8 @@ bool FileExists(const Array<char>& filePath)
 		FindClose(fileHandle);
 	}
 	return found;
+#elif GAME_LINUX
+	// TODO implement
 #else
 #error "FileExists not implemented on this platform"
 #endif
@@ -226,8 +228,10 @@ bool FileChangedSinceLastCall(const Array<char>& filePath)
 	}
 
 	return false;
+#elif GAME_LINUX
+	// TODO implement
 #else
-#error "FileExists not implemented on this platform"
+#error "FileChangedSinceLastCall not implemented on this platform"
 #endif
 }
 
