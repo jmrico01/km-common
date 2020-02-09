@@ -208,7 +208,9 @@ void FixedArray<T, S>::Append(const Array<T>& array)
 	DEBUG_ASSERTF(newSize <= S, "size %" PRIu64 ", S %" PRIu64 ", array.size %" PRIu64 "\n",
 		size, S, array.size);
 
-	MemCopy(data + size, array.data, array.size * sizeof(T));
+	for (uint64 i = 0; i < array.size; i++) {
+		data[size + i] = array.data[i];
+	}
 	size = newSize;
 }
 
@@ -362,6 +364,9 @@ DynamicArray<T, Allocator>::DynamicArray(uint64 capacity, Allocator* allocator)
 template <typename T, typename Allocator>
 DynamicArray<T, Allocator>::~DynamicArray()
 {
+	for (uint64 i = 0; i < size; i++) {
+		data[i].~T();
+	}
 	FreeOrUseDefautIfNull(allocator, data);
 }
 
@@ -385,8 +390,10 @@ void DynamicArray<T, Allocator>::FromArray(const Array<T>& array)
 		DEBUG_ASSERT(UpdateCapacity(array.size));
 	}
 
-	MemCopy(data, array.data, array.size * sizeof(T));
 	size = array.size;
+	for (uint64 i = 0; i < size; i++) {
+		data[i] = array.data[i];
+	}
 }
 
 template <typename T, typename Allocator>
@@ -417,7 +424,9 @@ void DynamicArray<T, Allocator>::Append(const Array<T>& array)
 		DEBUG_ASSERT(UpdateCapacity(newSize));
 	}
 
-	MemCopy(data + size, array.data, array.size * sizeof(T));
+	for (uint64 i = 0; i < array.size; i++) {
+		data[size + i] = array.data[i];
+	}
 	size = newSize;
 }
 
@@ -657,9 +666,11 @@ void HashTable<V, Allocator>::Free()
 template <typename V, typename Allocator>
 HashTable<V, Allocator>& HashTable<V, Allocator>::operator=(const HashTable<V, Allocator>& other)
 {
-	DEBUG_ASSERT(capacity == other.capacity); // TODO no rehashing, so we do MemCopy-only
+	DEBUG_ASSERT(capacity == other.capacity); // TODO no rehashing, so we do same-capacity only
 	size = other.size;
-	MemCopy(pairs, other.pairs, other.capacity * sizeof(KeyValuePair<V>));
+	for (uint64 i = 0; i < capacity; i++) {
+		pairs[i] = other.pairs[i];
+	}
 	return *this;
 }
 
