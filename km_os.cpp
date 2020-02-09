@@ -195,6 +195,7 @@ bool FileExists(const Array<char>& filePath)
 	return found;
 #elif GAME_LINUX
 	// TODO implement
+	return false;
 #else
 #error "FileExists not implemented on this platform"
 #endif
@@ -230,6 +231,7 @@ bool FileChangedSinceLastCall(const Array<char>& filePath)
 	return false;
 #elif GAME_LINUX
 	// TODO implement
+	return false;
 #else
 #error "FileChangedSinceLastCall not implemented on this platform"
 #endif
