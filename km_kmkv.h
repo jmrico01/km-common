@@ -48,8 +48,6 @@ bool LoadKmkv(const Array<char>& filePath, Allocator* allocator,
 
 template <typename Allocator>
 bool LoadKmkv(const Array<char>& kmkvString, HashTable<KmkvItem<Allocator>, Allocator>* outKmkv);
-// template <typename Allocator>
-// void FreeKmkv(HashTable<KmkvItem<Allocator>>* kmkv);
 
 template <typename Allocator>
 bool KmkvToString(const HashTable<KmkvItem<Allocator>>& kmkv,

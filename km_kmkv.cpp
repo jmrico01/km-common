@@ -302,27 +302,6 @@ bool LoadKmkv(const Array<char>& kmkvString, HashTable<KmkvItem<Allocator>, Allo
 	return LoadKmkvRecursive(kmkvString, outKmkv);
 }
 
-// template <typename Allocator>
-// void FreeKmkv(HashTable<KmkvItem<Allocator>>* kmkv)
-// {
-// 	for (uint64 i = 0; i < kmkv->capacity; i++) {
-// 		const HashKey& key = kmkv->pairs[i].key;
-// 		if (key.string.size == 0) {
-// 			continue;
-// 		}
-// 		const KmkvItem<Allocator>& item = kmkv->pairs[i].value;
-// 		if (item.isString) {
-// 			item.dynamicStringPtr->~DynamicArray();
-// 			kmkv->allocator->Free(item.dynamicStringPtr);
-// 		}
-// 		else {
-// 			FreeKmkv(item.hashTablePtr);
-// 			//item.hashTablePtr->~HashTable();
-// 			kmkv->allocator->Free(item.hashTablePtr);
-// 		}
-// 	}
-// }
-
 template <typename Allocator>
 internal bool KmkvToStringRecursive(const HashTable<KmkvItem<Allocator>>& kmkv, int indentSpaces,
 	DynamicArray<char, Allocator>* outString)
