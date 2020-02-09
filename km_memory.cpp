@@ -50,7 +50,7 @@ void* LinearAllocator::ReAllocate(void* memory, uint64 size)
 
 void LinearAllocator::Free(void* memory)
 {
-	DEBUG_ASSERT(memory > data);
+	DEBUG_ASSERT(memory >= data);
 	uint64 memoryInd = (uint64)memory - (uint64)data;
 	DEBUG_ASSERT(memoryInd < capacity);
 	used = memoryInd;

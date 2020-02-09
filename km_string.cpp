@@ -53,6 +53,9 @@ template <typename Allocator>
 char* ToCString(const Array<char>& string, Allocator* allocator)
 {
 	char* cString = (char*)allocator->Allocate(string.size + 1);
+	if (!cString) {
+		return nullptr;
+	}
 	MemCopy(cString, string.data, string.size * sizeof(char));
 	cString[string.size] = '\0';
 	return cString;

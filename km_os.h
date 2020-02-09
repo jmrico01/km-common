@@ -12,6 +12,9 @@ bool WriteFile(const Array<char>& filePath, const Array<uint8>& data, bool appen
 
 bool DeleteFile(const Array<char>& filePath, bool errorIfNotFound);
 
+bool FileExists(const Array<char>& filePath);
+bool FileChangedSinceLastCall(const Array<char>& filePath);
+
 bool CreateDirRecursive(const Array<char>& dir);
 
 template <typename Allocator>

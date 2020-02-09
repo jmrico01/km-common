@@ -2,25 +2,41 @@
 
 #if GAME_WIN32
 #include <Windows.h>
+#undef ERROR
 #elif GAME_LINUX
 #include <stdlib.h>
 #include <sys/stat.h>
 #endif
 
+#if GAME_WIN32
+internal FILETIME Win32GetLastWriteTime(const char* filePath)
+{
+	WIN32_FILE_ATTRIBUTE_DATA data;
+	if (!GetFileAttributesEx(filePath, GetFileExInfoStandard, &data)) {
+		LOG_ERROR("GetFileAttributesEx failed for file %s\n", filePath);
+		FILETIME zero = {};
+		return zero;
+	}
+	return data.ftLastWriteTime;
+}
+#endif
+
 template <typename Allocator>
 Array<uint8> LoadEntireFile(const Array<char>& filePath, Allocator* allocator)
 {
-	Array<uint8> file;
-	file.data = nullptr;
-	char* cFilePath = ToCString(filePath, allocator);
-	defer(allocator->Free(cFilePath));
+	Array<uint8> file = { .size = 0, .data = nullptr };
+	char* filePathC = ToCString(filePath, allocator);
+	if (!filePathC) {
+		return { .size = 0, .data = nullptr };
+	}
 
 #if GAME_WIN32
-	HANDLE hFile = CreateFile(cFilePath, GENERIC_READ, FILE_SHARE_READ,
+	HANDLE hFile = CreateFile(filePathC, GENERIC_READ, FILE_SHARE_READ,
 		NULL, OPEN_EXISTING, NULL, NULL);
 	if (hFile == INVALID_HANDLE_VALUE) {
 		return file;
 	}
+	allocator->Free(filePathC); // NOTE this has to be here to work with linear allocators... :(
 
 	LARGE_INTEGER fileSize;
 	if (!GetFileSizeEx(hFile, &fileSize)) {
@@ -43,10 +59,11 @@ Array<uint8> LoadEntireFile(const Array<char>& filePath, Allocator* allocator)
 	file.size = fileSize32;
 	CloseHandle(hFile);
 #elif GAME_LINUX
-	FILE* filePtr = fopen(cFilePath, "rb");
+	FILE* filePtr = fopen(filePathC, "rb");
 	if (filePtr == NULL) {
 		return file;
 	}
+	allocator->Free(filePathC); // NOTE this has to be here to work with linear allocators... :(
 	fseek(filePtr, 0, SEEK_END);
 	uint64 size = ftell(filePtr);
 	rewind(filePtr);
@@ -70,6 +87,7 @@ Array<uint8> LoadEntireFile(const Array<char>& filePath, Allocator* allocator)
 
 	return file;
 }
+
 
 template <typename Allocator>
 void FreeFile(const Array<uint8>& outFile, Allocator* allocator)
@@ -160,6 +178,57 @@ bool DeleteFile(const Array<char>& filePath, bool errorIfNotFound)
 #endif
 
 	return true;
+}
+
+bool FileExists(const Array<char>& filePath)
+{
+	char* cFilePath = ToCString(filePath, &defaultAllocator_);
+	defer(defaultAllocator_.Free(cFilePath));
+
+#if GAME_WIN32
+	WIN32_FIND_DATA findFileData;
+	HANDLE fileHandle = FindFirstFile(cFilePath, &findFileData);
+	bool found = fileHandle != INVALID_HANDLE_VALUE;
+	if (found) {
+		FindClose(fileHandle);
+	}
+	return found;
+#else
+#error "FileExists not implemented on this platform"
+#endif
+}
+
+bool FileChangedSinceLastCall(const Array<char>& filePath)
+{
+	char* cFilePath = ToCString(filePath, &defaultAllocator_);
+	defer(defaultAllocator_.Free(cFilePath));
+
+#if GAME_WIN32
+	static HashTable<FILETIME> fileTimes;
+	static bool initialized = false;
+	if (!initialized) {
+		initialized = true;
+	}
+
+	FILETIME lastWriteTime = Win32GetLastWriteTime(cFilePath);
+
+	HashKey key(filePath);
+	FILETIME* value = fileTimes.GetValue(key);
+	if (!value) {
+		fileTimes.Add(key, lastWriteTime);
+		return true;
+	}
+
+	if (lastWriteTime.dwLowDateTime != value->dwLowDateTime
+	|| lastWriteTime.dwHighDateTime != value->dwHighDateTime) {
+		*value = lastWriteTime;
+		return true;
+	}
+
+	return false;
+#else
+#error "FileExists not implemented on this platform"
+#endif
 }
 
 bool CreateDirRecursive(const Array<char>& dir)
