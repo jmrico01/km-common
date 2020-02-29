@@ -5,9 +5,9 @@
 #include <inttypes.h>
 
 // STATIC REDEFINES
-#define internal        static
-#define local_persist	static
-#define global_var		static
+#define internal      static
+#define local_persist static
+#define global_var    static
 
 /*
 GAME_INTERNAL:
