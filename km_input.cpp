@@ -2,20 +2,18 @@
 
 #include <km_platform/main_platform.h>
 
-inline bool IsKeyPressed(const GameInput* input, KeyInputCode keyCode)
+inline bool IsKeyPressed(const GameInput& input, KeyInputCode keyCode)
 {
-    return input->keyboard[keyCode].isDown;
+    return input.keyboard[keyCode].isDown;
 }
-inline bool WasKeyPressed(const GameInput* input, KeyInputCode keyCode)
+inline bool WasKeyPressed(const GameInput& input, KeyInputCode keyCode)
 {
-    return input->keyboard[keyCode].isDown
-        && input->keyboard[keyCode].transitions > 0;
+    return input.keyboard[keyCode].isDown && input.keyboard[keyCode].transitions > 0;
 }
 
-inline bool WasKeyReleased(const GameInput* input, KeyInputCode keyCode)
+inline bool WasKeyReleased(const GameInput& input, KeyInputCode keyCode)
 {
-    return !input->keyboard[keyCode].isDown
-        && input->keyboard[keyCode].transitions > 0;
+    return !input.keyboard[keyCode].isDown && input.keyboard[keyCode].transitions > 0;
 }
 
 void ClearInput(GameInput* input)
