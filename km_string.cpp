@@ -335,6 +335,36 @@ Array<char> AllocPrintf(Allocator* allocator, const char* format, ...)
 	}
 }
 
+template <typename Allocator>
+char* AllocPrintfDynamicArrayCallback(const char* buffer, void* user, int length)
+{
+	DynamicArray<char, Allocator>* result = *((DynamicArray<char, Allocator>*)user);
+	result->Append(Array<char> { .size = length, .data = buffer });
+	return buffer;
+}
+
+template <typename Allocator>
+DynamicArray<char, Allocator> AllocPrintf(const char* format, ...)
+{
+	DynamicArray<char, Allocator> result;
+
+	char buffer[STB_SPRINTF_MIN];
+	va_list args;
+	va_start(args, format);
+	int length = stbsp_vsprintfcb(AllocPrintfDynamicArrayCallback<Allocator>,
+		&result, buffer, format, args);
+	va_end(args);
+
+	if (length < 0) {
+		result.Clear();
+	}
+	else if (length != result.size) {
+		result.Clear();
+	}
+
+	return result;
+}
+
 template <typename T>
 bool StringToElementArray(const Array<char>& string, char sep, bool trimElements,
 	bool (*conversionFunction)(const Array<char>&, T*),

@@ -49,6 +49,8 @@ void ReadElementInSplitString(Array<char>* element, Array<char>* next, char sepa
 
 template <typename Allocator>
 Array<char> AllocPrintf(Allocator* allocator, const char* format, ...);
+template <typename Allocator>
+DynamicArray<char, Allocator> AllocPrintf(const char* format, ...);
 
 template <typename T>
 bool StringToElementArray(const Array<char>& string, char sep, bool trimElements,
