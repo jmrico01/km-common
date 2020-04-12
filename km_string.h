@@ -6,6 +6,10 @@
 // Typically, when I say "const Array<char>", I really mean "Array<const char>".
 // Not sure how pedantic that will get, and how much it will affect readability of usage code.
 
+// TODO maybe this?
+typedef Array<char> string;
+typedef const Array<const char> const_string;
+
 // TODO pretty random, but ok
 #define PATH_MAX_LENGTH 256
 
@@ -25,9 +29,9 @@ int StringCompare(const Array<char>& str1, const Array<char>& str2);
 bool StringEquals(const Array<char>& str1, const Array<char>& str2);
 
 void CatStrings(
-	size_t sourceACount, const char* sourceA,
-	size_t sourceBCount, const char* sourceB,
-	size_t destCount, char* dest);
+                size_t sourceACount, const char* sourceA,
+                size_t sourceBCount, const char* sourceB,
+                size_t destCount, char* dest);
 void StringCat(const char* str1, const char* str2, char* dest, uint64 destMaxLength);
 
 uint64 SubstringSearch(const Array<char>& string, const Array<char>& substring);
@@ -54,8 +58,8 @@ DynamicArray<char, Allocator> AllocPrintf(const char* format, ...);
 
 template <typename T>
 bool StringToElementArray(const Array<char>& string, char sep, bool trimElements,
-	bool (*conversionFunction)(const Array<char>&, T*),
-	int maxElements, T* array, int* numElements);
+                          bool (*conversionFunction)(const Array<char>&, T*),
+                          int maxElements, T* array, int* numElements);
 
 #ifdef KM_UTF8
 template <typename Allocator>
