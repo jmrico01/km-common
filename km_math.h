@@ -435,6 +435,11 @@ inline Vec2Int& operator*=(Vec2Int& v, float32 s)
 	return v;
 }*/
 
+inline Vec2Int MultiplyVec2IntFloat32(Vec2Int v, float32 f)
+{
+    return Vec2Int { (int)((float32)v.x * f), (int)((float32)v.y * f) };
+}
+
 inline bool operator==(const Vec2Int& v1, const Vec2Int& v2)
 {
 	return v1.x == v2.x && v1.y == v2.y;
