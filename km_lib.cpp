@@ -17,13 +17,13 @@
 internal inline void ArrayBoundsCheck(int index, uint64 size)
 {
 	DEBUG_ASSERTF(0 <= index && (uint64)index < size,
-		"Array bounds check failed: index %d, size %" PRIu64 "\n", index, size);
+                  "Array bounds check failed: index %d, size %" PRIu64 "\n", index, size);
 }
 
 internal inline void ArrayBoundsCheck(uint64 index, uint64 size)
 {
 	DEBUG_ASSERTF(index < size,
-		"Array bounds check failed: index %" PRIu64 ", size %" PRIu64 "\n", index, size);
+                  "Array bounds check failed: index %" PRIu64 ", size %" PRIu64 "\n", index, size);
 }
 
 int ToIntOrTruncate(uint64 n)
@@ -46,7 +46,7 @@ inline uint32 SafeTruncateUInt64(uint64 value)
 void MemCopy(void* dst, const void* src, uint64 numBytes)
 {
 	DEBUG_ASSERT(((const char*)dst + numBytes <= src)
-		|| (dst >= (const char*)src + numBytes));
+                 || (dst >= (const char*)src + numBytes));
 	// TODO maybe see about reimplementing this? would be informative
 	memcpy(dst, src, numBytes);
 }
@@ -61,15 +61,20 @@ void MemSet(void* dst, char value, uint64 numBytes)
 	memset(dst, value, numBytes);
 }
 
+int MemComp(const void* mem1, const void* mem2, uint64 numBytes)
+{
+    return memcmp(mem1, mem2, numBytes);
+}
+
 // Very simple string hash ( djb2 hash, source http://www.cse.yorku.ca/~oz/hash.html )
 uint64 KeyHash(const HashKey& key)
 {
 	uint64 hash = 5381;
-
+    
 	for (uint64 i = 0; i < key.string.size; i++) {
 		hash = ((hash << 5) + hash) + key.string[i];
 	}
-
+    
 	return hash;
 }
 bool32 KeyCompare(const HashKey& key1, const HashKey& key2)
@@ -77,13 +82,13 @@ bool32 KeyCompare(const HashKey& key1, const HashKey& key2)
 	if (key1.string.size != key2.string.size) {
 		return false;
 	}
-
+    
 	for (uint64 i = 0; i < key1.string.size; i++) {
 		if (key1.string[i] != key2.string[i]) {
 			return false;
 		}
 	}
-
+    
 	return true;
 }
 
@@ -206,8 +211,8 @@ void FixedArray<T, S>::Append(const Array<T>& array)
 {
 	uint64 newSize = size + array.size;
 	DEBUG_ASSERTF(newSize <= S, "size %" PRIu64 ", S %" PRIu64 ", array.size %" PRIu64 "\n",
-		size, S, array.size);
-
+                  size, S, array.size);
+    
 	for (uint64 i = 0; i < array.size; i++) {
 		data[size + i] = array.data[i];
 	}
@@ -243,7 +248,7 @@ void FixedArray<T, S>::AppendAfter(const T& element, uint64 index)
 {
 	DEBUG_ASSERT(index < size);
 	DEBUG_ASSERTF(size < S, "size %" PRIu64 ", S %" PRIu64 "\n", size, S);
-
+    
 	uint64 targetIndex = index + 1;
 	for (uint64 i = size; i > targetIndex; i--) {
 		data[i] = data[i - 1];
@@ -334,19 +339,19 @@ void FreeOrUseDefautIfNull(Allocator* allocator, void* memory)
 
 template <typename T, typename Allocator>
 DynamicArray<T, Allocator>::DynamicArray()
-	: DynamicArray(nullptr)
+: DynamicArray(nullptr)
 {
 }
 
 template <typename T, typename Allocator>
 DynamicArray<T, Allocator>::DynamicArray(Allocator* allocator)
-	: DynamicArray(DYNAMIC_ARRAY_START_CAPACITY, allocator)
+: DynamicArray(DYNAMIC_ARRAY_START_CAPACITY, allocator)
 {
 }
 
 template <typename T, typename Allocator>
 DynamicArray<T, Allocator>::DynamicArray(const Array<T>& array, Allocator* allocator)
-	: DynamicArray(array.size < DYNAMIC_ARRAY_START_CAPACITY ? DYNAMIC_ARRAY_START_CAPACITY : array.size, allocator)
+: DynamicArray(array.size < DYNAMIC_ARRAY_START_CAPACITY ? DYNAMIC_ARRAY_START_CAPACITY : array.size, allocator)
 {
 	FromArray(array);
 }
@@ -389,7 +394,7 @@ void DynamicArray<T, Allocator>::FromArray(const Array<T>& array)
 		// TODO round to nearest power of 2?
 		DEBUG_ASSERT(UpdateCapacity(array.size));
 	}
-
+    
 	size = array.size;
 	for (uint64 i = 0; i < size; i++) {
 		data[i] = array.data[i];
@@ -402,7 +407,7 @@ T* DynamicArray<T, Allocator>::Append()
 	if (size >= capacity) {
 		DEBUG_ASSERT(UpdateCapacity(capacity * 2));
 	}
-
+    
 	new (&data[size]) T();
 	return &data[size++];
 }
@@ -423,7 +428,7 @@ void DynamicArray<T, Allocator>::Append(const Array<T>& array)
 		// TODO round to nearest power of 2?
 		DEBUG_ASSERT(UpdateCapacity(newSize));
 	}
-
+    
 	for (uint64 i = 0; i < array.size; i++) {
 		data[size + i] = array.data[i];
 	}
@@ -504,7 +509,7 @@ bool DynamicArray<T, Allocator>::UpdateCapacity(uint64 newCapacity)
 	if (newMemory == nullptr) {
 		return false;
 	}
-
+    
 	capacity = newCapacity;
 	data = (T*)newMemory;
 	return true;
@@ -529,7 +534,7 @@ bool HashKey::WriteString(const Array<char>& str)
 	if (str.size > HASHKEY_MAX_LENGTH) {
 		return false;
 	}
-
+    
 	MemCopy(string.data, str.data, str.size * sizeof(char));
 	string.size = str.size;
 	return true;
@@ -545,13 +550,13 @@ bool HashKey::WriteString(const char* str)
 
 template <typename V, typename Allocator>
 HashTable<V, Allocator>::HashTable()
-	: HashTable(nullptr)
+: HashTable(nullptr)
 {
 }
 
 template <typename V, typename Allocator>
 HashTable<V, Allocator>::HashTable(Allocator* allocator)
-	: HashTable(HASH_TABLE_START_CAPACITY, allocator)
+: HashTable(HASH_TABLE_START_CAPACITY, allocator)
 {
 }
 
@@ -564,12 +569,12 @@ HashTable<V, Allocator>::HashTable(uint64 capacity, Allocator* allocator)
 	if (pairs == nullptr) {
 		DEBUG_PANIC("ERROR: not enough memory!\n");
 	}
-
+    
 	for (uint64 i = 0; i < capacity; i++) {
 		pairs[i].key.string.size = 0;
 		new (&pairs[i]) KeyValuePair<V>();
 	}
-
+    
 	this->capacity = capacity;
 	this->allocator = allocator;
 }
@@ -587,14 +592,14 @@ template <typename V, typename Allocator>
 V* HashTable<V, Allocator>::Add(const HashKey& key)
 {
 	DEBUG_ASSERT(GetPair(key) == nullptr);
-
+    
 	if (size >= (uint64)((float32)capacity * HASH_TABLE_MAX_SIZE_TO_CAPACITY)) {
 		uint64 newCapacity = NextPrime(capacity * 2);
 		pairs = (KeyValuePair<V>*)allocator->ReAllocate(pairs, sizeof(KeyValuePair<V>) * newCapacity);
 		if (pairs == nullptr) {
 			DEBUG_PANIC("not enough memory for HashTable resize (pairs allocation)\n");
 		}
-
+        
 		for (uint64 i = 0; i < capacity; i++) {
 			// Don't placement new here, probably? Because it'll reset everything...
 			// new (&pairs[i]) KeyValuePair<V>();
@@ -608,13 +613,13 @@ V* HashTable<V, Allocator>::Add(const HashKey& key)
 		DEBUG_PANIC("TODO can't resize+rehash yet\n");
 		// capacity = newCapacity;
 	}
-
+    
 	KeyValuePair<V>* pair = GetFreeSlot(key);
 	DEBUG_ASSERT(pair != nullptr);
-
+    
 	pair->key = key;
 	size++;
-
+    
 	return &(pair->value);
 }
 
@@ -631,7 +636,7 @@ V* HashTable<V, Allocator>::GetValue(const HashKey& key)
 	if (pair == nullptr) {
 		return nullptr;
 	}
-
+    
 	return &pair->value;
 }
 
@@ -642,7 +647,7 @@ const V* HashTable<V, Allocator>::GetValue(const HashKey& key) const
 	if (pair == nullptr) {
 		return nullptr;
 	}
-
+    
 	return &pair->value;
 }
 
@@ -658,7 +663,7 @@ template <typename V, typename Allocator>
 void HashTable<V, Allocator>::Free()
 {
 	allocator->Free(pairs);
-
+    
 	capacity = 0;
 	size = 0;
 }
@@ -687,7 +692,7 @@ KeyValuePair<V>* HashTable<V, Allocator>::GetPair(const HashKey& key) const
 			return nullptr;
 		}
 	}
-
+    
 	return nullptr;
 }
 
@@ -701,6 +706,6 @@ KeyValuePair<V>* HashTable<V, Allocator>::GetFreeSlot(const HashKey& key)
 			return pair;
 		}
 	}
-
+    
 	return nullptr;
 }
