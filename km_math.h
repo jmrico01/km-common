@@ -23,7 +23,7 @@ inline bool IsOdd(uint64 n) {
 
 inline int RoundToPowerOfTwo(int n, int powerOfTwo) {
 	DEBUG_ASSERTF(powerOfTwo && ((powerOfTwo & (powerOfTwo - 1)) == 0), "%d should be power of 2\n",
-		powerOfTwo);
+                  powerOfTwo);
 	return (n + powerOfTwo - 1) & -powerOfTwo;
 }
 
@@ -78,6 +78,10 @@ float32 Lerp(float32 a, float32 b, float32 t)
 {
     return a + (b - a) * t;
 }
+int Lerp(int a, int b, float32 t)
+{
+    return (int)((float32)a + (float32)(b - a) * t);
+}
 
 bool IsPrime(uint64 n)
 {
@@ -86,7 +90,7 @@ bool IsPrime(uint64 n)
             return false;
         }
     }
-
+    
     return true;
 }
 
@@ -95,7 +99,7 @@ uint64 NextPrime(uint64 n)
     while (!IsPrime(n)) {
         n++;
     }
-
+    
     return n;
 }
 
@@ -107,7 +111,7 @@ union Vec2
 	const static Vec2 one;
 	const static Vec2 unitX;
 	const static Vec2 unitY;
-
+    
 	struct
 	{
 		float32 x, y;
@@ -125,7 +129,7 @@ union Vec2Int
 	const static Vec2Int zero;
 	const static Vec2Int unitX;
 	const static Vec2Int unitY;
-
+    
 	struct
 	{
 		int x, y;
@@ -144,7 +148,7 @@ union Vec3
 	const static Vec3 unitX;
 	const static Vec3 unitY;
 	const static Vec3 unitZ;
-
+    
 	struct
 	{
 		float32 x, y, z;
@@ -170,7 +174,7 @@ union Vec4
 	const static Vec4 unitY;
 	const static Vec4 unitZ;
 	const static Vec4 unitW;
-
+    
 	struct
 	{
 		float32 x, y, z, w;
@@ -211,7 +215,7 @@ struct Mat4
 {
 	const static Mat4 zero;
 	const static Mat4 one;
-
+    
 	float32 e[4][4];
 };
 
@@ -219,7 +223,7 @@ struct Mat4
 struct Quat
 {
 	const static Quat one;
-
+    
 	// You should NOT be changing
 	// these values manually
 	float32 x, y, z, w;
@@ -312,7 +316,7 @@ inline bool operator==(const Vec2& v1, const Vec2& v2)
 	return v1.x == v2.x && v1.y == v2.y;
 }
 
-inline Vec2 Lerp(Vec2 v1, Vec2 v2, float t)
+Vec2 Lerp(Vec2 v1, Vec2 v2, float t)
 {
 	Vec2 result = {
 		Lerp(v1.x, v2.x, t),
@@ -439,6 +443,15 @@ inline bool operator==(const Vec2Int& v1, const Vec2Int& v2)
 inline bool operator!=(const Vec2Int& v1, const Vec2Int& v2)
 {
 	return v1.x != v2.x || v1.y != v2.y;
+}
+
+Vec2Int Lerp(Vec2Int v1, Vec2Int v2, float32 t)
+{
+	Vec2Int result = {
+		Lerp(v1.x, v2.x, t),
+		Lerp(v1.y, v2.y, t)
+	};
+	return result;
 }
 
 inline int MagSq(Vec2Int v)
@@ -702,14 +715,14 @@ const Mat4 Mat4::zero =
 inline Mat4 operator+(Mat4 m1, Mat4 m2)
 {
 	Mat4 result;
-
+    
 	// TODO this will hopefully get unrolled by the compiler
 	for (int col = 0; col < 4; col++) {
 		for (int row = 0; row < 4; row++) {
 			result.e[col][row] = m1.e[col][row] + m2.e[col][row];
 		}
 	}
-
+    
 	return result;
 }
 inline Mat4& operator+=(Mat4& m1, Mat4 m2)
@@ -721,12 +734,12 @@ inline Mat4& operator+=(Mat4& m1, Mat4 m2)
 inline Mat4 operator-(Mat4 m1, Mat4 m2)
 {
 	Mat4 result;
-
+    
 	// TODO this will hopefully get unrolled by the compiler
 	for (int col = 0; col < 4; col++)
 		for (int row = 0; row < 4; row++)
-			result.e[col][row] = m1.e[col][row] - m2.e[col][row];
-
+        result.e[col][row] = m1.e[col][row] - m2.e[col][row];
+    
 	return result;
 }
 inline Mat4& operator-=(Mat4& m1, Mat4 m2)
@@ -738,67 +751,67 @@ inline Mat4& operator-=(Mat4& m1, Mat4 m2)
 inline Mat4 operator*(Mat4 m1, Mat4 m2)
 {
 	Mat4 result = Mat4::zero;
-
+    
 	// I really thought hard about this
 	// Make it as cache-efficient as possible
 	// Probably doesn't matter at all...
 	for (int colM2 = 0; colM2 < 4; colM2++) {
 		for (int colM1 = 0; colM1 < 4; colM1++) {
 			for (int rowM1 = 0; rowM1 < 4; rowM1++) {
-				result.e[colM2][rowM1] += 
+				result.e[colM2][rowM1] +=
 					m2.e[colM2][colM1] * m1.e[colM1][rowM1];
 			}
 		}
 	}
-
+    
 	return result;
 }
 
 inline Vec4 operator*(Mat4 m, Vec4 v)
 {
 	Vec4 result = Vec4::zero;
-
+    
 	for (int row = 0; row < 4; row++) {
 		for (int col = 0; col < 4; col++) {
 			result.e[row] += m.e[col][row] * v.e[col];
 		}
 	}
-
+    
 	return result;
 }
 
 Mat4 Translate(Vec3 v)
 {
 	Mat4 result = Mat4::one;
-
+    
 	result.e[3][0] = v.x;
 	result.e[3][1] = v.y;
 	result.e[3][2] = v.z;
-
+    
 	return result;
 }
 
 Mat4 Scale(float32 s)
 {
 	Mat4 result = {};
-
+    
 	result.e[0][0] = s;
 	result.e[1][1] = s;
 	result.e[2][2] = s;
 	result.e[3][3] = 1.0f;
-
+    
 	return result;
 }
 
 Mat4 Scale(Vec3 v)
 {
 	Mat4 result = {};
-
+    
 	result.e[0][0] = v.x;
 	result.e[1][1] = v.y;
 	result.e[2][2] = v.z;
 	result.e[3][3] = 1.0f;
-
+    
 	return result;
 }
 
@@ -822,13 +835,13 @@ Mat4 Rotate(Vec3 r)
 		0.0f, 0.0f, 1.0f, 0.0f,
 		0.0f, 0.0f, 0.0f, 1.0f
 	};
-
+    
 	// Order: <- yaw <- pitch <- roll <-
 	return rz * ry * rx;
 }
 
 Mat4 Projection(float32 fov, float32 aspect,
-	float32 nearZ, float32 farZ)
+                float32 nearZ, float32 farZ)
 {
 	float32 degToRad = PI_F / 180.0f;
 	float32 yScale = 1.0f / tanf(degToRad * fov / 2.0f);
@@ -840,7 +853,7 @@ Mat4 Projection(float32 fov, float32 aspect,
 		0.0f, 0.0f, (farZ + nearZ) / nearMinusFar, -1.0f,
 		0.0f, 0.0f, 2.0f*farZ*nearZ / nearMinusFar, 0.0f
 	};
-
+    
 	return proj;
 }
 
@@ -910,10 +923,10 @@ inline Vec3 operator*(Quat q, Vec3 v)
 	qv.z = q.w*v.z + q.x*v.y - q.y*v.x;
 	qv.w = -q.x*v.x - q.y*v.y - q.z*v.z;*/
 	Quat qv = q * vQuat;
-
+    
 	Quat qInv = Inverse(q);
 	Quat qvqInv = qv * qInv;
-
+    
 	Vec3 result = { qvqInv.x, qvqInv.y, qvqInv.z };
 	return result;
 }
@@ -945,7 +958,7 @@ Quat QuatRotBetweenVectors(Vec3 v1, Vec3 v2)
 	if (axis == Vec3::zero) {
 		return Quat::one;
 	}
-
+    
 	return QuatFromAngleUnitAxis(angle, Normalize(axis));
 }
 
@@ -957,17 +970,17 @@ Mat4 UnitQuatToMat4(Quat q)
 	result.e[0][1] = 2.0f * (q.x*q.y + q.w*q.z);
 	result.e[0][2] = 2.0f * (q.x*q.z - q.w*q.y);
 	result.e[0][3] = 0.0f;
-
+    
 	result.e[1][0] = 2.0f * (q.x*q.y - q.w*q.z);
 	result.e[1][1] = 1.0f - 2.0f * (q.x*q.x + q.z*q.z);
 	result.e[1][2] = 2.0f * (q.y*q.z + q.w*q.x);
 	result.e[1][3] = 0.0f;
-
+    
 	result.e[2][0] = 2.0f * (q.x*q.z + q.w*q.y);
 	result.e[2][1] = 2.0f * (q.y*q.z - q.w*q.x);
 	result.e[2][2] = 1.0f - 2.0f * (q.x*q.x + q.y*q.y);
 	result.e[2][3] = 0.0f;
-
+    
 	result.e[3][0] = 0.0f;
 	result.e[3][1] = 0.0f;
 	result.e[3][2] = 0.0f;
