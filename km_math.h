@@ -174,6 +174,8 @@ union Vec4
 	const static Vec4 unitY;
 	const static Vec4 unitZ;
 	const static Vec4 unitW;
+    const static Vec4 white;
+    const static Vec4 black;
     
 	struct
 	{
@@ -192,6 +194,8 @@ const Vec4 Vec4::unitX = { 1.0f, 0.0f, 0.0f, 0.0f };
 const Vec4 Vec4::unitY = { 0.0f, 1.0f, 0.0f, 0.0f };
 const Vec4 Vec4::unitZ = { 0.0f, 0.0f, 1.0f, 0.0f };
 const Vec4 Vec4::unitW = { 0.0f, 0.0f, 0.0f, 1.0f };
+const Vec4 Vec4::white = { 1.0f, 1.0f, 1.0f, 1.0f };
+const Vec4 Vec4::black = { 0.0f, 0.0f, 0.0f, 1.0f };
 
 struct Rect
 {
