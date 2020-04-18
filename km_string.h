@@ -7,8 +7,8 @@
 // Not sure how pedantic that will get, and how much it will affect readability of usage code.
 
 // TODO maybe this?
-typedef Array<char> string;
-typedef const Array<const char> const_string;
+using string = Array<char>;
+using const_string = const Array<const char>;
 
 // TODO pretty random, but ok
 #define PATH_MAX_LENGTH 256

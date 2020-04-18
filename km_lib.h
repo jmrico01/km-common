@@ -163,7 +163,7 @@ struct HashTable
     V* Add(const HashKey& key);
     V* GetValue(const HashKey& key);
     const V* GetValue(const HashKey& key) const;
-    bool32 Remove(const HashKey& key);
+    bool Remove(const HashKey& key);
     
     void Clear();
     void Free();
@@ -175,4 +175,4 @@ struct HashTable
     KeyValuePair<V>* GetFreeSlot(const HashKey& key);
 };
 
-bool32 KeyCompare(const HashKey& key1, const HashKey& key2);
+bool KeyCompare(const HashKey& key1, const HashKey& key2);

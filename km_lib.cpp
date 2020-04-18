@@ -77,7 +77,7 @@ uint64 KeyHash(const HashKey& key)
     
     return hash;
 }
-bool32 KeyCompare(const HashKey& key1, const HashKey& key2)
+bool KeyCompare(const HashKey& key1, const HashKey& key2)
 {
     if (key1.string.size != key2.string.size) {
         return false;
