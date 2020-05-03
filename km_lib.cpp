@@ -3,7 +3,6 @@
 #include <cstring> // memcpy is here... no idea why
 #include <limits.h>
 
-#include "km_debug.h"
 #include "km_math.h"
 #include "km_string.h"
 

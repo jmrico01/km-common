@@ -31,7 +31,7 @@ enum KeyInputCode
     KM_KEY_Y,
     KM_KEY_Z,
     KM_KEY_SPACE,
-
+    
     KM_KEY_0,
     KM_KEY_1,
     KM_KEY_2,
@@ -52,19 +52,19 @@ enum KeyInputCode
     KM_KEY_NUMPAD_7,
     KM_KEY_NUMPAD_8,
     KM_KEY_NUMPAD_9,
-
+    
     KM_KEY_ESCAPE,
     KM_KEY_ENTER,
     KM_KEY_BACKSPACE,
     KM_KEY_TAB,
     KM_KEY_SHIFT,
     KM_KEY_CTRL,
-
+    
     KM_KEY_ARROW_UP,
     KM_KEY_ARROW_DOWN,
     KM_KEY_ARROW_LEFT,
     KM_KEY_ARROW_RIGHT,
-
+    
     KM_KEY_LAST // Always keep this at the end.
 };
 

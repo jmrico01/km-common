@@ -7,7 +7,6 @@
 #include <utf8proc.h>
 #endif
 
-#include "km_debug.h"
 #include "km_math.h"
 
 uint64 StringLength(const char* string)
@@ -16,7 +15,7 @@ uint64 StringLength(const char* string)
     while (*(string++) != '\0') {
         length++;
     }
-
+    
     return length;
 }
 
@@ -72,7 +71,7 @@ int StringCompare(const Array<char>& str1, const Array<char>& str2)
             return 1;
         }
     }
-
+    
     if (str1.size < str2.size) {
         return -1;
     }
@@ -87,29 +86,31 @@ bool StringEquals(const Array<char>& str1, const Array<char>& str2)
     if (str1.size != str2.size) {
         return false;
     }
-
+    
     for (uint64 i = 0; i < str1.size; i++) {
         if (str1[i] != str2[i]) {
             return false;
         }
     }
-
+    
     return true;
 }
 
 void CatStrings(
-    size_t sourceACount, const char* sourceA,
-    size_t sourceBCount, const char* sourceB,
-    size_t destCount, char* dest)
+                size_t sourceACount, const char* sourceA,
+                size_t sourceBCount, const char* sourceB,
+                size_t destCount, char* dest)
 {
+    DEBUG_ASSERT(sourceACount + sourceBCount <= destCount);
+    
     for (size_t i = 0; i < sourceACount; i++) {
         *dest++ = *sourceA++;
     }
-
+    
     for (size_t i = 0; i < sourceBCount; i++) {
         *dest++ = *sourceB++;
     }
-
+    
     *dest++ = '\0';
 }
 
@@ -137,7 +138,7 @@ uint64 SubstringSearch(const Array<char>& string, const Array<char>& substring)
             return i;
         }
     }
-
+    
     return string.size;
 }
 
@@ -172,7 +173,7 @@ Array<char> TrimWhitespace(const Array<char>& string)
     while (end > 0 && IsWhitespace(string[end - 1])) {
         end--;
     }
-
+    
     return { .size = end - start, .data = string.data + start };
 }
 
@@ -186,7 +187,7 @@ bool StringToIntBase10(const Array<char>& string, int* intBase10)
     if (string.size == 0) {
         return false;
     }
-
+    
     bool negative = false;
     *intBase10 = 0;
     for (uint64 i = 0; i < string.size; i++) {
@@ -200,7 +201,7 @@ bool StringToIntBase10(const Array<char>& string, int* intBase10)
         }
         *intBase10 = (*intBase10) * 10 + (int)(c - '0');
     }
-
+    
     if (negative) {
         *intBase10 = -(*intBase10);
     }
@@ -212,13 +213,13 @@ bool StringToUInt64Base10(const Array<char>& string, uint64* intBase10)
     if (string.size == 0) {
         return false;
     }
-
+    
     *intBase10 = 0;
     for (uint64 i = 0; i < string.size; i++) {
         char c = string[i];
         *intBase10 = (*intBase10) * 10 + (uint64)(c - '0');
     }
-
+    
     return true;
 }
 
@@ -228,7 +229,7 @@ bool StringToFloat32(const Array<char>& string, float32* f)
     while (dotIndex < string.size && string[dotIndex] != '.') {
         dotIndex++;
     }
-
+    
     int whole = 0;
     float32 wholeNegative = false;
     if (dotIndex > 0) {
@@ -249,7 +250,7 @@ bool StringToFloat32(const Array<char>& string, float32* f)
             return false;
         }
     }
-
+    
     *f = (float32)whole;
     if (fracString.size > 0) {
         frac = wholeNegative ? -frac : frac;
@@ -266,7 +267,7 @@ template <typename Allocator>
 void StringSplit(const Array<char>& string, char c, DynamicArray<Array<char>, Allocator>* outSplit)
 {
     outSplit->Clear();
-
+    
     Array<char> str = string;
     while (true) {
         uint64 next = str.FindFirst(c);
@@ -277,7 +278,7 @@ void StringSplit(const Array<char>& string, char c, DynamicArray<Array<char>, Al
         uint64 newSize = str.size - next - 1;
         str.size = next;
         outSplit->Append(str);
-
+        
         str.data += next + 1;
         str.size = newSize;
     }
@@ -293,7 +294,7 @@ Array<char> NextSplitElement(Array<char>* string, char separator)
             break;
         }
     }
-
+    
     string->size -= next.size;
     string->data += next.size + 1;
     return next;
@@ -309,7 +310,7 @@ void ReadElementInSplitString(Array<char>* element, Array<char>* next, char sepa
             return;
         }
     }
-
+    
     next->size = 0;
 }
 
@@ -347,28 +348,28 @@ template <typename Allocator>
 DynamicArray<char, Allocator> AllocPrintf(const char* format, ...)
 {
     DynamicArray<char, Allocator> result;
-
+    
     char buffer[STB_SPRINTF_MIN];
     va_list args;
     va_start(args, format);
     int length = stbsp_vsprintfcb(AllocPrintfDynamicArrayCallback<Allocator>,
-        &result, buffer, format, args);
+                                  &result, buffer, format, args);
     va_end(args);
-
+    
     if (length < 0) {
         result.Clear();
     }
     else if (length != result.size) {
         result.Clear();
     }
-
+    
     return result;
 }
 
 template <typename T>
 bool StringToElementArray(const Array<char>& string, char sep, bool trimElements,
-    bool (*conversionFunction)(const Array<char>&, T*),
-    int maxElements, T* array, int* numElements)
+                          bool (*conversionFunction)(const Array<char>&, T*),
+                          int maxElements, T* array, int* numElements)
 {
     int elementInd = 0;
     Array<char> element = string;
@@ -384,10 +385,10 @@ bool StringToElementArray(const Array<char>& string, char sep, bool trimElements
         }
         if (!conversionFunction(trimmed, array + elementInd)) {
             LOG_ERROR("String to array failed for %.*s in element %d conversion\n",
-                string.size, string.data, elementInd);
+                      string.size, string.data, elementInd);
             return false;
         }
-
+        
         if (next.size == 0) {
             break;
         }
@@ -395,11 +396,11 @@ bool StringToElementArray(const Array<char>& string, char sep, bool trimElements
         elementInd++;
         if (elementInd >= maxElements) {
             LOG_ERROR("String to array failed in %.*s (too many elements, max %d)\n",
-                string.size, string.data, maxElements);
+                      string.size, string.data, maxElements);
             return false;
         }
     }
-
+    
     *numElements = elementInd + 1;
     return true;
 }
@@ -413,16 +414,16 @@ bool Utf8ToUppercase(const Array<char>& utf8String, DynamicArray<char, Allocator
     while (i < utf8String.size) {
         int32 codePoint;
         utf8proc_ssize_t codePointBytes = utf8proc_iterate((uint8*)&utf8String[i],
-            utf8String.size - i, &codePoint);
+                                                           utf8String.size - i, &codePoint);
         if (codePointBytes < 0) {
             LOG_ERROR("Invalid UTF-8 bytes\n");
             return false;
         }
         i += codePointBytes;
-
+        
         int32 codePointUpper = utf8proc_toupper(codePoint);
         utf8proc_ssize_t codePointUpperBytes = utf8proc_encode_char(codePointUpper,
-            (uint8*)utf8Buffer.data);
+                                                                    (uint8*)utf8Buffer.data);
         if (codePointUpperBytes == 0) {
             LOG_ERROR("Failed to write UTF-8 codePointUpper\n");
             return false;
@@ -430,7 +431,7 @@ bool Utf8ToUppercase(const Array<char>& utf8String, DynamicArray<char, Allocator
         utf8Buffer.size = codePointUpperBytes;
         outString->Append(utf8Buffer.ToArray());
     }
-
+    
     return true;
 }
 #endif

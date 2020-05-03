@@ -6,39 +6,32 @@
 
 #if GAME_SLOW
 
-// TODO review this log dependency
-#include "km_log.h"
+#define DEBUG_PANIC(format, ...) \
+LOG_ERROR("PANIC! %s:%d (%s)\n", __FILE__, __LINE__, __func__); \
+LOG_ERROR(format, ##__VA_ARGS__); \
+LOG_FLUSH(); \
+*(int*)0 = 0
 
-#define DEBUG_ASSERTF(expression, format, ...) if (!(expression)) { \
-LOG_ERROR("Assert failed:\n"); \
-LOG_ERROR(format, ##__VA_ARGS__); \
-          PlatformFlushLogs(logState_); \
-          *(int*)0 = 0; }
-#define DEBUG_ASSERT(expression) DEBUG_ASSERTF(expression, "")
-#define DEBUG_PANIC(format, ...) \
-LOG_ERROR("PANIC!\n"); \
-LOG_ERROR(format, ##__VA_ARGS__); \
-          PlatformFlushLogs(logState_); \
-          *(int*)0 = 0;
-          
 #elif GAME_INTERNAL
-          
-#include "km_log.h"
-          
-#define DEBUG_ASSERTF(expression, format, ...) if (!(expression)) { \
-          LOG_ERROR("Assert failed\n"); \
-          LOG_ERROR(format, ##__VA_ARGS__); \
-                    PlatformFlushLogs(logState_); }
-#define DEBUG_ASSERT(expression) DEBUG_ASSERTF(expression, "")
+
 #define DEBUG_PANIC(format, ...) \
-LOG_ERROR("PANIC!\n"); \
+LOG_ERROR("PANIC! %s:%d (%s)\n", __FILE__, __LINE__, __func__); \
 LOG_ERROR(format, ##__VA_ARGS__); \
-          PlatformFlushLogs(logState_);
-          
+LOG_FLUSH()
+
 #else
-          // TODO rethink these macros maybe, at least the panic
+
+#define DEBUG_PANIC(format, ...)
 #define DEBUG_ASSERTF(expression, format, ...)
 #define DEBUG_ASSERT(expression)
-#define DEBUG_PANIC(format, ...)
+
 #endif
-          
+
+#if GAME_SLOW || GAME_INTERNAL
+
+#define DEBUG_ASSERTF(expression, format, ...) if (!(expression)) { \
+LOG_ERROR("Assertion failed at %s:%d (%s)\n", __FILE__, __LINE__, __func__); \
+DEBUG_PANIC(format, ##__VA_ARGS__); }
+#define DEBUG_ASSERT(expression) DEBUG_ASSERTF(expression, "")
+
+#endif
