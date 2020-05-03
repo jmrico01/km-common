@@ -3,7 +3,8 @@
 #include "km_defines.h"
 #include "km_memory.h"
 
-#define C_ARRAY_LENGTH(cArray) (sizeof(cArray) / sizeof(cArray[0]))
+// https://stackoverflow.com/questions/4415524/common-array-length-macro-for-c
+#define C_ARRAY_LENGTH(x) ((sizeof(x)/sizeof(0[x])) / ((size_t)(!(sizeof(x) % sizeof(0[x])))))
 
 const uint64 HASHKEY_MAX_LENGTH = 64;
 
@@ -89,6 +90,7 @@ struct FixedArray
 };
 
 // TODO Assignment (=) of DynamicArray shallow-copies their members. Override the operator, probably
+// OMG please don't do this ^   get rid of the whole RAII-ness of this thing ASAP, it's so annoying
 template <typename T, typename Allocator = StandardAllocator>
 struct DynamicArray // TODO figure out where allocator will go
 {
