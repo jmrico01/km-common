@@ -8,7 +8,7 @@
 
 template <typename Allocator>
 KmkvItem<Allocator>::KmkvItem()
-    : keywordTag(), type(KmkvItemType::NONE)
+: keywordTag(), type(KmkvItemType::NONE)
 {
 }
 
@@ -17,24 +17,24 @@ KmkvItem<Allocator>& KmkvItem<Allocator>::operator=(const KmkvItem<Allocator>& o
 {
     keywordTag = other.keywordTag;
     type = other.type;
-
+    
     // TODO fix this allocator-passing madness
     switch (other.type) {
-    case KmkvItemType::NONE: {
-    } break;
-    case KmkvItemType::STRING: {
-        dynamicStringPtr = defaultAllocator_.template New<DynamicArray<char>>();
-        DEBUG_ASSERT(dynamicStringPtr);
-        new (dynamicStringPtr) DynamicArray<char>(other.dynamicStringPtr->ToArray());
-    } break;
-    case KmkvItemType::KMKV: {
-        hashTablePtr = defaultAllocator_.template New<HashTable<KmkvItem<Allocator>, Allocator>>();
-        DEBUG_ASSERT(hashTablePtr);
-        new (hashTablePtr) HashTable<KmkvItem<Allocator>, Allocator>();
-        *hashTablePtr = *other.hashTablePtr;
-    } break;
+        case KmkvItemType::NONE: {
+        } break;
+        case KmkvItemType::STRING: {
+            dynamicStringPtr = defaultAllocator_.template New<DynamicArray<char>>();
+            DEBUG_ASSERT(dynamicStringPtr);
+            new (dynamicStringPtr) DynamicArray<char>(other.dynamicStringPtr->ToArray());
+        } break;
+        case KmkvItemType::KMKV: {
+            hashTablePtr = defaultAllocator_.template New<HashTable<KmkvItem<Allocator>, Allocator>>();
+            DEBUG_ASSERT(hashTablePtr);
+            new (hashTablePtr) HashTable<KmkvItem<Allocator>, Allocator>();
+            *hashTablePtr = *other.hashTablePtr;
+        } break;
     }
-
+    
     return *this;
 }
 
@@ -43,22 +43,22 @@ KmkvItem<Allocator>::~KmkvItem()
 {
     // TODO fix this allocator-passing madness
     switch (type) {
-    case KmkvItemType::NONE: {
-    } break;
-    case KmkvItemType::STRING: {
-        dynamicStringPtr->~DynamicArray();
-        defaultAllocator_.Free(dynamicStringPtr);
-    } break;
-    case KmkvItemType::KMKV: {
-        hashTablePtr->~HashTable();
-        defaultAllocator_.Free(hashTablePtr);
-    } break;
+        case KmkvItemType::NONE: {
+        } break;
+        case KmkvItemType::STRING: {
+            dynamicStringPtr->~DynamicArray();
+            defaultAllocator_.Free(dynamicStringPtr);
+        } break;
+        case KmkvItemType::KMKV: {
+            hashTablePtr->~HashTable();
+            defaultAllocator_.Free(hashTablePtr);
+        } break;
     }
 }
 
 template <typename Allocator>
 DynamicArray<char, Allocator>* GetKmkvItemStrValue(
-    HashTable<KmkvItem<Allocator>, Allocator>& kmkv, const HashKey& itemKey)
+                                                   HashTable<KmkvItem<Allocator>, Allocator>& kmkv, const HashKey& itemKey)
 {
     const KmkvItem<Allocator>* itemValuePtr = kmkv.GetValue(itemKey);
     if (itemValuePtr == nullptr) {
@@ -72,14 +72,14 @@ DynamicArray<char, Allocator>* GetKmkvItemStrValue(
 
 template <typename Allocator>
 const DynamicArray<char, Allocator>* GetKmkvItemStrValue(
-    const HashTable<KmkvItem<Allocator>, Allocator>& kmkv, const HashKey& itemKey)
+                                                         const HashTable<KmkvItem<Allocator>, Allocator>& kmkv, const HashKey& itemKey)
 {
     return GetKmkvItemStrValue(const_cast<HashTable<KmkvItem<Allocator>>&>(kmkv), itemKey);
 }
 
 template <typename Allocator>
 HashTable<KmkvItem<Allocator>>* GetKmkvItemObjValue(
-    HashTable<KmkvItem<Allocator>, Allocator>& kmkv, const HashKey& itemKey)
+                                                    HashTable<KmkvItem<Allocator>, Allocator>& kmkv, const HashKey& itemKey)
 {
     const KmkvItem<Allocator>* itemValuePtr = kmkv.GetValue(itemKey);
     if (itemValuePtr == nullptr) {
@@ -92,20 +92,20 @@ HashTable<KmkvItem<Allocator>>* GetKmkvItemObjValue(
 }
 
 template <typename Allocator>
-const DynamicArray<char, Allocator>* GetKmkvItemObjValue(
-    const HashTable<KmkvItem<Allocator>, Allocator>& kmkv, const HashKey& itemKey)
+const DynamicArray<char, Allocator>* GetKmkvItemObjValue(const HashTable<KmkvItem<Allocator>, Allocator>& kmkv,
+                                                         const HashKey& itemKey)
 {
     return GetKmkvItemObjValue(const_cast<HashTable<KmkvItem<Allocator>>&>(kmkv), itemKey);
 }
 
 template <uint64 KEYWORD_SIZE, typename Allocator>
 int ReadNextKeywordValue(const Array<char>& string,
-    FixedArray<char, KEYWORD_SIZE>* outKeyword, DynamicArray<char, Allocator>* outValue)
+                         FixedArray<char, KEYWORD_SIZE>* outKeyword, DynamicArray<char, Allocator>* outValue)
 {
     if (string.size == 0 || string[0] == '\0') {
         return 0;
     }
-
+    
     int i = 0;
     outKeyword->Clear();
     while (i < (int)string.size && !IsWhitespace(string[i])) {
@@ -115,11 +115,11 @@ int ReadNextKeywordValue(const Array<char>& string,
         }
         outKeyword->Append(string[i++]);
     }
-
-    if (i < (int)string.size && IsWhitespace(string[i])) {
+    
+    while (i < (int)string.size && string[i] == ' ') {
         i++;
     }
-
+    
     outValue->Clear();
     bool bracketValue = false;
     while (i < (int)string.size) {
@@ -134,14 +134,10 @@ int ReadNextKeywordValue(const Array<char>& string,
             bracketValue = true;
             break;
         }
-        if (outValue->size == 0 && IsWhitespace(string[i])) {
-            i++;
-            continue;
-        }
-
+        
         outValue->Append(string[i++]);
     }
-
+    
     if (bracketValue) {
         int bracketDepth = 1;
         bool prevNewline = false;
@@ -169,26 +165,26 @@ int ReadNextKeywordValue(const Array<char>& string,
                 i++;
                 continue;
             }
-
+            
             outValue->Append(string[i++]);
         }
-
+        
         if (!bracketMatched) {
             LOG_ERROR("Value bracket unmatched pair for keyword %.*s\n",
-                (int)outKeyword->size, outKeyword->data);
+                      (int)outKeyword->size, outKeyword->data);
             return -1;
         }
     }
-
+    
     // Trim trailing whitespace
     while (outValue->size > 0 && IsWhitespace((*outValue)[outValue->size - 1])) {
         outValue->RemoveLast();
     }
-
+    
     while (i < (int)string.size && IsWhitespace(string[i])) {
         i++;
     }
-
+    
     return i;
 }
 
@@ -209,7 +205,7 @@ internal bool LoadKmkvRecursive(Array<char> string, HashTable<KmkvItem<Allocator
         }
         string.size -= read;
         string.data += read;
-
+        
         DynamicArray<char> keywordTag;
         bool keywordHasTag = false;
         uint64 keywordTagInd = 0;
@@ -236,7 +232,7 @@ internal bool LoadKmkvRecursive(Array<char> string, HashTable<KmkvItem<Allocator
             }
             if (bracketMatched && keywordTagInd != keyword.size - 1) {
                 LOG_ERROR("found characters after kmkv keyword tag bracket, keyword %.*s\n",
-                    (int)keyword.size, keyword.data);
+                          (int)keyword.size, keyword.data);
                 return false;
             }
         }
@@ -244,7 +240,7 @@ internal bool LoadKmkvRecursive(Array<char> string, HashTable<KmkvItem<Allocator
         if (keywordHasTag) {
             keywordArray = keywordArray.SliceTo(keywordArray.size - keywordTag.size - 2);
         }
-
+        
         if (outKmkv->GetValue(keywordArray)) {
             LOG_ERROR("kmkv duplicate keyword: %.*s\n", (int)keywordArray.size, keywordArray.data);
             return false;
@@ -252,7 +248,7 @@ internal bool LoadKmkvRecursive(Array<char> string, HashTable<KmkvItem<Allocator
         KmkvItem<Allocator>* newItem = outKmkv->Add(keywordArray);
         DEBUG_ASSERT(newItem);
         newItem->keywordTag = keywordTag;
-
+        
         if (StringEquals(newItem->keywordTag.ToArray(), ToString("kmkv"))) {
             newItem->type = KmkvItemType::KMKV;
             // "placement new" - allocate with custom allocator, but still call constructor
@@ -277,13 +273,13 @@ internal bool LoadKmkvRecursive(Array<char> string, HashTable<KmkvItem<Allocator
             new (newItem->dynamicStringPtr) DynamicArray<char>(valueBuffer.ToArray());
         }
     }
-
+    
     return true;
 }
 
 template <typename Allocator>
 bool LoadKmkv(const Array<char>& filePath, Allocator* allocator,
-    HashTable<KmkvItem<Allocator>>* outKmkv)
+              HashTable<KmkvItem<Allocator>>* outKmkv)
 {
     Array<uint8> kmkvFile = LoadEntireFile(filePath, allocator);
     if (kmkvFile.data == nullptr) {
@@ -291,11 +287,11 @@ bool LoadKmkv(const Array<char>& filePath, Allocator* allocator,
         return false;
     }
     defer(FreeFile(kmkvFile, allocator));
-
+    
     Array<char> fileString;
     fileString.size = kmkvFile.size;
     fileString.data = (char*)kmkvFile.data;
-
+    
     return LoadKmkv(fileString, outKmkv);
 }
 
@@ -308,60 +304,60 @@ bool LoadKmkv(const Array<char>& kmkvString, HashTable<KmkvItem<Allocator>, Allo
 
 template <typename Allocator>
 internal bool KmkvToStringRecursive(const HashTable<KmkvItem<Allocator>>& kmkv, int indentSpaces,
-    DynamicArray<char, Allocator>* outString)
+                                    DynamicArray<char, Allocator>* outString)
 {
     for (uint64 i = 0; i < kmkv.capacity; i++) {
         const HashKey& key = kmkv.pairs[i].key;
         if (key.string.size == 0) {
             continue;
         }
-
+        
         for (int i = 0; i < indentSpaces; i++) outString->Append(' ');
         outString->Append(key.string.ToArray());
         const KmkvItem<Allocator>& item = kmkv.pairs[i].value;
         switch (item.type) {
-        case KmkvItemType::NONE: {
-        } break;
-        case KmkvItemType::STRING: {
-            if (item.keywordTag.size > 0) {
-                outString->Append('{');
-                outString->Append(item.keywordTag.ToArray());
-                outString->Append('}');
-            }
-            outString->Append(' ');
-
-            bool inlineValue = item.dynamicStringPtr->IndexOf('\n') == item.dynamicStringPtr->size;
-            if (!inlineValue) {
-                outString->Append('{');
-                outString->Append('\n');
-            }
-            outString->Append(item.dynamicStringPtr->ToArray());
-            if (!inlineValue) {
-                outString->Append('\n');
+            case KmkvItemType::NONE: {
+            } break;
+            case KmkvItemType::STRING: {
+                if (item.keywordTag.size > 0) {
+                    outString->Append('{');
+                    outString->Append(item.keywordTag.ToArray());
+                    outString->Append('}');
+                }
+                outString->Append(' ');
+                
+                bool inlineValue = item.dynamicStringPtr->IndexOf('\n') == item.dynamicStringPtr->size;
+                if (!inlineValue) {
+                    outString->Append('{');
+                    outString->Append('\n');
+                }
+                outString->Append(item.dynamicStringPtr->ToArray());
+                if (!inlineValue) {
+                    outString->Append('\n');
+                    for (int i = 0; i < indentSpaces; i++) outString->Append(' ');
+                    outString->Append('}');
+                }
+            } break;
+            case KmkvItemType::KMKV: {
+                outString->Append(ToString("{kmkv} {\n"));
+                if (!KmkvToStringRecursive(*item.hashTablePtr, indentSpaces + 4, outString)) {
+                    LOG_ERROR("Failed to convert nested kmkv to string, key %.*s\n",
+                              (int)key.string.size, key.string.data);
+                }
                 for (int i = 0; i < indentSpaces; i++) outString->Append(' ');
                 outString->Append('}');
-            }
-        } break;
-        case KmkvItemType::KMKV: {
-            outString->Append(ToString("{kmkv} {\n"));
-            if (!KmkvToStringRecursive(*item.hashTablePtr, indentSpaces + 4, outString)) {
-                LOG_ERROR("Failed to convert nested kmkv to string, key %.*s\n",
-                    (int)key.string.size, key.string.data);
-            }
-            for (int i = 0; i < indentSpaces; i++) outString->Append(' ');
-            outString->Append('}');
-        } break;
+            } break;
         }
-
+        
         outString->Append('\n');
     }
-
+    
     return true;
 }
 
 template <typename Allocator>
 bool KmkvToString(const HashTable<KmkvItem<Allocator>>& kmkv,
-    DynamicArray<char, Allocator>* outString)
+                  DynamicArray<char, Allocator>* outString)
 {
     return KmkvToStringRecursive(kmkv, 0, outString);
 }
@@ -372,99 +368,99 @@ void AddAndMaybeEscapeJson(const Array<char>& string, DynamicArray<char, Allocat
 {
     for (uint64 i = 0; i < string.size; i++) {
         switch (string[i]) {
-        case '\b': {
-            outJson->Append('\\');
-            outJson->Append('b');
-        } break;
-        case '\f': {
-            outJson->Append('\\');
-            outJson->Append('f');
-        } break;
-        case '\n': {
-            outJson->Append('\\');
-            outJson->Append('n');
-        } break;
-        case '\r': {
-            outJson->Append('\\');
-            outJson->Append('r');
-        } break;
-        case '\t': {
-            outJson->Append('\\');
-            outJson->Append('t');
-        } break;
-        case '\"': {
-            outJson->Append('\\');
-            outJson->Append('"');
-        } break;
-        case '\\': {
-            outJson->Append('\\');
-            outJson->Append('\\');
-        } break;
-        default: {
-            outJson->Append(string[i]);
-        } break;
+            case '\b': {
+                outJson->Append('\\');
+                outJson->Append('b');
+            } break;
+            case '\f': {
+                outJson->Append('\\');
+                outJson->Append('f');
+            } break;
+            case '\n': {
+                outJson->Append('\\');
+                outJson->Append('n');
+            } break;
+            case '\r': {
+                outJson->Append('\\');
+                outJson->Append('r');
+            } break;
+            case '\t': {
+                outJson->Append('\\');
+                outJson->Append('t');
+            } break;
+            case '\"': {
+                outJson->Append('\\');
+                outJson->Append('"');
+            } break;
+            case '\\': {
+                outJson->Append('\\');
+                outJson->Append('\\');
+            } break;
+            default: {
+                outJson->Append(string[i]);
+            } break;
         }
     }
 }
 
 template <typename Allocator>
 internal bool KmkvToJsonRecursive(const HashTable<KmkvItem<Allocator>>& kmkv,
-    DynamicArray<char, Allocator>* outJson)
+                                  DynamicArray<char, Allocator>* outJson)
 {
     for (uint64 i = 0; i < kmkv.capacity; i++) {
         const HashKey& key = kmkv.pairs[i].key;
         if (key.string.size == 0) {
             continue;
         }
-
+        
         outJson->Append('"');
         outJson->Append(key.string.ToArray());
         outJson->Append('"');
         outJson->Append(':');
         const KmkvItem<Allocator>& item = kmkv.pairs[i].value;
         switch (item.type) {
-        case KmkvItemType::NONE: {
-        } break;
-        case KmkvItemType::STRING: {
-            if (StringEquals(item.keywordTag.ToArray(), ToString("array"))) {
-                outJson->Append('[');
-                Array<char> arrayString = item.dynamicStringPtr->ToArray();
-                bool atLeastOne = arrayString.size > 0;
-                while (arrayString.size > 0) {
-                    Array<char> split = NextSplitElement(&arrayString, ',');
-                    split = TrimWhitespace(split);
-                    outJson->Append('"');
-                    AddAndMaybeEscapeJson(split, outJson);
-                    outJson->Append('"');
-                    outJson->Append(',');
+            case KmkvItemType::NONE: {
+            } break;
+            case KmkvItemType::STRING: {
+                if (StringEquals(item.keywordTag.ToArray(), ToString("array"))) {
+                    outJson->Append('[');
+                    Array<char> arrayString = item.dynamicStringPtr->ToArray();
+                    bool atLeastOne = arrayString.size > 0;
+                    while (arrayString.size > 0) {
+                        Array<char> split = NextSplitElement(&arrayString, ',');
+                        split = TrimWhitespace(split);
+                        outJson->Append('"');
+                        AddAndMaybeEscapeJson(split, outJson);
+                        outJson->Append('"');
+                        outJson->Append(',');
+                    }
+                    if (atLeastOne) {
+                        outJson->RemoveLast();
+                    }
+                    outJson->Append(']');
                 }
-                if (atLeastOne) {
-                    outJson->RemoveLast();
+                else {
+                    outJson->Append('"');
+                    AddAndMaybeEscapeJson(item.dynamicStringPtr->ToArray(), outJson);
+                    outJson->Append('"');
                 }
-                outJson->Append(']');
-            }
-            else {
-                outJson->Append('"');
-                AddAndMaybeEscapeJson(item.dynamicStringPtr->ToArray(), outJson);
-                outJson->Append('"');
-            }
-        } break;
-        case KmkvItemType::KMKV: {
-            outJson->Append('{');
-            if (!KmkvToJsonRecursive(*item.hashTablePtr, outJson)) {
-                return false;
-            }
-            outJson->Append('}');
-        } break;
+            } break;
+            case KmkvItemType::KMKV: {
+                outJson->Append('{');
+                if (!KmkvToJsonRecursive(*item.hashTablePtr, outJson)) {
+                    return false;
+                }
+                outJson->Append('}');
+            } break;
         }
-
+        
         outJson->Append(',');
     }
-
+    
     if ((*outJson)[outJson->size - 1] == ',') {
         outJson->RemoveLast();
     }
-
+    
     return true;
 }
 
@@ -476,13 +472,13 @@ bool KmkvToJson(const HashTable<KmkvItem<Allocator>>& kmkv, DynamicArray<char, A
         return false;
     }
     outJson->Append('}');
-
+    
     return true;
 }
 
 template <typename Allocator>
 internal bool JsonToKmkvRecursive(const cJSON* json, Allocator* allocator,
-    HashTable<KmkvItem<Allocator>>* outKmkv)
+                                  HashTable<KmkvItem<Allocator>>* outKmkv)
 {
     const cJSON* child = json->child;
     while (child != NULL && child->string != NULL) {
@@ -508,7 +504,7 @@ internal bool JsonToKmkvRecursive(const cJSON* json, Allocator* allocator,
             item->dynamicStringPtr = allocator->template New<DynamicArray<char, Allocator>>();
             DEBUG_ASSERT(item->dynamicStringPtr != nullptr);
             new (item->dynamicStringPtr) DynamicArray<char, Allocator>();
-
+            
             const cJSON* arrayItem;
             cJSON_ArrayForEach(arrayItem, child) {
                 if (!cJSON_IsString(arrayItem)) {
@@ -527,16 +523,16 @@ internal bool JsonToKmkvRecursive(const cJSON* json, Allocator* allocator,
             LOG_ERROR("Unhandled JSON type: %d\n", child->type);
             return false;
         }
-
+        
         child = child->next;
     }
-
+    
     return true;
 }
 
 template <typename Allocator>
 bool JsonToKmkv(const Array<char>& jsonString, Allocator* allocator,
-    HashTable<KmkvItem<Allocator>>* outKmkv)
+                HashTable<KmkvItem<Allocator>>* outKmkv)
 {
     const char* jsonCString = ToCString(jsonString, allocator);
     cJSON* json = cJSON_Parse(jsonCString);
@@ -548,7 +544,7 @@ bool JsonToKmkv(const Array<char>& jsonString, Allocator* allocator,
         return false;
     }
     defer(cJSON_Delete(json));
-
+    
     if (!cJSON_IsObject(json)) {
         LOG_ERROR("Top-level json not object type: %s\n", jsonCString);
         return false;
