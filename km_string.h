@@ -2,11 +2,6 @@
 
 #include "km_lib.h"
 
-// TODO I could be even more strict/precise about const in these functions.
-// Typically, when I say "const Array<char>", I really mean "Array<const char>".
-// Not sure how pedantic that will get, and how much it will affect readability of usage code.
-
-// TODO maybe this?
 using string = Array<char>;
 using const_string = const Array<const char>;
 
@@ -15,7 +10,9 @@ using const_string = const Array<const char>;
 
 uint64 StringLength(const char* str);
 
-Array<char> ToString(const char* cString);
+const_string ToString(const char* cString);
+string ToNonConstString(const_string constString); // TODO(patio): wish I didn't have to do this, maybe?
+
 #ifdef KM_CPP_STD
 #include <string>
 Array<char> ToString(const std::string& string);
@@ -23,19 +20,18 @@ Array<char> ToString(const std::string& string);
 template <uint64 S>
 void InitFromCString(FixedArray<char, S>* string, const char* cString);
 template <typename Allocator>
-char* ToCString(const Array<char>& string, Allocator* allocator);
+char* ToCString(const_string string, Allocator* allocator);
 
-int StringCompare(const Array<char>& str1, const Array<char>& str2);
-bool StringEquals(const Array<char>& str1, const Array<char>& str2);
+int StringCompare(const_string str1, const_string str2);
+bool StringEquals(const_string str1, const_string str2);
 
-void CatStrings(
-                size_t sourceACount, const char* sourceA,
+void CatStrings(size_t sourceACount, const char* sourceA,
                 size_t sourceBCount, const char* sourceB,
                 size_t destCount, char* dest);
 void StringCat(const char* str1, const char* str2, char* dest, uint64 destMaxLength);
 
-uint64 SubstringSearch(const Array<char>& string, const Array<char>& substring);
-bool StringContains(const Array<char>& string, const Array<char>& substring);
+uint64 SubstringSearch(const_string string, const_string substring);
+bool StringContains(const_string string, const_string substring);
 
 bool IsNewline(char c);
 bool IsWhitespace(char c);
@@ -52,7 +48,7 @@ Array<char> NextSplitElement(Array<char>* string, char separator);
 void ReadElementInSplitString(Array<char>* element, Array<char>* next, char separator);
 
 template <typename Allocator>
-Array<char> AllocPrintf(Allocator* allocator, const char* format, ...);
+string AllocPrintf(Allocator* allocator, const char* format, ...);
 template <typename Allocator>
 DynamicArray<char, Allocator> AllocPrintf(const char* format, ...);
 

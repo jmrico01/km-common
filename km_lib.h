@@ -60,6 +60,8 @@ struct Array
     inline T& operator[](uint64 index);
     inline const T& operator[](int index) const;
     inline const T& operator[](uint64 index) const;
+
+    operator const Array<const T>() const { return *((const Array<const T>*)this); }
 };
 
 template <typename T, uint64 S>
@@ -68,12 +70,14 @@ struct FixedArray
     uint64 size;
     T data[S];
 
-    Array<T> ToArray() const; // NOTE modifying this array's size won't affect the FixedArray size
+    Array<T> ToArray() const; // NOTE modifying the returned array's size won't affect the FixedArray size
+    const Array<const T> ToConstArray() const;
     void FromArray(const Array<T>& array);
 
     T* Append();
     T* Append(const T& element);
     void Append(const Array<T>& array);
+    void Append(const Array<const T>& array);
     void RemoveLast();
     void Clear();
     uint64 IndexOf(const T& value);
@@ -107,8 +111,7 @@ struct DynamicArray // TODO figure out where allocator will go
     DynamicArray(const DynamicArray<T>& other) = delete;
     ~DynamicArray();
 
-    Array<T>& ToArray();
-    const Array<T>& ToArray() const;
+    Array<T>& ToArray() const; // TODO(patio): hmm, I don't like this
     void FromArray(const Array<T>& array);
 
     T* Append();
@@ -134,10 +137,10 @@ struct HashKey
     FixedArray<char, HASHKEY_MAX_LENGTH> string;
 
     HashKey();
-    HashKey(const Array<char>& str);
+    HashKey(const Array<const char> str); // TODO move somewhere else to use const_string?
     HashKey(const char* str);
 
-    bool WriteString(const Array<char>& str);
+    bool WriteString(const Array<const char> str);
     bool WriteString(const char* str);
 };
 

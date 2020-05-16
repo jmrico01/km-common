@@ -183,11 +183,19 @@ inline const T& Array<T>::operator[](uint64 index) const
 template <typename T, uint64 S>
 Array<T> FixedArray<T, S>::ToArray() const
 {
-    Array<T> array = {
+    return {
         .size = size,
         .data = (T*)data
     };
-    return array;
+}
+
+template <typename T, uint64 S>
+const Array<const T> FixedArray<T, S>::ToConstArray() const
+{
+    return {
+        .size = size,
+        .data = (T*)data
+    };
 }
 
 template <typename T, uint64 S>
@@ -215,6 +223,12 @@ T* FixedArray<T, S>::Append(const T& element)
 
 template <typename T, uint64 S>
 void FixedArray<T, S>::Append(const Array<T>& array)
+{
+    Append(array);
+}
+
+template <typename T, uint64 S>
+void FixedArray<T, S>::Append(const Array<const T>& array)
 {
     uint64 newSize = size + array.size;
     DEBUG_ASSERTF(newSize <= S, "size %" PRIu64 ", S %" PRIu64 ", array.size %" PRIu64 "\n",
@@ -383,13 +397,7 @@ DynamicArray<T, Allocator>::~DynamicArray()
 }
 
 template <typename T, typename Allocator>
-Array<T>& DynamicArray<T, Allocator>::ToArray()
-{
-    return *((Array<T>*)this);
-}
-
-template <typename T, typename Allocator>
-const Array<T>& DynamicArray<T, Allocator>::ToArray() const
+Array<T>& DynamicArray<T, Allocator>::ToArray() const
 {
     return *((Array<T>*)this);
 }
@@ -526,7 +534,7 @@ HashKey::HashKey()
 {
 }
 
-HashKey::HashKey(const Array<char>& str)
+HashKey::HashKey(const Array<const char> str)
 {
     WriteString(str);
 }
@@ -536,7 +544,7 @@ HashKey::HashKey(const char* str)
     WriteString(str);
 }
 
-bool HashKey::WriteString(const Array<char>& str)
+bool HashKey::WriteString(const Array<const char> str)
 {
     if (str.size > HASHKEY_MAX_LENGTH) {
         return false;
