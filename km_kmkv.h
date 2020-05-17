@@ -2,6 +2,7 @@
 
 #include "km_lib.h"
 #include "km_memory.h"
+#include "km_string.h"
 
 enum class KmkvItemType
 {
@@ -25,25 +26,25 @@ struct KmkvItem
     ~KmkvItem();
 };
 
-int ReadNextKeywordValue(const Array<char>& string, Array<char>* outKeyword, Array<char>* outValue);
+int ReadNextKeywordValue(const_string str, string* outKeyword, string* outValue);
 
 // NOTE(patio) deprecated! just use the way simpler API
 template <uint64 KEYWORD_SIZE, typename Allocator>
-int ReadNextKeywordValue(const Array<char>& string,
+int ReadNextKeywordValue(const Array<char>& str,
                          FixedArray<char, KEYWORD_SIZE>* outKeyword, DynamicArray<char, Allocator>* outValue);
 
 template <typename Allocator>
-DynamicArray<char, Allocator>* GetKmkvItemStrValue(
-                                                   HashTable<KmkvItem<Allocator>, Allocator>& kmkv, const HashKey& itemKey);
+DynamicArray<char, Allocator>* GetKmkvItemStrValue(HashTable<KmkvItem<Allocator>, Allocator>& kmkv,
+                                                   const HashKey& itemKey);
 template <typename Allocator>
-const DynamicArray<char, Allocator>* GetKmkvItemStrValue(
-                                                         const HashTable<KmkvItem<Allocator>, Allocator>& kmkv, const HashKey& itemKey);
+const DynamicArray<char, Allocator>* GetKmkvItemStrValue(const HashTable<KmkvItem<Allocator>, Allocator>& kmkv,
+                                                         const HashKey& itemKey);
 template <typename Allocator>
-HashTable<KmkvItem<Allocator>>* GetKmkvItemObjValue(
-                                                    HashTable<KmkvItem<Allocator>, Allocator>& kmkv, const HashKey& itemKey);
+HashTable<KmkvItem<Allocator>>* GetKmkvItemObjValue(HashTable<KmkvItem<Allocator>, Allocator>& kmkv,
+                                                    const HashKey& itemKey);
 template <typename Allocator>
-const HashTable<KmkvItem<Allocator>>* GetKmkvItemObjValue(
-                                                          const HashTable<KmkvItem<Allocator>, Allocator>& kmkv, const HashKey& itemKey);
+const HashTable<KmkvItem<Allocator>>* GetKmkvItemObjValue(const HashTable<KmkvItem<Allocator>, Allocator>& kmkv,
+                                                          const HashKey& itemKey);
 
 template <typename Allocator>
 bool LoadKmkv(const Array<char>& filePath, Allocator* allocator,

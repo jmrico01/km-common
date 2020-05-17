@@ -534,7 +534,7 @@ HashKey::HashKey()
 {
 }
 
-HashKey::HashKey(const Array<const char> str)
+HashKey::HashKey(const_string str)
 {
     WriteString(str);
 }
@@ -544,7 +544,7 @@ HashKey::HashKey(const char* str)
     WriteString(str);
 }
 
-bool HashKey::WriteString(const Array<const char> str)
+bool HashKey::WriteString(const_string str)
 {
     if (str.size > HASHKEY_MAX_LENGTH) {
         return false;
@@ -557,10 +557,7 @@ bool HashKey::WriteString(const Array<const char> str)
 
 bool HashKey::WriteString(const char* str)
 {
-    Array<char> stringArray;
-    stringArray.data = (char*)str;
-    stringArray.size = StringLength(str);
-    return WriteString(stringArray);
+    return WriteString(ToString(str));
 }
 
 template <typename V, typename Allocator>

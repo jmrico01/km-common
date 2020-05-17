@@ -98,16 +98,16 @@ const DynamicArray<char, Allocator>* GetKmkvItemObjValue(const HashTable<KmkvIte
     return GetKmkvItemObjValue(const_cast<HashTable<KmkvItem<Allocator>>&>(kmkv), itemKey);
 }
 
-int ReadNextKeywordValue(const Array<char>& string, Array<char>* outKeyword, Array<char>* outValue)
+int ReadNextKeywordValue(const_string str, string* outKeyword, string* outValue)
 {
-    if (string.size == 0 || string[0] == '\0') {
+    if (str.size == 0 || str[0] == '\0') {
         return 0;
     }
 
     int i = 0;
     outKeyword->size = 0;
-    outKeyword->data = string.data;
-    while (i < (int)string.size && !IsWhitespace(string[i])) {
+    outKeyword->data = (char*)str.data;
+    while (i < (int)str.size && !IsWhitespace(str[i])) {
         outKeyword->size++;
         i++;
     }
@@ -115,20 +115,20 @@ int ReadNextKeywordValue(const Array<char>& string, Array<char>* outKeyword, Arr
         return -1;
     }
 
-    while (i < (int)string.size && string[i] == ' ') {
+    while (i < (int)str.size && str[i] == ' ') {
         i++;
     }
 
     outValue->size = 0;
-    outValue->data = string.data + i;
+    outValue->data = (char*)str.data + i;
     bool bracketValue = false;
-    while (i < (int)string.size) {
-        if (IsNewline(string[i])) {
+    while (i < (int)str.size) {
+        if (IsNewline(str[i])) {
             // End of inline value
             i++;
             break;
         }
-        if (string[i] == '{' && outValue->size == 0) {
+        if (str[i] == '{' && outValue->size == 0) {
             // Start of bracket value, read in separately
             i++;
             bracketValue = true;
@@ -143,11 +143,11 @@ int ReadNextKeywordValue(const Array<char>& string, Array<char>* outKeyword, Arr
         int bracketDepth = 1;
         bool prevNewline = false;
         bool bracketMatched = false;
-        while (i < (int)string.size) {
-            if (string[i] == '{' && (i + 1 < (int)string.size) && IsNewline(string[i + 1])) {
+        while (i < (int)str.size) {
+            if (str[i] == '{' && (i + 1 < (int)str.size) && IsNewline(str[i + 1])) {
                 bracketDepth++;
             }
-            else if (string[i] == '}' && prevNewline) {
+            else if (str[i] == '}' && prevNewline) {
                 bracketDepth--;
                 if (bracketDepth == 0) {
                     i++;
@@ -155,16 +155,16 @@ int ReadNextKeywordValue(const Array<char>& string, Array<char>* outKeyword, Arr
                     break;
                 }
             }
-            if (IsNewline(string[i])) {
+            if (IsNewline(str[i])) {
                 prevNewline = true;
             }
-            else if (prevNewline && !IsWhitespace(string[i])) {
+            else if (prevNewline && !IsWhitespace(str[i])) {
                 prevNewline = false;
             }
-            if (outValue->size == 0 && IsWhitespace(string[i])) {
+            if (outValue->size == 0 && IsWhitespace(str[i])) {
                 // Gobble starting whitespace
                 i++;
-                outValue->data = string.data + i;
+                outValue->data = (char*)str.data + i;
                 continue;
             }
 
@@ -184,7 +184,7 @@ int ReadNextKeywordValue(const Array<char>& string, Array<char>* outKeyword, Arr
         outValue->size--;
     }
 
-    while (i < (int)string.size && IsWhitespace(string[i])) {
+    while (i < (int)str.size && IsWhitespace(str[i])) {
         i++;
     }
 
@@ -192,11 +192,11 @@ int ReadNextKeywordValue(const Array<char>& string, Array<char>* outKeyword, Arr
 }
 
 template <uint64 KEYWORD_SIZE, typename Allocator>
-int ReadNextKeywordValue(const Array<char>& string,
+int ReadNextKeywordValue(const Array<char>& str,
                          FixedArray<char, KEYWORD_SIZE>* outKeyword, DynamicArray<char, Allocator>* outValue)
 {
-    Array<char> keyword, value;
-    int result = ReadNextKeywordValue(string, &keyword, &value);
+    string keyword, value;
+    int result = ReadNextKeywordValue(str, &keyword, &value);
     if (result > 0) {
         outKeyword->FromArray(keyword);
         outValue->FromArray(value);
@@ -205,13 +205,13 @@ int ReadNextKeywordValue(const Array<char>& string,
 }
 
 template <typename Allocator>
-internal bool LoadKmkvRecursive(Array<char> string, HashTable<KmkvItem<Allocator>, Allocator>* outKmkv)
+internal bool LoadKmkvRecursive(string str, HashTable<KmkvItem<Allocator>, Allocator>* outKmkv)
 {
     const uint64 KEYWORD_MAX_LENGTH = 32;
     FixedArray<char, KEYWORD_MAX_LENGTH> keyword;
     DynamicArray<char, Allocator> valueBuffer(outKmkv->allocator);
     while (true) {
-        int read = ReadNextKeywordValue(string, &keyword, &valueBuffer);
+        int read = ReadNextKeywordValue(str, &keyword, &valueBuffer);
         if (read < 0) {
             LOG_ERROR("kmkv file keyword/value error\n");
             return false;
@@ -219,8 +219,8 @@ internal bool LoadKmkvRecursive(Array<char> string, HashTable<KmkvItem<Allocator
         else if (read == 0) {
             break;
         }
-        string.size -= read;
-        string.data += read;
+        str.size -= read;
+        str.data += read;
 
         DynamicArray<char> keywordTag;
         bool keywordHasTag = false;
@@ -252,7 +252,7 @@ internal bool LoadKmkvRecursive(Array<char> string, HashTable<KmkvItem<Allocator
                 return false;
             }
         }
-        Array<char> keywordArray = keyword.ToArray();
+        string keywordArray = keyword.ToArray();
         if (keywordHasTag) {
             keywordArray = keywordArray.SliceTo(keywordArray.size - keywordTag.size - 2);
         }

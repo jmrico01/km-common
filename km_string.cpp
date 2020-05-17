@@ -9,23 +9,15 @@
 
 #include "km_math.h"
 
-uint64 StringLength(const char* string)
+uint64 StringLength(const char* str)
 {
     uint64 length = 0;
-    while (*(string++) != '\0') {
+    while (*(str++) != '\0') {
         length++;
     }
 
     return length;
 }
-
-/*Array<char> ToString(const char* cString)
-{
-    return {
-        .size = StringLength(cString),
-        .data = (char*)cString
-    };
-}*/
 
 const_string ToString(const char* cString)
 {
@@ -44,11 +36,11 @@ string ToNonConstString(const_string constString)
 }
 
 #ifdef KM_CPP_STD
-Array<char> ToString(const std::string& string)
+string ToString(const std::string& str)
 {
     return {
-        .size = string.size(),
-        .data = (char*)string.c_str()
+        .size = str.size(),
+        .data = (char*)str.c_str()
     };
 }
 #endif
@@ -65,51 +57,15 @@ void InitFromCString(FixedArray<char, S>* string, const char* cString)
 }
 
 template <typename Allocator>
-char* ToCString(const_string string, Allocator* allocator)
+char* ToCString(const_string str, Allocator* allocator)
 {
-    char* cString = (char*)allocator->Allocate(string.size + 1);
+    char* cString = (char*)allocator->Allocate(str.size + 1);
     if (!cString) {
         return nullptr;
     }
-    MemCopy(cString, string.data, string.size * sizeof(char));
-    cString[string.size] = '\0';
+    MemCopy(cString, str.data, str.size * sizeof(char));
+    cString[str.size] = '\0';
     return cString;
-}
-
-int StringCompare(const Array<char>& str1, const Array<char>& str2)
-{
-    uint64 minSize = MinUInt64(str1.size, str2.size);
-    for (uint64 i = 0; i < minSize; i++) {
-        if (str1[i] < str2[i]) {
-            return -1;
-        }
-        else if (str1[i] > str2[i]) {
-            return 1;
-        }
-    }
-
-    if (str1.size < str2.size) {
-        return -1;
-    }
-    else if (str1.size > str2.size) {
-        return 1;
-    }
-    return 0;
-}
-
-bool StringEquals(const Array<char>& str1, const Array<char>& str2)
-{
-    if (str1.size != str2.size) {
-        return false;
-    }
-
-    for (uint64 i = 0; i < str1.size; i++) {
-        if (str1[i] != str2[i]) {
-            return false;
-        }
-    }
-
-    return true;
 }
 
 int StringCompare(const_string str1, const_string str2)
@@ -170,17 +126,18 @@ void StringCat(const char* str1, const char* str2, char* dest, uint64 destMaxLen
     CatStrings(StringLength(str1), str1, StringLength(str2), str2, destMaxLength, dest);
 }
 
-uint64 SubstringSearch(const_string string, const_string substring)
+// TODO slow, naive implementation, but perfectly fine for small strings
+uint64 SubstringSearch(const_string str, const_string substr)
 {
-    for (uint64 i = 0; i < string.size; i++) {
+    for (uint64 i = 0; i < str.size; i++) {
         bool match = true;
-        for (uint64 j = 0; j < substring.size; j++) {
+        for (uint64 j = 0; j < substr.size; j++) {
             uint64 ind = i + j;
-            if (ind >= string.size) {
+            if (ind >= str.size) {
                 match = false;
                 break;
             }
-            if (string[i + j] != substring[j]) {
+            if (str[i + j] != substr[j]) {
                 match = false;
                 break;
             }
@@ -190,12 +147,12 @@ uint64 SubstringSearch(const_string string, const_string substring)
         }
     }
 
-    return string.size;
+    return str.size;
 }
 
-bool StringContains(const_string string, const_string substring)
+bool StringContains(const_string str, const_string substr)
 {
-    return SubstringSearch(string, substring) != string.size;
+    return SubstringSearch(str, substr) != str.size;
 }
 
 inline bool IsNewline(char c)
@@ -214,35 +171,33 @@ inline bool IsAlphanumeric(char c)
     return isalnum(c) != 0;
 }
 
-Array<char> TrimWhitespace(const Array<char>& string)
+string TrimWhitespace(const_string str)
 {
     uint64 start = 0;
-    while (start < string.size && IsWhitespace(string[start])) {
+    while (start < str.size && IsWhitespace(str[start])) {
         start++;
     }
-    uint64 end = string.size;
-    while (end > 0 && IsWhitespace(string[end - 1])) {
+    uint64 end = str.size;
+    while (end > 0 && IsWhitespace(str[end - 1])) {
         end--;
     }
 
-    return { .size = end - start, .data = string.data + start };
+    return string {
+        .size = end - start,
+        .data = (char*)str.data + start
+    };
 }
 
-void TrimWhitespace(const Array<char>& string, Array<char>* trimmed)
+bool StringToIntBase10(const_string str, int* intBase10)
 {
-    *trimmed = TrimWhitespace(string);
-}
-
-bool StringToIntBase10(const Array<char>& string, int* intBase10)
-{
-    if (string.size == 0) {
+    if (str.size == 0) {
         return false;
     }
 
     bool negative = false;
     *intBase10 = 0;
-    for (uint64 i = 0; i < string.size; i++) {
-        char c = string[i];
+    for (uint64 i = 0; i < str.size; i++) {
+        char c = str[i];
         if (i == 0 && c == '-') {
             negative = true;
             continue;
@@ -259,51 +214,47 @@ bool StringToIntBase10(const Array<char>& string, int* intBase10)
     return true;
 }
 
-bool StringToUInt64Base10(const Array<char>& string, uint64* intBase10)
+bool StringToUInt64Base10(const_string str, uint64* intBase10)
 {
-    if (string.size == 0) {
+    if (str.size == 0) {
         return false;
     }
 
     *intBase10 = 0;
-    for (uint64 i = 0; i < string.size; i++) {
-        char c = string[i];
+    for (uint64 i = 0; i < str.size; i++) {
+        char c = str[i];
         *intBase10 = (*intBase10) * 10 + (uint64)(c - '0');
     }
 
     return true;
 }
 
-bool StringToFloat32(const Array<char>& string, float32* f)
+bool StringToFloat32(const_string str, float32* f)
 {
     uint64 dotIndex = 0;
-    while (dotIndex < string.size && string[dotIndex] != '.') {
+    while (dotIndex < str.size && str[dotIndex] != '.') {
         dotIndex++;
     }
 
     int whole = 0;
     float32 wholeNegative = false;
     if (dotIndex > 0) {
-        Array<char> stringWhole;
-        stringWhole.size = dotIndex;
-        stringWhole.data = string.data;
+        const_string stringWhole = str.SliceTo(dotIndex);
         if (!StringToIntBase10(stringWhole, &whole)) {
             return false;
         }
-        wholeNegative = string[0] == '-';
-    }
-    int frac = 0;
-    Array<char> fracString;
-    fracString.size = string.size - dotIndex - 1;
-    if (fracString.size > 0) {
-        fracString.data = string.data + dotIndex + 1;
-        if (!StringToIntBase10(fracString, &frac)) {
-            return false;
-        }
+        wholeNegative = str[0] == '-';
     }
 
     *f = (float32)whole;
-    if (fracString.size > 0) {
+
+    int frac = 0;
+    if (dotIndex + 1 < str.size) {
+        const_string fracString = str.SliceFrom(dotIndex + 1);
+        if (!StringToIntBase10(fracString, &frac)) {
+            return false;
+        }
+
         frac = wholeNegative ? -frac : frac;
         float32 fractional = (float32)frac;
         for (uint64 i = 0; i < fracString.size; i++) {
@@ -315,54 +266,40 @@ bool StringToFloat32(const Array<char>& string, float32* f)
 }
 
 template <typename Allocator>
-void StringSplit(const Array<char>& string, char c, DynamicArray<Array<char>, Allocator>* outSplit)
+void StringSplit(const_string str, char c, DynamicArray<string, Allocator>* outSplit)
 {
     outSplit->Clear();
 
-    Array<char> str = string;
+    string s = str;
     while (true) {
-        uint64 next = str.FindFirst(c);
-        if (next == str.size) {
-            outSplit->Append(str);
+        uint64 next = s.FindFirst(c);
+        if (next == s.size) {
+            outSplit->Append(s);
             break;
         }
-        uint64 newSize = str.size - next - 1;
-        str.size = next;
-        outSplit->Append(str);
+        uint64 newSize = s.size - next - 1;
+        s.size = next;
+        outSplit->Append(s);
 
-        str.data += next + 1;
-        str.size = newSize;
+        s.data += next + 1;
+        s.size = newSize;
     }
 }
 
-Array<char> NextSplitElement(Array<char>* string, char separator)
+string NextSplitElement(string* str, char separator)
 {
-    Array<char> next = *string;
-    for (uint64 i = 0; i < string->size; i++) {
-        if ((*string)[i] == separator) {
+    string next = *str;
+    for (uint64 i = 0; i < str->size; i++) {
+        if ((*str)[i] == separator) {
             next.size = i;
-            string->size--;
+            str->size--;
             break;
         }
     }
 
-    string->size -= next.size;
-    string->data += next.size + 1;
+    str->size -= next.size;
+    str->data += next.size + 1;
     return next;
-}
-
-void ReadElementInSplitString(Array<char>* element, Array<char>* next, char separator)
-{
-    for (uint64 i = 0; i < element->size; i++) {
-        if ((*element)[i] == separator) {
-            next->data = element->data + i + 1;
-            next->size = element->size - i - 1;
-            element->size = i;
-            return;
-        }
-    }
-
-    next->size = 0;
 }
 
 template <typename Allocator>
@@ -391,7 +328,7 @@ template <typename Allocator>
 char* AllocPrintfDynamicArrayCallback(const char* buffer, void* user, int length)
 {
     DynamicArray<char, Allocator>* result = *((DynamicArray<char, Allocator>*)user);
-    result->Append(Array<char> { .size = length, .data = buffer });
+    result->Append(string { .size = length, .data = buffer });
     return buffer;
 }
 
@@ -418,36 +355,34 @@ DynamicArray<char, Allocator> AllocPrintf(const char* format, ...)
 }
 
 template <typename T>
-bool StringToElementArray(const Array<char>& string, char sep, bool trimElements,
-                          bool (*conversionFunction)(const Array<char>&, T*),
+bool StringToElementArray(const_string str, char sep, bool trimElements,
+                          bool (*conversionFunction)(const_string, T*),
                           int maxElements, T* array, int* numElements)
 {
     int elementInd = 0;
-    Array<char> element = string;
+    string s = ToNonConstString(str);
     while (true) {
-        Array<char> next;
-        ReadElementInSplitString(&element, &next, sep);
-        Array<char> trimmed;
+        string next = NextSplitElement(&s, sep);
+        string trimmed;
         if (trimElements) {
-            TrimWhitespace(element, &trimmed);
+            trimmed = TrimWhitespace(next);
         }
         else {
-            trimmed = element;
+            trimmed = next;
         }
         if (!conversionFunction(trimmed, array + elementInd)) {
             LOG_ERROR("String to array failed for %.*s in element %d conversion\n",
-                      string.size, string.data, elementInd);
+                      str.size, str.data, elementInd);
             return false;
         }
 
-        if (next.size == 0) {
+        if (s.size == 0) {
             break;
         }
-        element = next;
         elementInd++;
         if (elementInd >= maxElements) {
             LOG_ERROR("String to array failed in %.*s (too many elements, max %d)\n",
-                      string.size, string.data, maxElements);
+                      str.size, str.data, maxElements);
             return false;
         }
     }
@@ -458,7 +393,7 @@ bool StringToElementArray(const Array<char>& string, char sep, bool trimElements
 
 #ifdef KM_UTF8
 template <typename Allocator>
-bool Utf8ToUppercase(const Array<char>& utf8String, DynamicArray<char, Allocator>* outString)
+bool Utf8ToUppercase(const_string utf8String, DynamicArray<char, Allocator>* outString)
 {
     FixedArray<char, 4> utf8Buffer;
     uint64 i = 0;

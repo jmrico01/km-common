@@ -303,7 +303,7 @@ FixedArray<char, PATH_MAX_LENGTH> GetExecutablePath(Allocator* allocator)
     return path;
 }
 
-bool RunCommand(const Array<char>& command)
+bool RunCommand(const_string command)
 {
     char* commandCString = ToCString(command, &defaultAllocator_);
 
