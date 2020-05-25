@@ -22,7 +22,7 @@ internal FILETIME Win32GetLastWriteTime(const char* filePath)
 #endif
 
 template <typename Allocator>
-Array<uint8> LoadEntireFile(const Array<char>& filePath, Allocator* allocator)
+Array<uint8> LoadEntireFile(const_string filePath, Allocator* allocator)
 {
     Array<uint8> file = { .size = 0, .data = nullptr };
     char* filePathC = ToCString(filePath, allocator);
@@ -32,7 +32,7 @@ Array<uint8> LoadEntireFile(const Array<char>& filePath, Allocator* allocator)
 
 #if GAME_WIN32
     HANDLE hFile = CreateFile(filePathC, GENERIC_READ, FILE_SHARE_READ,
-        NULL, OPEN_EXISTING, NULL, NULL);
+                              NULL, OPEN_EXISTING, NULL, NULL);
     if (hFile == INVALID_HANDLE_VALUE) {
         return file;
     }
@@ -95,7 +95,7 @@ void FreeFile(const Array<uint8>& outFile, Allocator* allocator)
     allocator->Free(outFile.data);
 }
 
-bool WriteFile(const Array<char>& filePath, const Array<uint8>& data, bool append)
+bool WriteFile(const_string filePath, const Array<uint8>& data, bool append)
 {
     char* cFilePath = ToCString(filePath, &defaultAllocator_);
     defer(defaultAllocator_.Free(cFilePath));
@@ -147,7 +147,7 @@ bool WriteFile(const Array<char>& filePath, const Array<uint8>& data, bool appen
 #endif
 }
 
-bool DeleteFile(const Array<char>& filePath, bool errorIfNotFound)
+bool DeleteFile(const_string filePath, bool errorIfNotFound)
 {
     char* cFilePath = ToCString(filePath, &defaultAllocator_);
     defer(defaultAllocator_.Free(cFilePath));
@@ -180,7 +180,7 @@ bool DeleteFile(const Array<char>& filePath, bool errorIfNotFound)
     return true;
 }
 
-bool FileExists(const Array<char>& filePath)
+bool FileExists(const_string filePath)
 {
     char* cFilePath = ToCString(filePath, &defaultAllocator_);
     defer(defaultAllocator_.Free(cFilePath));
@@ -201,7 +201,7 @@ bool FileExists(const Array<char>& filePath)
 #endif
 }
 
-bool FileChangedSinceLastCall(const Array<char>& filePath)
+bool FileChangedSinceLastCall(const_string filePath)
 {
     char* cFilePath = ToCString(filePath, &defaultAllocator_);
     defer(defaultAllocator_.Free(cFilePath));
@@ -223,7 +223,7 @@ bool FileChangedSinceLastCall(const Array<char>& filePath)
     }
 
     if (lastWriteTime.dwLowDateTime != value->dwLowDateTime
-    || lastWriteTime.dwHighDateTime != value->dwHighDateTime) {
+        || lastWriteTime.dwHighDateTime != value->dwHighDateTime) {
         *value = lastWriteTime;
         return true;
     }
@@ -237,7 +237,7 @@ bool FileChangedSinceLastCall(const Array<char>& filePath)
 #endif
 }
 
-bool CreateDirRecursive(const Array<char>& dir)
+bool CreateDirRecursive(const_string dir)
 {
     FixedArray<char, PATH_MAX_LENGTH> path;
     uint64 nextSlash = 0;
@@ -303,7 +303,7 @@ FixedArray<char, PATH_MAX_LENGTH> GetExecutablePath(Allocator* allocator)
     return path;
 }
 
-bool RunCommand(const Array<char>& command)
+bool RunCommand(const_string command)
 {
     char* commandCString = ToCString(command, &defaultAllocator_);
 

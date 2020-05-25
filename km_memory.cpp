@@ -23,16 +23,16 @@ void StandardAllocator::Free(void* memory)
 }
 
 LinearAllocator::LinearAllocator(uint64 capacity, void* data)
-    : used(0), capacity(capacity), data(data)
+: used(0), capacity(capacity), data(data)
 {
 }
 
 void* LinearAllocator::Allocate(uint64 size)
 {
-    if ((capacity - used) < size) {
+    if (used + size > capacity) {
         return nullptr;
     }
-
+    
     uint64 start = used;
     used += size;
     return (void*)((uint8*)data + start);
@@ -45,7 +45,11 @@ template <typename T> T* LinearAllocator::New()
 
 void* LinearAllocator::ReAllocate(void* memory, uint64 size)
 {
-    return Allocate(size); // TODO lmao so lazy
+    void* newData = Allocate(size);
+    // TODO extremely hacky way of copying memory, but otherwise, we would have had to know the previous alloc size
+    uint64 diff = (uint64)newData - (uint64)memory;
+    MemCopy(newData, memory, MinUInt64(diff, size));
+    return newData;
 }
 
 void LinearAllocator::Free(void* memory)

@@ -4,20 +4,20 @@
 #include "km_string.h"
 
 template <typename Allocator>
-Array<uint8> LoadEntireFile(const Array<char>& filePath, Allocator* allocator);
+Array<uint8> LoadEntireFile(const_string filePath, Allocator* allocator);
 template <typename Allocator>
 void FreeFile(const Array<uint8>& outFile, Allocator* allocator);
 
-bool WriteFile(const Array<char>& filePath, const Array<uint8>& data, bool append);
+bool WriteFile(const_string filePath, const Array<uint8>& data, bool append);
 
-bool DeleteFile(const Array<char>& filePath, bool errorIfNotFound);
+bool DeleteFile(const_string filePath, bool errorIfNotFound);
 
-bool FileExists(const Array<char>& filePath);
-bool FileChangedSinceLastCall(const Array<char>& filePath);
+bool FileExists(const_string filePath);
+bool FileChangedSinceLastCall(const_string filePath);
 
-bool CreateDirRecursive(const Array<char>& dir);
+bool CreateDirRecursive(const_string dir);
 
 template <typename Allocator>
 FixedArray<char, PATH_MAX_LENGTH> GetExecutablePath(Allocator* allocator);
 
-bool RunCommand(const Array<char>& command);
+bool RunCommand(const_string command);
