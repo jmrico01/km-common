@@ -117,6 +117,7 @@ struct DynamicArray // TODO figure out where allocator will go
     T* Append();
     T* Append(const T& element);
     void Append(const Array<T>& array);
+    void Append(const Array<const T>& array);
     void RemoveLast();
     void Clear();
     uint64 IndexOf(const T& value);
@@ -134,9 +135,10 @@ struct DynamicArray // TODO figure out where allocator will go
 
 struct HashKey
 {
-    FixedArray<char, HASHKEY_MAX_LENGTH> string;
+    FixedArray<char, HASHKEY_MAX_LENGTH> s;
 
     HashKey();
+    HashKey(Array<char> str); // TODO move somewhere else to use const_string?
     HashKey(const Array<const char> str); // TODO move somewhere else to use const_string?
     HashKey(const char* str);
 

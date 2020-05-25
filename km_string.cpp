@@ -270,7 +270,7 @@ void StringSplit(const_string str, char c, DynamicArray<string, Allocator>* outS
 {
     outSplit->Clear();
 
-    string s = str;
+    string s = ToNonConstString(str);
     while (true) {
         uint64 next = s.FindFirst(c);
         if (next == s.size) {

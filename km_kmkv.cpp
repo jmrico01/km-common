@@ -324,12 +324,12 @@ internal bool KmkvToStringRecursive(const HashTable<KmkvItem<Allocator>>& kmkv, 
 {
     for (uint64 i = 0; i < kmkv.capacity; i++) {
         const HashKey& key = kmkv.pairs[i].key;
-        if (key.string.size == 0) {
+        if (key.s.size == 0) {
             continue;
         }
 
         for (int j = 0; j < indentSpaces; j++) outString->Append(' ');
-        outString->Append(key.string.ToArray());
+        outString->Append(key.s.ToArray());
         const KmkvItem<Allocator>& item = kmkv.pairs[i].value;
         switch (item.type) {
             case KmkvItemType::NONE: {
@@ -358,7 +358,7 @@ internal bool KmkvToStringRecursive(const HashTable<KmkvItem<Allocator>>& kmkv, 
                 outString->Append(ToString("{kmkv} {\n"));
                 if (!KmkvToStringRecursive(*item.hashTablePtr, indentSpaces + 4, outString)) {
                     LOG_ERROR("Failed to convert nested kmkv to string, key %.*s\n",
-                              (int)key.string.size, key.string.data);
+                              (int)key.s.size, key.s.data);
                 }
                 for (int j = 0; j < indentSpaces; j++) outString->Append(' ');
                 outString->Append('}');
@@ -425,12 +425,12 @@ internal bool KmkvToJsonRecursive(const HashTable<KmkvItem<Allocator>>& kmkv,
 {
     for (uint64 i = 0; i < kmkv.capacity; i++) {
         const HashKey& key = kmkv.pairs[i].key;
-        if (key.string.size == 0) {
+        if (key.s.size == 0) {
             continue;
         }
 
         outJson->Append('"');
-        outJson->Append(key.string.ToArray());
+        outJson->Append(key.s.ToArray());
         outJson->Append('"');
         outJson->Append(':');
         const KmkvItem<Allocator>& item = kmkv.pairs[i].value;
@@ -513,7 +513,7 @@ internal bool JsonToKmkvRecursive(const cJSON* json, Allocator* allocator,
             item->type = KmkvItemType::STRING;
             item->dynamicStringPtr = allocator->template New<DynamicArray<char, Allocator>>();
             DEBUG_ASSERT(item->dynamicStringPtr != nullptr);
-            new (item->dynamicStringPtr) DynamicArray<char, Allocator>(ToString(child->valuestring));
+            new (item->dynamicStringPtr) DynamicArray<char, Allocator>(ToNonConstString(ToString(child->valuestring)));
         }
         else if (cJSON_IsArray(child)) {
             item->type = KmkvItemType::STRING;

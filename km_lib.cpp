@@ -70,20 +70,20 @@ uint64 KeyHash(const HashKey& key)
 {
     uint64 hash = 5381;
 
-    for (uint64 i = 0; i < key.string.size; i++) {
-        hash = ((hash << 5) + hash) + key.string[i];
+    for (uint64 i = 0; i < key.s.size; i++) {
+        hash = ((hash << 5) + hash) + key.s[i];
     }
 
     return hash;
 }
 bool KeyCompare(const HashKey& key1, const HashKey& key2)
 {
-    if (key1.string.size != key2.string.size) {
+    if (key1.s.size != key2.s.size) {
         return false;
     }
 
-    for (uint64 i = 0; i < key1.string.size; i++) {
-        if (key1.string[i] != key2.string[i]) {
+    for (uint64 i = 0; i < key1.s.size; i++) {
+        if (key1.s[i] != key2.s[i]) {
             return false;
         }
     }
@@ -224,7 +224,7 @@ T* FixedArray<T, S>::Append(const T& element)
 template <typename T, uint64 S>
 void FixedArray<T, S>::Append(const Array<T>& array)
 {
-    Append(array);
+    Append((const Array<const T>)array);
 }
 
 template <typename T, uint64 S>
@@ -438,6 +438,12 @@ T* DynamicArray<T, Allocator>::Append(const T& element)
 template <typename T, typename Allocator>
 void DynamicArray<T, Allocator>::Append(const Array<T>& array)
 {
+    Append((const Array<const T>)array);
+}
+
+template <typename T, typename Allocator>
+void DynamicArray<T, Allocator>::Append(const Array<const T>& array)
+{
     uint64 newSize = size + array.size;
     if (capacity < newSize) {
         // TODO round to nearest power of 2?
@@ -534,6 +540,11 @@ HashKey::HashKey()
 {
 }
 
+HashKey::HashKey(string str)
+{
+    WriteString(str);
+}
+
 HashKey::HashKey(const_string str)
 {
     WriteString(str);
@@ -550,8 +561,8 @@ bool HashKey::WriteString(const_string str)
         return false;
     }
 
-    MemCopy(string.data, str.data, str.size * sizeof(char));
-    string.size = str.size;
+    MemCopy(s.data, str.data, str.size * sizeof(char));
+    s.size = str.size;
     return true;
 }
 
@@ -583,7 +594,7 @@ HashTable<V, Allocator>::HashTable(uint64 capacity, Allocator* allocator)
     }
 
     for (uint64 i = 0; i < capacity; i++) {
-        pairs[i].key.string.size = 0;
+        pairs[i].key.s.size = 0;
         new (&pairs[i]) KeyValuePair<V>();
     }
 
@@ -667,7 +678,7 @@ template <typename V, typename Allocator>
 void HashTable<V, Allocator>::Clear()
 {
     for (uint64 i = 0; i < capacity; i++) {
-        pairs[i].key.string.size = 0;
+        pairs[i].key.s.size = 0;
     }
 }
 
@@ -700,7 +711,7 @@ KeyValuePair<V>* HashTable<V, Allocator>::GetPair(const HashKey& key) const
         if (KeyCompare(pair->key, key)) {
             return pair;
         }
-        if (pair->key.string.size == 0) {
+        if (pair->key.s.size == 0) {
             return nullptr;
         }
     }
@@ -714,7 +725,7 @@ KeyValuePair<V>* HashTable<V, Allocator>::GetFreeSlot(const HashKey& key)
     uint64 hashInd = KeyHash(key) % capacity;
     for (uint64 i = 0; i < capacity; i++) {
         KeyValuePair<V>* pair = pairs + hashInd + i;
-        if (pair->key.string.size == 0) {
+        if (pair->key.s.size == 0) {
             return pair;
         }
     }
