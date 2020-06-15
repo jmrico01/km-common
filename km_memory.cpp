@@ -22,6 +22,11 @@ void StandardAllocator::Free(void* memory)
     free(memory);
 }
 
+LinearAllocator::LinearAllocator(const Array<uint8>& memory)
+: used(0), capacity(memory.size), data(memory.data)
+{
+}
+
 LinearAllocator::LinearAllocator(uint64 capacity, void* data)
 : used(0), capacity(capacity), data(data)
 {
@@ -32,7 +37,7 @@ void* LinearAllocator::Allocate(uint64 size)
     if (used + size > capacity) {
         return nullptr;
     }
-    
+
     uint64 start = used;
     used += size;
     return (void*)((uint8*)data + start);

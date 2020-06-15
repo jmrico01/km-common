@@ -1,6 +1,7 @@
 #pragma once
 
 #include "km_defines.h"
+#include "km_lib.h"
 
 struct StandardAllocator
 {
@@ -22,15 +23,16 @@ struct LinearAllocator
     uint64 used;
     uint64 capacity;
     void* data;
-    
+
+    LinearAllocator(const Array<uint8>& memory);
     LinearAllocator(uint64 capacity, void* data);
-    
+
     void* Allocate(uint64 size);
     template <typename T> T* New();
     void* ReAllocate(void* memory, uint64 size);
     void Free(void* memory);
     void Clear();
-    
+
     LinearAllocatorState SaveState();
     void LoadState(const LinearAllocatorState& state);
 };
