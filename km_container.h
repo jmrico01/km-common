@@ -18,7 +18,7 @@ struct DynamicArray
     DynamicArray(uint64 capacity, Allocator* allocator = nullptr);
     DynamicArray(const DynamicArray<T>& other) = delete;
 
-    Array<T> ToArray() const; // TODO(patio): hmm, I don't like this
+    Array<T> ToArray() const;
     void FromArray(const Array<T>& array);
 
     T* Append();

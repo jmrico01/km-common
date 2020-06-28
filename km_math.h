@@ -621,6 +621,11 @@ inline Vec3 Normalize(Vec3 v)
     return v / Mag(v);
 }
 
+Vec3 CalculateTriangleUnitNormal(Vec3 v1, Vec3 v2, Vec3 v3)
+{
+    return Normalize(Cross(v2 - v1, v3 - v1));
+}
+
 // -------------------- Vec4 --------------------
 inline Vec4 operator-(Vec4 v)
 {
