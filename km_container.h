@@ -4,6 +4,9 @@
 #include "km_defines.h"
 #include "km_memory.h"
 
+// NOTE: Adding things to this container might invalidate pointers to elements.
+// Subtle case that confused me: getting pointers through Append 3 times in a row, and only afterward
+// setting the 3 values through the pointers. Some values would be unset if a resize was triggered.
 template <typename T, typename Allocator = StandardAllocator>
 struct DynamicArray
 {

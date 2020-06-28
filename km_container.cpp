@@ -3,7 +3,6 @@
 #include <cstring> // NOTE don't remove this! Otherwise MSVC freaks out about placement new
 
 static const uint64 DYNAMIC_ARRAY_START_CAPACITY = 16;
-static const uint64 DYNAMIC_QUEUE_START_CAPACITY = 16;
 
 // TODO pretty high, maybe do lower
 static const uint64 HASH_TABLE_START_CAPACITY = 89;
@@ -145,7 +144,7 @@ template <typename T, typename Allocator>
 void DynamicArray<T, Allocator>::Append(const Array<const T>& array)
 {
     uint64 newSize = size + array.size;
-    if (capacity < newSize) {
+    if (newSize > capacity) {
         // TODO round to nearest power of 2?
         DEBUG_ASSERT(UpdateCapacity(newSize));
     }
