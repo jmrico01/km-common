@@ -1,11 +1,39 @@
 #include "km_container.h"
 
+#include <cstring> // NOTE don't remove this! Otherwise MSVC freaks out about placement new
+
 static const uint64 DYNAMIC_ARRAY_START_CAPACITY = 16;
 static const uint64 DYNAMIC_QUEUE_START_CAPACITY = 16;
 
 // TODO pretty high, maybe do lower
 static const uint64 HASH_TABLE_START_CAPACITY = 89;
 static const float32 HASH_TABLE_MAX_SIZE_TO_CAPACITY = 0.7f;
+
+// Very simple string hash ( djb2 hash, source http://www.cse.yorku.ca/~oz/hash.html )
+uint64 KeyHash(const HashKey& key)
+{
+    uint64 hash = 5381;
+
+    for (uint64 i = 0; i < key.s.size; i++) {
+        hash = ((hash << 5) + hash) + key.s[i];
+    }
+
+    return hash;
+}
+bool KeyCompare(const HashKey& key1, const HashKey& key2)
+{
+    if (key1.s.size != key2.s.size) {
+        return false;
+    }
+
+    for (uint64 i = 0; i < key1.s.size; i++) {
+        if (key1.s[i] != key2.s[i]) {
+            return false;
+        }
+    }
+
+    return true;
+}
 
 // TODO dumb wrappers until I figure out a better way to do this at compile time
 template <typename Allocator>
@@ -69,16 +97,7 @@ DynamicArray<T, Allocator>::DynamicArray(uint64 capacity, Allocator* allocator)
 }
 
 template <typename T, typename Allocator>
-DynamicArray<T, Allocator>::~DynamicArray()
-{
-    for (uint64 i = 0; i < size; i++) {
-        data[i].~T();
-    }
-    FreeOrUseDefautIfNull(allocator, data);
-}
-
-template <typename T, typename Allocator>
-Array<T>& DynamicArray<T, Allocator>::ToArray() const
+Array<T> DynamicArray<T, Allocator>::ToArray() const
 {
     return *((Array<T>*)this);
 }
@@ -238,7 +257,7 @@ HashKey::HashKey(const char* str)
 
 bool HashKey::WriteString(const_string str)
 {
-    if (str.size > HASHKEY_MAX_LENGTH) {
+    if (str.size > MAX_LENGTH) {
         return false;
     }
 

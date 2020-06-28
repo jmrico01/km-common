@@ -1,7 +1,7 @@
 #pragma once
 
+#include "km_array.h"
 #include "km_container.h"
-#include "km_lib.h"
 
 using string = Array<char>;
 using const_string = const Array<const char>;
@@ -39,9 +39,9 @@ bool StringToIntBase10(const_string str, int* intBase10);
 bool StringToUInt64Base10(const_string str, uint64* intBase10);
 bool StringToFloat32(const_string str, float32* f);
 
+string NextSplitElement(string* str, char separator);
 template <typename Allocator>
 void StringSplit(const_string str, char c, DynamicArray<string, Allocator>* outSplit);
-string NextSplitElement(string* str, char separator);
 
 template <typename T>
 bool StringToElementArray(const_string str, char sep, bool trimElements,

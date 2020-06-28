@@ -90,9 +90,9 @@ Array<uint8> LoadEntireFile(const_string filePath, Allocator* allocator)
 
 
 template <typename Allocator>
-void FreeFile(const Array<uint8>& outFile, Allocator* allocator)
+void FreeFile(Array<uint8> file, Allocator* allocator)
 {
-    allocator->Free(outFile.data);
+    allocator->Free(file.data);
 }
 
 bool WriteFile(const_string filePath, const Array<uint8>& data, bool append)

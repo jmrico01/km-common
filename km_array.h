@@ -2,42 +2,6 @@
 
 #include "km_defines.h"
 
-// https://stackoverflow.com/questions/4415524/common-array-length-macro-for-c
-#define C_ARRAY_LENGTH(x) ((sizeof(x)/sizeof(0[x])) / ((size_t)(!(sizeof(x) % sizeof(0[x])))))
-
-const uint64 HASHKEY_MAX_LENGTH = 64;
-
-const uint8  UINT8_MAX_VALUE  = 0xff;
-const uint16 UINT16_MAX_VALUE = 0xffff;
-const uint32 UINT32_MAX_VALUE = 0xffffffff;
-const uint64 UINT64_MAX_VALUE = 0xffffffffffffffff;
-
-int ToIntOrTruncate(uint64 n);
-uint32 SafeTruncateUInt64(uint64 value);
-
-void MemCopy(void* dst, const void* src, uint64 numBytes);
-void MemMove(void* dst, const void* src, uint64 numBytes);
-void MemSet(void* dst, char value, uint64 numBytes);
-int  MemComp(const void* mem1, const void* mem2, uint64 numBytes);
-
-// defer C++11 implementation, source: https://www.gingerbill.org/article/2015/08/19/defer-in-cpp/
-template <typename F>
-struct _DeferFunctionObject {
-    F function;
-    _DeferFunctionObject(F function) : function(function) {}
-    ~_DeferFunctionObject() { function(); }
-};
-
-template <typename F>
-_DeferFunctionObject<F> _DeferFunction(F function) {
-    return _DeferFunctionObject<F>(function);
-}
-
-#define DEFER_1(x, y) x##y
-#define DEFER_2(x, y) DEFER_1(x, y)
-#define DEFER_3(x)    DEFER_2(x, __COUNTER__)
-#define defer(code)   auto DEFER_3(_defer_) = _DeferFunction([&](){code;})
-
 template <typename T>
 struct Array
 {

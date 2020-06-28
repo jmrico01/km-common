@@ -1,10 +1,7 @@
-#include "km_lib.h"
+#include "km_array.h"
 
-#include <cstring> // memcpy is here... no idea why
-#include <limits.h>
-
-#include "km_math.h"
-#include "km_string.h"
+// #include <limits.h>
+// #include "km_string.h"
 
 internal inline void ArrayBoundsCheck(int index, uint64 size)
 {
@@ -16,72 +13,6 @@ internal inline void ArrayBoundsCheck(uint64 index, uint64 size)
 {
     DEBUG_ASSERTF(index < size,
                   "Array bounds check failed: index %" PRIu64 ", size %" PRIu64 "\n", index, size);
-}
-
-int ToIntOrTruncate(uint64 n)
-{
-    if (n > INT_MAX) {
-        return INT_MAX;
-    }
-    else {
-        return (int)n;
-    }
-}
-
-inline uint32 SafeTruncateUInt64(uint64 value)
-{
-    DEBUG_ASSERT(value <= 0xFFFFFFFF);
-    uint32 result = (uint32)value;
-    return result;
-}
-
-void MemCopy(void* dst, const void* src, uint64 numBytes)
-{
-    DEBUG_ASSERT(((const char*)dst + numBytes <= src)
-                 || (dst >= (const char*)src + numBytes));
-    // TODO maybe see about reimplementing this? would be informative
-    memcpy(dst, src, numBytes);
-}
-
-void MemMove(void* dst, const void* src, uint64 numBytes)
-{
-    memmove(dst, src, numBytes);
-}
-
-void MemSet(void* dst, char value, uint64 numBytes)
-{
-    memset(dst, value, numBytes);
-}
-
-int MemComp(const void* mem1, const void* mem2, uint64 numBytes)
-{
-    return memcmp(mem1, mem2, numBytes);
-}
-
-// Very simple string hash ( djb2 hash, source http://www.cse.yorku.ca/~oz/hash.html )
-uint64 KeyHash(const HashKey& key)
-{
-    uint64 hash = 5381;
-
-    for (uint64 i = 0; i < key.s.size; i++) {
-        hash = ((hash << 5) + hash) + key.s[i];
-    }
-
-    return hash;
-}
-bool KeyCompare(const HashKey& key1, const HashKey& key2)
-{
-    if (key1.s.size != key2.s.size) {
-        return false;
-    }
-
-    for (uint64 i = 0; i < key1.s.size; i++) {
-        if (key1.s[i] != key2.s[i]) {
-            return false;
-        }
-    }
-
-    return true;
 }
 
 template <typename T> const Array<T> Array<T>::empty = { .size = 0, .data = nullptr };

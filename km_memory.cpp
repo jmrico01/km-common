@@ -2,6 +2,29 @@
 
 #include <stdlib.h>
 
+void MemCopy(void* dst, const void* src, uint64 numBytes)
+{
+    DEBUG_ASSERT(((const char*)dst + numBytes <= src)
+                 || (dst >= (const char*)src + numBytes));
+    // TODO maybe see about reimplementing this? would be informative
+    memcpy(dst, src, numBytes);
+}
+
+void MemMove(void* dst, const void* src, uint64 numBytes)
+{
+    memmove(dst, src, numBytes);
+}
+
+void MemSet(void* dst, char value, uint64 numBytes)
+{
+    memset(dst, value, numBytes);
+}
+
+int MemComp(const void* mem1, const void* mem2, uint64 numBytes)
+{
+    return memcmp(mem1, mem2, numBytes);
+}
+
 void* StandardAllocator::Allocate(uint64 size)
 {
     return malloc(size);

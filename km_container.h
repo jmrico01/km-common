@@ -1,13 +1,11 @@
 #pragma once
 
+#include "km_array.h"
 #include "km_defines.h"
-#include "km_lib.h"
 #include "km_memory.h"
 
-// TODO Assignment (=) of DynamicArray shallow-copies their members. Override the operator, probably
-// OMG please don't do this ^   get rid of the whole RAII-ness of this thing ASAP, it's so annoying
 template <typename T, typename Allocator = StandardAllocator>
-struct DynamicArray // TODO figure out where allocator will go
+struct DynamicArray
 {
     uint64 size;
     T* data;
@@ -19,9 +17,8 @@ struct DynamicArray // TODO figure out where allocator will go
     DynamicArray(const Array<T>& array, Allocator* allocator = nullptr);
     DynamicArray(uint64 capacity, Allocator* allocator = nullptr);
     DynamicArray(const DynamicArray<T>& other) = delete;
-    ~DynamicArray();
 
-    Array<T>& ToArray() const; // TODO(patio): hmm, I don't like this
+    Array<T> ToArray() const; // TODO(patio): hmm, I don't like this
     void FromArray(const Array<T>& array);
 
     T* Append();
@@ -45,7 +42,9 @@ struct DynamicArray // TODO figure out where allocator will go
 
 struct HashKey
 {
-    FixedArray<char, HASHKEY_MAX_LENGTH> s;
+    static const uint64 MAX_LENGTH = 64;
+
+    FixedArray<char, MAX_LENGTH> s;
 
     HashKey();
     HashKey(Array<char> str); // TODO move somewhere else to use const_string?

@@ -372,7 +372,7 @@ bool StringToElementArray(const_string str, char sep, bool trimElements,
         }
         if (!conversionFunction(trimmed, array + elementInd)) {
             LOG_ERROR("String to array failed for %.*s in element %d conversion\n",
-                      str.size, str.data, elementInd);
+                      (int)str.size, str.data, elementInd);
             return false;
         }
 
@@ -382,7 +382,7 @@ bool StringToElementArray(const_string str, char sep, bool trimElements,
         elementInd++;
         if (elementInd >= maxElements) {
             LOG_ERROR("String to array failed in %.*s (too many elements, max %d)\n",
-                      str.size, str.data, maxElements);
+                      (int)str.size, str.data, maxElements);
             return false;
         }
     }

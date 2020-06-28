@@ -1,7 +1,12 @@
 #pragma once
 
+#include "km_array.h"
 #include "km_defines.h"
-#include "km_lib.h"
+
+void MemCopy(void* dst, const void* src, uint64 numBytes);
+void MemMove(void* dst, const void* src, uint64 numBytes);
+void MemSet(void* dst, char value, uint64 numBytes);
+int  MemComp(const void* mem1, const void* mem2, uint64 numBytes);
 
 struct StandardAllocator
 {

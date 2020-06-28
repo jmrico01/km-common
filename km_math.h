@@ -53,6 +53,23 @@ inline uint64 ClampUInt64(uint64 a, uint64 min, uint64 max) {
     return MinUInt64(MaxUInt64(a, min), max);
 }
 
+int ToIntOrTruncate(uint64 n)
+{
+    if (n > INT_MAX) {
+        return INT_MAX;
+    }
+    else {
+        return (int)n;
+    }
+}
+
+uint32 SafeTruncateUInt64(uint64 value)
+{
+    DEBUG_ASSERT(value <= 0xFFFFFFFF);
+    uint32 result = (uint32)value;
+    return result;
+}
+
 inline float32 MinFloat32(float32 a, float32 b) {
     return a < b ? a : b;
 }
@@ -61,6 +78,11 @@ inline float32 MaxFloat32(float32 a, float32 b) {
 }
 inline float32 ClampFloat32(float32 a, float32 min, float32 max) {
     return MinFloat32(MaxFloat32(a, min), max);
+}
+
+float32 ModFloat32(float32 n, float32 mod)
+{
+    return (float32)fmod(n, mod);
 }
 
 // TODO quick and dirty round implementation
@@ -920,6 +942,7 @@ inline Vec3 operator*(Quat q, Vec3 v)
 {
     // Treat v as a quaternion with w = 0
     Quat vQuat = { v.x, v.y, v.z, 0.0f };
+    // TODO Quat multiply with baked in w=0 would be faster, obviously
     /*qv.x = q.w*v.x + q.y*v.z - q.z*v.y;
     qv.y = q.w*v.y + q.z*v.x - q.x*v.z;
     qv.z = q.w*v.z + q.x*v.y - q.y*v.x;
@@ -936,11 +959,14 @@ inline Vec3 operator*(Quat q, Vec3 v)
 // Axis should be a unit vector
 Quat QuatFromAngleUnitAxis(float32 angle, Vec3 axis)
 {
+    const float32 cosHalfAngle = cosf(angle / 2.0f);
+    const float32 sinHalfAngle = sinf(angle / 2.0f);
+
     Quat quat;
-    quat.x = axis.x * sinf(angle / 2.0f);
-    quat.y = axis.y * sinf(angle / 2.0f);
-    quat.z = axis.z * sinf(angle / 2.0f);
-    quat.w = cosf(angle / 2.0f);
+    quat.x = axis.x * sinHalfAngle;
+    quat.y = axis.y * sinHalfAngle;
+    quat.z = axis.z * sinHalfAngle;
+    quat.w = cosHalfAngle;
     return quat;
 }
 
