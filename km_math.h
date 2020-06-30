@@ -1020,3 +1020,22 @@ Mat4 UnitQuatToMat4(Quat q)
     result.e[3][3] = 1.0f;
     return result;
 }
+
+Vec3 BarycentricCoordinates(Vec2 p, Vec2 a, Vec2 b, Vec2 c)
+{
+    const Vec2 v0 = b - a;
+    const Vec2 v1 = c - a;
+    const Vec2 v2 = p - a;
+    const float32 d00 = Dot(v0, v0);
+    const float32 d01 = Dot(v0, v1);
+    const float32 d11 = Dot(v1, v1);
+    const float32 d20 = Dot(v2, v0);
+    const float32 d21 = Dot(v2, v1);
+    const float32 denom = d00 * d11 - d01 * d01;
+
+    Vec3 result;
+    result.y = (d11 * d20 - d01 * d21) / denom;
+    result.z = (d00 * d21 - d01 * d20) / denom;
+    result.x = 1.0f - result.y - result.z;
+    return result;
+}
