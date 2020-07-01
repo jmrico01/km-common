@@ -13,6 +13,19 @@ inline int RoundToPowerOfTwo(int n, int powerOfTwo) {
     return (n + powerOfTwo - 1) & -powerOfTwo;
 }
 
+inline uint32 RoundUpToPowerOfTwo(int n)
+{
+    n--;
+    n |= n >> 1;
+    n |= n >> 2;
+    n |= n >> 4;
+    n |= n >> 8;
+    n |= n >> 16;
+    n++;
+
+    return n;
+}
+
 inline int AbsInt(int n) {
     return n >= 0 ? n : -n;
 }
@@ -1021,6 +1034,11 @@ Mat4 UnitQuatToMat4(Quat q)
 }
 
 // Misc, higher level geometry functions
+
+float32 TriangleArea(Vec3 v1, Vec3 v2, Vec3 v3)
+{
+    return Mag(Cross(v3 - v1, v2 - v1)) / 2.0f;
+}
 
 // Returns triangle normal out of the front face, where v1 -> v2 -> v3 are ordered clockwise
 Vec3 CalculateTriangleUnitNormal(Vec3 v1, Vec3 v2, Vec3 v3)
