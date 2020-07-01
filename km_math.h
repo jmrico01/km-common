@@ -638,6 +638,11 @@ inline Vec3 Normalize(Vec3 v)
     return v / Mag(v);
 }
 
+inline Vec3 GetPerpendicular(Vec3 v)
+{
+    return v.z < v.x ? Vec3 { v.y, -v.x, 0.0f } : Vec3 { 0.0f, -v.z, v.y };
+}
+
 // -------------------- Vec4 --------------------
 inline Vec4 operator-(Vec4 v)
 {
@@ -998,12 +1003,19 @@ Quat QuatFromEulerAngles(Vec3 euler)
 
 Quat QuatRotBetweenVectors(Vec3 v1, Vec3 v2)
 {
-    Vec3 axis = Cross(v1, v2);
-    float angle = asinf(Mag(axis) / (Mag(v1) * Mag(v2)));
-    if (axis == Vec3::zero) {
+    float32 dot = Dot(v1, v2);
+    if (dot > 0.99999f) {
         return Quat::one;
     }
+    else if (dot < -0.99999f) {
+        // TODO 180 degree rotation about any perpendicular axis
+        // hardcoded PI_F could be cheaper to calculate some other way
+        const Vec3 axis = Normalize(GetPerpendicular(v1));
+        return QuatFromAngleUnitAxis(PI_F, axis);
+    }
 
+    const Vec3 axis = Cross(v1, v2);
+    const float32 angle = (float32)sqrt(MagSq(v1) * MagSq(v2)) + dot;
     return QuatFromAngleUnitAxis(angle, Normalize(axis));
 }
 
