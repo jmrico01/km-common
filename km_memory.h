@@ -5,7 +5,7 @@
 
 void MemCopy(void* dst, const void* src, uint64 numBytes);
 void MemMove(void* dst, const void* src, uint64 numBytes);
-void MemSet(void* dst, char value, uint64 numBytes);
+void MemSet(void* dst, uint8 value, uint64 numBytes);
 int  MemComp(const void* mem1, const void* mem2, uint64 numBytes);
 
 struct StandardAllocator

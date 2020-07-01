@@ -20,6 +20,12 @@ inline float32 AbsFloat32(float32 f) {
     return f < 0.0f ? -f : f;
 }
 
+inline int RandInt(int min, int max)
+{
+	DEBUG_ASSERT(max > min);
+	return rand() % (max - min) + min;
+}
+
 inline int MinInt(int a, int b) {
     return a < b ? a : b;
 }
@@ -55,6 +61,17 @@ uint32 SafeTruncateUInt64(uint64 value)
     DEBUG_ASSERT(value <= 0xFFFFFFFF);
     uint32 result = (uint32)value;
     return result;
+}
+
+
+inline float32 RandFloat32()
+{
+	return (float32)rand() / RAND_MAX;
+}
+inline float32 RandFloat32(float32 min, float32 max)
+{
+	DEBUG_ASSERT(max > min);
+	return RandFloat32() * (max - min) + min;
 }
 
 inline float32 MinFloat32(float32 a, float32 b) {
@@ -608,11 +625,6 @@ inline Vec3 Normalize(Vec3 v)
     return v / Mag(v);
 }
 
-Vec3 CalculateTriangleUnitNormal(Vec3 v1, Vec3 v2, Vec3 v3)
-{
-    return Normalize(Cross(v2 - v1, v3 - v1));
-}
-
 // -------------------- Vec4 --------------------
 inline Vec4 operator-(Vec4 v)
 {
@@ -1008,6 +1020,14 @@ Mat4 UnitQuatToMat4(Quat q)
     return result;
 }
 
+// Misc, higher level geometry functions
+
+// Returns triangle normal out of the front face, where v1 -> v2 -> v3 are ordered clockwise
+Vec3 CalculateTriangleUnitNormal(Vec3 v1, Vec3 v2, Vec3 v3)
+{
+    return Normalize(Cross(v3 - v1, v2 - v1));
+}
+
 Vec3 BarycentricCoordinates(Vec2 p, Vec2 a, Vec2 b, Vec2 c)
 {
     const Vec2 v0 = b - a;
@@ -1025,4 +1045,16 @@ Vec3 BarycentricCoordinates(Vec2 p, Vec2 a, Vec2 b, Vec2 c)
     result.z = (d00 * d21 - d01 * d20) / denom;
     result.x = 1.0f - result.y - result.z;
     return result;
+}
+
+bool RayPlaneIntersection(Vec3 rayOrigin, Vec3 rayDir, Vec3 planeOrigin, Vec3 planeNormal, float32* a)
+{
+    float32 dotDirNormal = Dot(rayDir, planeNormal);
+    if (dotDirNormal == 0.0f) {
+        // Ray direction is perpendicular to plane normal. There is no intersection.
+        return false;
+    }
+
+    *a = Dot(planeOrigin - rayOrigin, planeNormal) / dotDirNormal;
+    return true;
 }

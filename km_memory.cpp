@@ -15,9 +15,12 @@ void MemMove(void* dst, const void* src, uint64 numBytes)
     memmove(dst, src, numBytes);
 }
 
-void MemSet(void* dst, char value, uint64 numBytes)
+void MemSet(void* dst, uint8 value, uint64 numBytes)
 {
-    memset(dst, value, numBytes);
+    uint8* d = (uint8*)dst;
+    for (uint64 i = 0; i < numBytes; i++) {
+        *(d++) = value;
+    }
 }
 
 int MemComp(const void* mem1, const void* mem2, uint64 numBytes)
