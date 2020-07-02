@@ -1077,7 +1077,7 @@ Vec3 BarycentricCoordinates(Vec2 p, Vec2 a, Vec2 b, Vec2 c)
     return result;
 }
 
-bool RayPlaneIntersection(Vec3 rayOrigin, Vec3 rayDir, Vec3 planeOrigin, Vec3 planeNormal, float32* a)
+bool RayPlaneIntersection(Vec3 rayOrigin, Vec3 rayDir, Vec3 planeOrigin, Vec3 planeNormal, float32* t)
 {
     float32 dotDirNormal = Dot(rayDir, planeNormal);
     if (dotDirNormal == 0.0f) {
@@ -1085,6 +1085,60 @@ bool RayPlaneIntersection(Vec3 rayOrigin, Vec3 rayDir, Vec3 planeOrigin, Vec3 pl
         return false;
     }
 
-    *a = Dot(planeOrigin - rayOrigin, planeNormal) / dotDirNormal;
+    *t = Dot(planeOrigin - rayOrigin, planeNormal) / dotDirNormal;
+    return true;
+}
+
+bool RayAxisAlignedBoxIntersection(Vec3 rayOrigin, Vec3 rayDirInv, Vec3 boxMin, Vec3 boxMax)
+{
+    float32 tMin = -INFINITY;
+    float32 tMax = INFINITY;
+
+    const float32 tX1 = (boxMin.x - rayOrigin.x) * rayDirInv.x;
+    const float32 tX2 = (boxMax.x - rayOrigin.x) * rayDirInv.x;
+    tMin = MaxFloat32(tMin, MinFloat32(tX1, tX2));
+    tMax = MinFloat32(tMax, MaxFloat32(tX1, tX2));
+
+    const float32 tY1 = (boxMin.y - rayOrigin.y) * rayDirInv.y;
+    const float32 tY2 = (boxMax.y - rayOrigin.y) * rayDirInv.y;
+    tMin = MaxFloat32(tMin, MinFloat32(tY1, tY2));
+    tMax = MinFloat32(tMax, MaxFloat32(tY1, tY2));
+
+    const float32 tZ1 = (boxMin.z - rayOrigin.z) * rayDirInv.z;
+    const float32 tZ2 = (boxMax.z - rayOrigin.z) * rayDirInv.z;
+    tMin = MaxFloat32(tMin, MinFloat32(tZ1, tZ2));
+    tMax = MinFloat32(tMax, MaxFloat32(tZ1, tZ2));
+
+    return tMax >= tMin;
+}
+
+bool RayTriangleIntersection(Vec3 rayOrigin, Vec3 rayDir, Vec3 a, Vec3 b, Vec3 c, float32* t)
+{
+    const float32 EPSILON = 0.000001f;
+
+    const Vec3 ab = b - a;
+    const Vec3 ac = c - a;
+    const Vec3 h = Cross(rayDir, ac);
+    const float32 x = Dot(ab, h);
+    if (x > -EPSILON && x < EPSILON) {
+        // Ray is parallel to triangle
+        return false;
+    }
+
+    const float32 f = 1.0f / x;
+    const Vec3 s = rayOrigin - a;
+    const float32 u = f * Dot(s, h);
+    if (u < 0.0f || u > 1.0f) {
+        return false;
+    }
+
+    const Vec3 q = Cross(s, ab);
+    const float32 v = f * Dot(rayDir, q);
+    if (v < 0.0f || u + v > 1.0f) {
+        return false;
+    }
+
+    *t = f * Dot(ac, q);
+    // NOTE if a is 0, intersection is a line (I think)
     return true;
 }
