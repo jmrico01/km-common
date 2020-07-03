@@ -1089,7 +1089,7 @@ bool RayPlaneIntersection(Vec3 rayOrigin, Vec3 rayDir, Vec3 planeOrigin, Vec3 pl
     return true;
 }
 
-bool RayAxisAlignedBoxIntersection(Vec3 rayOrigin, Vec3 rayDirInv, Vec3 boxMin, Vec3 boxMax)
+bool RayAxisAlignedBoxIntersection(Vec3 rayOrigin, Vec3 rayDirInv, Vec3 boxMin, Vec3 boxMax, float32* t)
 {
     float32 tMin = -INFINITY;
     float32 tMax = INFINITY;
@@ -1110,6 +1110,7 @@ bool RayAxisAlignedBoxIntersection(Vec3 rayOrigin, Vec3 rayDirInv, Vec3 boxMin, 
     tMax = MinFloat32(tMax, MaxFloat32(tZ1, tZ2));
 
     // *point = 
+    *t = tMin;
 
     return tMax >= tMin;
 }
