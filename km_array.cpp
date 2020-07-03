@@ -1,19 +1,8 @@
 #include "km_array.h"
 
-// #include <limits.h>
-// #include "km_string.h"
-
-internal inline void ArrayBoundsCheck(int index, uint64 size)
-{
-    DEBUG_ASSERTF(0 <= index && (uint64)index < size,
-                  "Array bounds check failed: index %d, size %" PRIu64 "\n", index, size);
-}
-
-internal inline void ArrayBoundsCheck(uint64 index, uint64 size)
-{
-    DEBUG_ASSERTF(index < size,
-                  "Array bounds check failed: index %" PRIu64 ", size %" PRIu64 "\n", index, size);
-}
+#define ARRAY_BOUNDS_CHECK(index, size) DEBUG_ASSERTF(0 <= index && (uint64)index < size, \
+"Array bounds check failed: index %" PRIu64 ", size %" PRIu64 "\n", \
+(uint64)index, size)
 
 template <typename T> const Array<T> Array<T>::empty = { .size = 0, .data = nullptr };
 
@@ -79,28 +68,28 @@ Array<T> Array<T>::SliceFrom(uint64 start) const
 template <typename T>
 inline T& Array<T>::operator[](int index)
 {
-    ArrayBoundsCheck(index, size);
+    ARRAY_BOUNDS_CHECK(index, size);
     return data[index];
 }
 
 template <typename T>
 inline T& Array<T>::operator[](uint64 index)
 {
-    ArrayBoundsCheck(index, size);
+    ARRAY_BOUNDS_CHECK(index, size);
     return data[index];
 }
 
 template <typename T>
 inline const T& Array<T>::operator[](int index) const
 {
-    ArrayBoundsCheck(index, size);
+    ARRAY_BOUNDS_CHECK(index, size);
     return data[index];
 }
 
 template <typename T>
 inline const T& Array<T>::operator[](uint64 index) const
 {
-    ArrayBoundsCheck(index, size);
+    ARRAY_BOUNDS_CHECK(index, size);
     return data[index];
 }
 
@@ -116,28 +105,28 @@ Array<T> StaticArray<T, S>::ToArray() const
 template <typename T, uint64 S>
 inline T& StaticArray<T, S>::operator[](int index)
 {
-    ArrayBoundsCheck(index, S);
+    ARRAY_BOUNDS_CHECK(index, S);
     return data[index];
 }
 
 template <typename T, uint64 S>
 inline T& StaticArray<T, S>::operator[](uint64 index)
 {
-    ArrayBoundsCheck(index, S);
+    ARRAY_BOUNDS_CHECK(index, S);
     return data[index];
 }
 
 template <typename T, uint64 S>
 inline const T& StaticArray<T, S>::operator[](int index) const
 {
-    ArrayBoundsCheck(index, S);
+    ARRAY_BOUNDS_CHECK(index, S);
     return data[index];
 }
 
 template <typename T, uint64 S>
 inline const T& StaticArray<T, S>::operator[](uint64 index) const
 {
-    ArrayBoundsCheck(index, S);
+    ARRAY_BOUNDS_CHECK(index, S);
     return data[index];
 }
 
@@ -260,28 +249,28 @@ void FixedArray<T, S>::Remove(uint64 index)
 template <typename T, uint64 S>
 inline T& FixedArray<T, S>::operator[](int index)
 {
-    ArrayBoundsCheck(index, size);
+    ARRAY_BOUNDS_CHECK(index, size);
     return data[index];
 }
 
 template <typename T, uint64 S>
 inline T& FixedArray<T, S>::operator[](uint64 index)
 {
-    ArrayBoundsCheck(index, size);
+    ARRAY_BOUNDS_CHECK(index, size);
     return data[index];
 }
 
 template <typename T, uint64 S>
 inline const T& FixedArray<T, S>::operator[](int index) const
 {
-    ArrayBoundsCheck(index, size);
+    ARRAY_BOUNDS_CHECK(index, size);
     return data[index];
 }
 
 template <typename T, uint64 S>
 inline const T& FixedArray<T, S>::operator[](uint64 index) const
 {
-    ArrayBoundsCheck(index, size);
+    ARRAY_BOUNDS_CHECK(index, size);
     return data[index];
 }
 

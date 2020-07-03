@@ -188,28 +188,28 @@ void DynamicArray<T, Allocator>::Free()
 template <typename T, typename Allocator>
 inline T& DynamicArray<T, Allocator>::operator[](int index)
 {
-    ArrayBoundsCheck(index, size);
+    ARRAY_BOUNDS_CHECK(index, size);
     return data[index];
 }
 
 template <typename T, typename Allocator>
 inline T& DynamicArray<T, Allocator>::operator[](uint64 index)
 {
-    ArrayBoundsCheck(index, size);
+    ARRAY_BOUNDS_CHECK(index, size);
     return data[index];
 }
 
 template <typename T, typename Allocator>
 inline const T& DynamicArray<T, Allocator>::operator[](int index) const
 {
-    ArrayBoundsCheck(index, size);
+    ARRAY_BOUNDS_CHECK(index, size);
     return data[index];
 }
 
 template <typename T, typename Allocator>
 inline const T& DynamicArray<T, Allocator>::operator[](uint64 index) const
 {
-    ArrayBoundsCheck(index, size);
+    ARRAY_BOUNDS_CHECK(index, size);
     return data[index];
 }
 
