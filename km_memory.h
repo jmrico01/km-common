@@ -34,6 +34,8 @@ struct LinearAllocator
 
     void* Allocate(uint64 size);
     template <typename T> T* New();
+    template <typename T> T* New(int n);
+    template <typename T> T* New(uint64 n);
     void* ReAllocate(void* memory, uint64 size);
     void Free(void* memory);
     void Clear();

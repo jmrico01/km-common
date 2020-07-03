@@ -105,6 +105,50 @@ inline const T& Array<T>::operator[](uint64 index) const
 }
 
 template <typename T, uint64 S>
+Array<T> StaticArray<T, S>::ToArray() const
+{
+    return {
+        .size = S,
+        .data = (T*)data
+    };
+}
+
+template <typename T, uint64 S>
+inline T& StaticArray<T, S>::operator[](int index)
+{
+    ArrayBoundsCheck(index, S);
+    return data[index];
+}
+
+template <typename T, uint64 S>
+inline T& StaticArray<T, S>::operator[](uint64 index)
+{
+    ArrayBoundsCheck(index, S);
+    return data[index];
+}
+
+template <typename T, uint64 S>
+inline const T& StaticArray<T, S>::operator[](int index) const
+{
+    ArrayBoundsCheck(index, S);
+    return data[index];
+}
+
+template <typename T, uint64 S>
+inline const T& StaticArray<T, S>::operator[](uint64 index) const
+{
+    ArrayBoundsCheck(index, S);
+    return data[index];
+}
+
+template <typename T, uint64 S>
+StaticArray<T, S>& StaticArray<T, S>::operator=(const StaticArray<T, S>& other)
+{
+    MemCopy(data, other.data, S * sizeof(T));
+    return *this;
+}
+
+template <typename T, uint64 S>
 Array<T> FixedArray<T, S>::ToArray() const
 {
     return {

@@ -28,6 +28,21 @@ struct Array
 };
 
 template <typename T, uint64 S>
+struct StaticArray
+{
+    T data[S];
+
+    Array<T> ToArray() const;
+
+    inline T& operator[](int index);
+    inline T& operator[](uint64 index);
+    inline const T& operator[](int index) const;
+    inline const T& operator[](uint64 index) const;
+
+    StaticArray<T, S>& operator=(const StaticArray<T, S>& other);
+};
+
+template <typename T, uint64 S>
 struct FixedArray
 {
     uint64 size;

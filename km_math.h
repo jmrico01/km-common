@@ -1109,6 +1109,8 @@ bool RayAxisAlignedBoxIntersection(Vec3 rayOrigin, Vec3 rayDirInv, Vec3 boxMin, 
     tMin = MaxFloat32(tMin, MinFloat32(tZ1, tZ2));
     tMax = MinFloat32(tMax, MaxFloat32(tZ1, tZ2));
 
+    // *point = 
+
     return tMax >= tMin;
 }
 

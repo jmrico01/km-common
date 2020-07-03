@@ -74,6 +74,16 @@ template <typename T> T* LinearAllocator::New()
     return (T*)Allocate(sizeof(T));
 }
 
+template <typename T> T* LinearAllocator::New(int n)
+{
+    return (T*)Allocate(n * sizeof(T));
+}
+
+template <typename T> T* LinearAllocator::New(uint64 n)
+{
+    return (T*)Allocate(n * sizeof(T));
+}
+
 void* LinearAllocator::ReAllocate(void* memory, uint64 size)
 {
     void* newData = Allocate(size);
