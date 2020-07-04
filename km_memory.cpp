@@ -18,7 +18,7 @@ void MemMove(void* dst, const void* src, uint64 numBytes)
 void MemSet(void* dst, uint8 value, uint64 numBytes)
 {
     uint8* d = (uint8*)dst;
-    for (uint64 i = 0; i < numBytes; i++) {
+    for (uint32 i = 0; i < numBytes; i++) {
         *(d++) = value;
     }
 }
@@ -48,7 +48,7 @@ void StandardAllocator::Free(void* memory)
     free(memory);
 }
 
-LinearAllocator::LinearAllocator(const Array<uint8>& memory)
+LinearAllocator::LinearAllocator(const LargeArray<uint8>& memory)
 : used(0), capacity(memory.size), data(memory.data)
 {
 }
@@ -72,11 +72,6 @@ void* LinearAllocator::Allocate(uint64 size)
 template <typename T> T* LinearAllocator::New()
 {
     return (T*)Allocate(sizeof(T));
-}
-
-template <typename T> T* LinearAllocator::New(int n)
-{
-    return (T*)Allocate(n * sizeof(T));
 }
 
 template <typename T> T* LinearAllocator::New(uint64 n)

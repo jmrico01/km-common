@@ -322,7 +322,7 @@ template <typename Allocator>
 internal bool KmkvToStringRecursive(const HashTable<KmkvItem<Allocator>>& kmkv, int indentSpaces,
                                     DynamicArray<char, Allocator>* outString)
 {
-    for (uint64 i = 0; i < kmkv.capacity; i++) {
+    for (uint32 i = 0; i < kmkv.capacity; i++) {
         const HashKey& key = kmkv.pairs[i].key;
         if (key.s.size == 0) {
             continue;
@@ -382,7 +382,7 @@ bool KmkvToString(const HashTable<KmkvItem<Allocator>>& kmkv,
 template <typename Allocator>
 void AddAndMaybeEscapeJson(const Array<char>& string, DynamicArray<char, Allocator>* outJson)
 {
-    for (uint64 i = 0; i < string.size; i++) {
+    for (uint32 i = 0; i < string.size; i++) {
         switch (string[i]) {
             case '\b': {
                 outJson->Append('\\');
@@ -423,7 +423,7 @@ template <typename Allocator>
 internal bool KmkvToJsonRecursive(const HashTable<KmkvItem<Allocator>>& kmkv,
                                   DynamicArray<char, Allocator>* outJson)
 {
-    for (uint64 i = 0; i < kmkv.capacity; i++) {
+    for (uint32 i = 0; i < kmkv.capacity; i++) {
         const HashKey& key = kmkv.pairs[i].key;
         if (key.s.size == 0) {
             continue;

@@ -10,15 +10,15 @@
 template <typename T, typename Allocator = StandardAllocator>
 struct DynamicArray
 {
-    uint64 size;
+    uint32 size;
     T* data;
-    uint64 capacity;
+    uint32 capacity;
     Allocator* allocator;
 
     DynamicArray();
     DynamicArray(Allocator* allocator);
     DynamicArray(const Array<T>& array, Allocator* allocator = nullptr);
-    DynamicArray(uint64 capacity, Allocator* allocator = nullptr);
+    DynamicArray(uint32 capacity, Allocator* allocator = nullptr);
     DynamicArray(const DynamicArray<T>& other) = delete;
 
     Array<T> ToArray() const;
@@ -30,22 +30,20 @@ struct DynamicArray
     void Append(const Array<const T>& array);
     void RemoveLast();
     void Clear();
-    uint64 IndexOf(const T& value);
+    uint32 IndexOf(const T& value);
     void Free();
 
-    inline T& operator[](int index);
-    inline T& operator[](uint64 index);
-    inline const T& operator[](int index) const;
-    inline const T& operator[](uint64 index) const;
+    inline T& operator[](uint32 index);
+    inline const T& operator[](uint32 index) const;
 
     DynamicArray<T, Allocator>& operator=(const DynamicArray<T, Allocator>& other);
 
-    bool UpdateCapacity(uint64 newCapacity);
+    bool UpdateCapacity(uint32 newCapacity);
 };
 
 struct HashKey
 {
-    static const uint64 MAX_LENGTH = 64;
+    static const uint32 MAX_LENGTH = 64;
 
     FixedArray<char, MAX_LENGTH> s;
 
@@ -68,14 +66,14 @@ struct KeyValuePair
 template <typename V, typename Allocator = StandardAllocator>
 struct HashTable
 {
-    uint64 size;
-    uint64 capacity;
+    uint32 size;
+    uint32 capacity;
     KeyValuePair<V>* pairs;
     Allocator* allocator;
 
     HashTable();
     HashTable(Allocator* allocator);
-    HashTable(uint64 capacity, Allocator* allocator = nullptr);
+    HashTable(uint32 capacity, Allocator* allocator = nullptr);
     HashTable(const HashTable<V, Allocator>& other) = delete;
     ~HashTable();
 

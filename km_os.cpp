@@ -240,7 +240,7 @@ bool FileChangedSinceLastCall(const_string filePath)
 bool CreateDirRecursive(const_string dir)
 {
     FixedArray<char, PATH_MAX_LENGTH> path;
-    uint64 nextSlash = 0;
+    uint32 nextSlash = 0;
     while (true) {
         nextSlash = dir.FindFirst('/', nextSlash + 1);
         if (nextSlash == dir.size) {
@@ -284,7 +284,7 @@ FixedArray<char, PATH_MAX_LENGTH> GetExecutablePath(Allocator* allocator)
         return path;
     }
     path.size = size;
-    for (uint64 i = 0; i < path.size; i++) {
+    for (uint32 i = 0; i < path.size; i++) {
         if (path[i] == '\\') {
             path[i] = '/';
         }

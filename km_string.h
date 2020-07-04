@@ -9,7 +9,7 @@ using const_string = const Array<const char>;
 // TODO pretty random, but ok
 #define PATH_MAX_LENGTH 256
 
-uint64 StringLength(const char* str);
+uint32 StringLength(const char* str);
 
 const_string ToString(const char* cString);
 string ToNonConstString(const_string constString); // TODO(patio): wish I didn't have to do this, maybe?
@@ -18,7 +18,7 @@ string ToNonConstString(const_string constString); // TODO(patio): wish I didn't
 string ToString(const std::string& str);
 #endif
 
-template <uint64 S>
+template <uint32 S>
 void InitFromCString(FixedArray<char, S>* string, const char* cString);
 template <typename Allocator>
 char* ToCString(const_string str, Allocator* allocator);
@@ -26,7 +26,7 @@ char* ToCString(const_string str, Allocator* allocator);
 int StringCompare(const_string str1, const_string str2);
 bool StringEquals(const_string str1, const_string str2);
 
-uint64 SubstringSearch(const_string str, const_string substr);
+uint32 SubstringSearch(const_string str, const_string substr);
 bool StringContains(const_string str, const_string substr);
 
 bool IsNewline(char c);
@@ -36,7 +36,7 @@ bool IsAlphanumeric(char c);
 string TrimWhitespace(const_string str);
 
 bool StringToIntBase10(const_string str, int* intBase10);
-bool StringToUInt64Base10(const_string str, uint64* intBase10);
+bool StringToUInt32Base10(const_string str, uint32* intBase10);
 bool StringToFloat32(const_string str, float32* f);
 
 string NextSplitElement(string* str, char separator);

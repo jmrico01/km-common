@@ -33,6 +33,11 @@ inline float32 AbsFloat32(float32 f) {
     return f < 0.0f ? -f : f;
 }
 
+inline int RandInt(int max)
+{
+	DEBUG_ASSERT(max > 0);
+	return rand() % max;
+}
 inline int RandInt(int min, int max)
 {
 	DEBUG_ASSERT(max > min);
@@ -47,6 +52,27 @@ inline int MaxInt(int a, int b) {
 }
 inline int ClampInt(int a, int min, int max) {
     return MinInt(MaxInt(a, min), max);
+}
+
+inline int RandUInt32(uint32 max)
+{
+	DEBUG_ASSERT(max > 0);
+	return rand() % max;
+}
+inline int RandUInt32(uint32 min, uint32 max)
+{
+	DEBUG_ASSERT(max > min);
+	return rand() % (max - min) + min;
+}
+
+inline uint32 MinUInt32(uint32 a, uint32 b) {
+    return a < b ? a : b;
+}
+inline uint32 MaxUInt32(uint32 a, uint32 b) {
+    return a > b ? a : b;
+}
+inline uint32 ClampUInt32(uint32 a, uint32 min, uint32 max) {
+    return MinUInt32(MaxUInt32(a, min), max);
 }
 
 inline uint64 MinUInt64(uint64 a, uint64 b) {
@@ -121,9 +147,9 @@ int Lerp(int a, int b, float32 t)
     return (int)((float32)a + (float32)(b - a) * t);
 }
 
-bool IsPrime(uint64 n)
+bool IsPrime(uint32 n)
 {
-    for (uint64 i = 2; i < n / 2; i++) {
+    for (uint32 i = 2; i < n / 2; i++) {
         if (n % i == 0) {
             return false;
         }
@@ -132,7 +158,7 @@ bool IsPrime(uint64 n)
     return true;
 }
 
-uint64 NextPrime(uint64 n)
+uint32 NextPrime(uint32 n)
 {
     while (!IsPrime(n)) {
         n++;

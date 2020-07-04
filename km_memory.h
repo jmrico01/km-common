@@ -3,6 +3,11 @@
 #include "km_array.h"
 #include "km_defines.h"
 
+// Pushes allocator state onto the stack
+// Resets the state when the current scope ends using a defer statement
+#define ALLOCATOR_SCOPE_RESET(allocator) auto scopedAllocatorState = (allocator).SaveState(); \
+defer((allocator).LoadState(scopedAllocatorState));
+
 void MemCopy(void* dst, const void* src, uint64 numBytes);
 void MemMove(void* dst, const void* src, uint64 numBytes);
 void MemSet(void* dst, uint8 value, uint64 numBytes);
@@ -29,12 +34,11 @@ struct LinearAllocator
     uint64 capacity;
     void* data;
 
-    LinearAllocator(const Array<uint8>& memory);
+    LinearAllocator(const LargeArray<uint8>& memory);
     LinearAllocator(uint64 capacity, void* data);
 
     void* Allocate(uint64 size);
     template <typename T> T* New();
-    template <typename T> T* New(int n);
     template <typename T> T* New(uint64 n);
     void* ReAllocate(void* memory, uint64 size);
     void Free(void* memory);

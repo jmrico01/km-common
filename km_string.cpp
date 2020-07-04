@@ -9,9 +9,9 @@
 
 #include "km_math.h"
 
-uint64 StringLength(const char* str)
+uint32 StringLength(const char* str)
 {
-    uint64 length = 0;
+    uint32 length = 0;
     while (*(str++) != '\0') {
         length++;
     }
@@ -45,10 +45,10 @@ string ToString(const std::string& str)
 }
 #endif
 
-template <uint64 S>
+template <uint32 S>
 void InitFromCString(FixedArray<char, S>* string, const char* cString)
 {
-    uint64 stringLength = StringLength(cString);
+    uint32 stringLength = StringLength(cString);
     if (stringLength > S) {
         stringLength = S;
     }
@@ -70,8 +70,8 @@ char* ToCString(const_string str, Allocator* allocator)
 
 int StringCompare(const_string str1, const_string str2)
 {
-    uint64 minSize = MinUInt64(str1.size, str2.size);
-    for (uint64 i = 0; i < minSize; i++) {
+    uint32 minSize = MinUInt32(str1.size, str2.size);
+    for (uint32 i = 0; i < minSize; i++) {
         if (str1[i] < str2[i]) {
             return -1;
         }
@@ -95,7 +95,7 @@ bool StringEquals(const_string str1, const_string str2)
         return false;
     }
 
-    for (uint64 i = 0; i < str1.size; i++) {
+    for (uint32 i = 0; i < str1.size; i++) {
         if (str1[i] != str2[i]) {
             return false;
         }
@@ -121,18 +121,18 @@ void CatStrings(size_t sourceACount, const char* sourceA,
     *dest++ = '\0';
 }
 
-void StringCat(const char* str1, const char* str2, char* dest, uint64 destMaxLength)
+void StringCat(const char* str1, const char* str2, char* dest, uint32 destMaxLength)
 {
     CatStrings(StringLength(str1), str1, StringLength(str2), str2, destMaxLength, dest);
 }
 
 // TODO slow, naive implementation, but perfectly fine for small strings
-uint64 SubstringSearch(const_string str, const_string substr)
+uint32 SubstringSearch(const_string str, const_string substr)
 {
-    for (uint64 i = 0; i < str.size; i++) {
+    for (uint32 i = 0; i < str.size; i++) {
         bool match = true;
-        for (uint64 j = 0; j < substr.size; j++) {
-            uint64 ind = i + j;
+        for (uint32 j = 0; j < substr.size; j++) {
+            uint32 ind = i + j;
             if (ind >= str.size) {
                 match = false;
                 break;
@@ -173,11 +173,11 @@ inline bool IsAlphanumeric(char c)
 
 string TrimWhitespace(const_string str)
 {
-    uint64 start = 0;
+    uint32 start = 0;
     while (start < str.size && IsWhitespace(str[start])) {
         start++;
     }
-    uint64 end = str.size;
+    uint32 end = str.size;
     while (end > 0 && IsWhitespace(str[end - 1])) {
         end--;
     }
@@ -196,7 +196,7 @@ bool StringToIntBase10(const_string str, int* intBase10)
 
     bool negative = false;
     *intBase10 = 0;
-    for (uint64 i = 0; i < str.size; i++) {
+    for (uint32 i = 0; i < str.size; i++) {
         char c = str[i];
         if (i == 0 && c == '-') {
             negative = true;
@@ -214,16 +214,16 @@ bool StringToIntBase10(const_string str, int* intBase10)
     return true;
 }
 
-bool StringToUInt64Base10(const_string str, uint64* intBase10)
+bool StringToUInt32Base10(const_string str, uint32* intBase10)
 {
     if (str.size == 0) {
         return false;
     }
 
     *intBase10 = 0;
-    for (uint64 i = 0; i < str.size; i++) {
+    for (uint32 i = 0; i < str.size; i++) {
         char c = str[i];
-        *intBase10 = (*intBase10) * 10 + (uint64)(c - '0');
+        *intBase10 = (*intBase10) * 10 + (uint32)(c - '0');
     }
 
     return true;
@@ -231,7 +231,7 @@ bool StringToUInt64Base10(const_string str, uint64* intBase10)
 
 bool StringToFloat32(const_string str, float32* f)
 {
-    uint64 dotIndex = 0;
+    uint32 dotIndex = 0;
     while (dotIndex < str.size && str[dotIndex] != '.') {
         dotIndex++;
     }
@@ -257,7 +257,7 @@ bool StringToFloat32(const_string str, float32* f)
 
         frac = wholeNegative ? -frac : frac;
         float32 fractional = (float32)frac;
-        for (uint64 i = 0; i < fracString.size; i++) {
+        for (uint32 i = 0; i < fracString.size; i++) {
             fractional /= 10.0f;
         }
         *f += fractional;
@@ -272,12 +272,12 @@ void StringSplit(const_string str, char c, DynamicArray<string, Allocator>* outS
 
     string s = ToNonConstString(str);
     while (true) {
-        uint64 next = s.FindFirst(c);
+        uint32 next = s.FindFirst(c);
         if (next == s.size) {
             outSplit->Append(s);
             break;
         }
-        uint64 newSize = s.size - next - 1;
+        uint32 newSize = s.size - next - 1;
         s.size = next;
         outSplit->Append(s);
 
@@ -289,7 +289,7 @@ void StringSplit(const_string str, char c, DynamicArray<string, Allocator>* outS
 string NextSplitElement(string* str, char separator)
 {
     string next = *str;
-    for (uint64 i = 0; i < str->size; i++) {
+    for (uint32 i = 0; i < str->size; i++) {
         if ((*str)[i] == separator) {
             next.size = i;
             str->size--;
@@ -316,7 +316,7 @@ string AllocPrintf(Allocator* allocator, const char* format, ...)
             return { .size = 0, .data = nullptr };
         }
         else if (length < bufferSize) {
-            return { .size = (uint64)length, .data = buffer };
+            return { .size = (uint32)length, .data = buffer };
         }
         else {
             bufferSize *= 2;

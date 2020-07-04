@@ -7,45 +7,43 @@ struct Array
 {
     const static Array<T> empty;
 
-    uint64 size;
+    uint32 size;
     T* data;
 
     void RemoveLast();
     void Clear();
-    uint64 FindFirst(const T& value, uint64 start = 0) const;
-    uint64 FindLast(const T& value) const;
+    uint32 FindFirst(const T& value, uint32 start = 0) const;
+    uint32 FindLast(const T& value) const;
 
-    Array<T> Slice(uint64 start, uint64 end) const;
-    Array<T> SliceTo(uint64 end) const;
-    Array<T> SliceFrom(uint64 start) const;
+    Array<T> Slice(uint32 start, uint32 end) const;
+    Array<T> SliceTo(uint32 end) const;
+    Array<T> SliceFrom(uint32 start) const;
 
-    inline T& operator[](int index);
-    inline T& operator[](uint64 index);
-    inline const T& operator[](int index) const;
-    inline const T& operator[](uint64 index) const;
+    void Shuffle();
 
-    operator const Array<const T>() const { return *((const Array<const T>*)this); }
+    inline T& operator[](uint32 index);
+    inline const T& operator[](uint32 index) const;
+
+    operator const Array<const T>() const;
 };
 
-template <typename T, uint64 S>
+template <typename T, uint32 S>
 struct StaticArray
 {
     T data[S];
 
     Array<T> ToArray() const;
 
-    inline T& operator[](int index);
-    inline T& operator[](uint64 index);
-    inline const T& operator[](int index) const;
-    inline const T& operator[](uint64 index) const;
+    inline T& operator[](uint32 index);
+    inline const T& operator[](uint32 index) const;
 
     StaticArray<T, S>& operator=(const StaticArray<T, S>& other);
 };
 
-template <typename T, uint64 S>
+template <typename T, uint32 S>
 struct FixedArray
 {
-    uint64 size;
+    uint32 size;
     T data[S];
 
     Array<T> ToArray() const; // NOTE modifying the returned array's size won't affect the FixedArray size
@@ -58,16 +56,34 @@ struct FixedArray
     void Append(const Array<const T>& array);
     void RemoveLast();
     void Clear();
-    uint64 IndexOf(const T& value);
 
     // slow, linear time
-    void AppendAfter(const T& element, uint64 index);
-    void Remove(uint64 index);
+    void AppendAfter(const T& element, uint32 index);
+    void Remove(uint32 index);
 
-    inline T& operator[](int index);
-    inline T& operator[](uint64 index);
-    inline const T& operator[](int index) const;
-    inline const T& operator[](uint64 index) const;
+    inline T& operator[](uint32 index);
+    inline const T& operator[](uint32 index) const;
 
     FixedArray<T, S>& operator=(const FixedArray<T, S>& other);
+};
+
+template <typename T>
+struct LargeArray
+{
+    const static LargeArray<T> empty;
+
+    uint64 size;
+    T* data;
+
+    void RemoveLast();
+    void Clear();
+
+    LargeArray<T> Slice(uint64 start, uint64 end) const;
+    LargeArray<T> SliceTo(uint64 end) const;
+    LargeArray<T> SliceFrom(uint64 start) const;
+
+    inline T& operator[](uint64 index);
+    inline const T& operator[](uint64 index) const;
+
+    operator const LargeArray<const T>() const;
 };

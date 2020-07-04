@@ -2,18 +2,18 @@
 
 #include <cstring> // NOTE don't remove this! Otherwise MSVC freaks out about placement new
 
-static const uint64 DYNAMIC_ARRAY_START_CAPACITY = 16;
+static const uint32 DYNAMIC_ARRAY_START_CAPACITY = 16;
 
 // TODO pretty high, maybe do lower
-static const uint64 HASH_TABLE_START_CAPACITY = 89;
+static const uint32 HASH_TABLE_START_CAPACITY = 89;
 static const float32 HASH_TABLE_MAX_SIZE_TO_CAPACITY = 0.7f;
 
 // Very simple string hash ( djb2 hash, source http://www.cse.yorku.ca/~oz/hash.html )
-uint64 KeyHash(const HashKey& key)
+uint32 KeyHash(const HashKey& key)
 {
-    uint64 hash = 5381;
+    uint32 hash = 5381;
 
-    for (uint64 i = 0; i < key.s.size; i++) {
+    for (uint32 i = 0; i < key.s.size; i++) {
         hash = ((hash << 5) + hash) + key.s[i];
     }
 
@@ -25,7 +25,7 @@ bool KeyCompare(const HashKey& key1, const HashKey& key2)
         return false;
     }
 
-    for (uint64 i = 0; i < key1.s.size; i++) {
+    for (uint32 i = 0; i < key1.s.size; i++) {
         if (key1.s[i] != key2.s[i]) {
             return false;
         }
@@ -36,7 +36,7 @@ bool KeyCompare(const HashKey& key1, const HashKey& key2)
 
 // TODO dumb wrappers until I figure out a better way to do this at compile time
 template <typename Allocator>
-void* AllocateOrUseDefaultIfNull(Allocator* allocator, uint64 size)
+void* AllocateOrUseDefaultIfNull(Allocator* allocator, uint32 size)
 {
     if (allocator == nullptr) {
         return defaultAllocator_.Allocate(size);
@@ -46,7 +46,7 @@ void* AllocateOrUseDefaultIfNull(Allocator* allocator, uint64 size)
     }
 }
 template <typename Allocator>
-void* ReAllocateOrUseDefaultIfNull(Allocator* allocator, void* memory, uint64 size)
+void* ReAllocateOrUseDefaultIfNull(Allocator* allocator, void* memory, uint32 size)
 {
     if (allocator == nullptr) {
         return defaultAllocator_.ReAllocate(memory, size);
@@ -86,7 +86,7 @@ DynamicArray<T, Allocator>::DynamicArray(const Array<T>& array, Allocator* alloc
 }
 
 template <typename T, typename Allocator>
-DynamicArray<T, Allocator>::DynamicArray(uint64 capacity, Allocator* allocator)
+DynamicArray<T, Allocator>::DynamicArray(uint32 capacity, Allocator* allocator)
 {
     size = 0;
     data = (T*)AllocateOrUseDefaultIfNull(allocator, capacity * sizeof(T));
@@ -110,7 +110,7 @@ void DynamicArray<T, Allocator>::FromArray(const Array<T>& array)
     }
 
     size = array.size;
-    for (uint64 i = 0; i < size; i++) {
+    for (uint32 i = 0; i < size; i++) {
         data[i] = array.data[i];
     }
 }
@@ -143,13 +143,13 @@ void DynamicArray<T, Allocator>::Append(const Array<T>& array)
 template <typename T, typename Allocator>
 void DynamicArray<T, Allocator>::Append(const Array<const T>& array)
 {
-    uint64 newSize = size + array.size;
+    uint32 newSize = size + array.size;
     if (newSize > capacity) {
         // TODO round to nearest power of 2?
         DEBUG_ASSERT(UpdateCapacity(newSize));
     }
 
-    for (uint64 i = 0; i < array.size; i++) {
+    for (uint32 i = 0; i < array.size; i++) {
         data[size + i] = array.data[i];
     }
     size = newSize;
@@ -169,9 +169,9 @@ void DynamicArray<T, Allocator>::Clear()
 }
 
 template <typename T, typename Allocator>
-uint64 DynamicArray<T, Allocator>::IndexOf(const T& value)
+uint32 DynamicArray<T, Allocator>::IndexOf(const T& value)
 {
-    for (uint64 i = 0; i < size; i++) {
+    for (uint32 i = 0; i < size; i++) {
         if (data[i] == value) {
             return i;
         }
@@ -186,28 +186,14 @@ void DynamicArray<T, Allocator>::Free()
 }
 
 template <typename T, typename Allocator>
-inline T& DynamicArray<T, Allocator>::operator[](int index)
+inline T& DynamicArray<T, Allocator>::operator[](uint32 index)
 {
     ARRAY_BOUNDS_CHECK(index, size);
     return data[index];
 }
 
 template <typename T, typename Allocator>
-inline T& DynamicArray<T, Allocator>::operator[](uint64 index)
-{
-    ARRAY_BOUNDS_CHECK(index, size);
-    return data[index];
-}
-
-template <typename T, typename Allocator>
-inline const T& DynamicArray<T, Allocator>::operator[](int index) const
-{
-    ARRAY_BOUNDS_CHECK(index, size);
-    return data[index];
-}
-
-template <typename T, typename Allocator>
-inline const T& DynamicArray<T, Allocator>::operator[](uint64 index) const
+inline const T& DynamicArray<T, Allocator>::operator[](uint32 index) const
 {
     ARRAY_BOUNDS_CHECK(index, size);
     return data[index];
@@ -221,7 +207,7 @@ DynamicArray<T, Allocator>& DynamicArray<T, Allocator>::operator=(const DynamicA
 }
 
 template <typename T, typename Allocator>
-bool DynamicArray<T, Allocator>::UpdateCapacity(uint64 newCapacity)
+bool DynamicArray<T, Allocator>::UpdateCapacity(uint32 newCapacity)
 {
     DEBUG_ASSERT(capacity != 0);
     DEBUG_ASSERT(newCapacity != 0);
@@ -283,16 +269,16 @@ HashTable<V, Allocator>::HashTable(Allocator* allocator)
 }
 
 template <typename V, typename Allocator>
-HashTable<V, Allocator>::HashTable(uint64 capacity, Allocator* allocator)
+HashTable<V, Allocator>::HashTable(uint32 capacity, Allocator* allocator)
 {
     size = 0;
-    uint64 sizeBytes = sizeof(KeyValuePair<V>) * capacity;
+    uint32 sizeBytes = sizeof(KeyValuePair<V>) * capacity;
     pairs = (KeyValuePair<V>*)allocator->Allocate(sizeBytes);
     if (pairs == nullptr) {
         DEBUG_PANIC("ERROR: not enough memory!\n");
     }
 
-    for (uint64 i = 0; i < capacity; i++) {
+    for (uint32 i = 0; i < capacity; i++) {
         pairs[i].key.s.size = 0;
         new (&pairs[i]) KeyValuePair<V>();
     }
@@ -304,7 +290,7 @@ HashTable<V, Allocator>::HashTable(uint64 capacity, Allocator* allocator)
 template <typename V, typename Allocator>
 HashTable<V, Allocator>::~HashTable()
 {
-    for (uint64 i = 0; i < capacity; i++) {
+    for (uint32 i = 0; i < capacity; i++) {
         pairs[i].~KeyValuePair<V>();
     }
     allocator->Free(pairs);
@@ -315,14 +301,14 @@ V* HashTable<V, Allocator>::Add(const HashKey& key)
 {
     DEBUG_ASSERT(GetPair(key) == nullptr);
 
-    if (size >= (uint64)((float32)capacity * HASH_TABLE_MAX_SIZE_TO_CAPACITY)) {
-        uint64 newCapacity = NextPrime(capacity * 2);
+    if (size >= (uint32)((float32)capacity * HASH_TABLE_MAX_SIZE_TO_CAPACITY)) {
+        uint32 newCapacity = NextPrime(capacity * 2);
         pairs = (KeyValuePair<V>*)allocator->ReAllocate(pairs, sizeof(KeyValuePair<V>) * newCapacity);
         if (pairs == nullptr) {
             DEBUG_PANIC("not enough memory for HashTable resize (pairs allocation)\n");
         }
 
-        for (uint64 i = 0; i < capacity; i++) {
+        for (uint32 i = 0; i < capacity; i++) {
             // Don't placement new here, probably? Because it'll reset everything...
             // new (&pairs[i]) KeyValuePair<V>();
         }
@@ -376,7 +362,7 @@ const V* HashTable<V, Allocator>::GetValue(const HashKey& key) const
 template <typename V, typename Allocator>
 void HashTable<V, Allocator>::Clear()
 {
-    for (uint64 i = 0; i < capacity; i++) {
+    for (uint32 i = 0; i < capacity; i++) {
         pairs[i].key.s.size = 0;
     }
 }
@@ -395,7 +381,7 @@ HashTable<V, Allocator>& HashTable<V, Allocator>::operator=(const HashTable<V, A
 {
     DEBUG_ASSERT(capacity == other.capacity); // TODO no rehashing, so we do same-capacity only
     size = other.size;
-    for (uint64 i = 0; i < capacity; i++) {
+    for (uint32 i = 0; i < capacity; i++) {
         pairs[i] = other.pairs[i];
     }
     return *this;
@@ -404,8 +390,8 @@ HashTable<V, Allocator>& HashTable<V, Allocator>::operator=(const HashTable<V, A
 template <typename V, typename Allocator>
 KeyValuePair<V>* HashTable<V, Allocator>::GetPair(const HashKey& key) const
 {
-    uint64 hashInd = KeyHash(key) % capacity;
-    for (uint64 i = 0; i < capacity; i++) {
+    uint32 hashInd = KeyHash(key) % capacity;
+    for (uint32 i = 0; i < capacity; i++) {
         KeyValuePair<V>* pair = pairs + hashInd + i;
         if (KeyCompare(pair->key, key)) {
             return pair;
@@ -421,8 +407,8 @@ KeyValuePair<V>* HashTable<V, Allocator>::GetPair(const HashKey& key) const
 template <typename V, typename Allocator>
 KeyValuePair<V>* HashTable<V, Allocator>::GetFreeSlot(const HashKey& key)
 {
-    uint64 hashInd = KeyHash(key) % capacity;
-    for (uint64 i = 0; i < capacity; i++) {
+    uint32 hashInd = KeyHash(key) % capacity;
+    for (uint32 i = 0; i < capacity; i++) {
         KeyValuePair<V>* pair = pairs + hashInd + i;
         if (pair->key.s.size == 0) {
             return pair;
