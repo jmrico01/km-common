@@ -19,6 +19,7 @@ struct Array
     Array<T> SliceTo(uint32 end) const;
     Array<T> SliceFrom(uint32 start) const;
 
+    void CopyFrom(const Array<T>& other);
     void Shuffle();
 
     inline T& operator[](uint32 index);

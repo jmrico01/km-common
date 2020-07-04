@@ -66,6 +66,13 @@ Array<T> Array<T>::SliceFrom(uint32 start) const
 }
 
 template <typename T>
+void Array<T>::CopyFrom(const Array<T>& other)
+{
+    DEBUG_ASSERT(size >= other.size);
+    MemCopy(data, other.data, other.size * sizeof(T));
+}
+
+template <typename T>
 void Array<T>::Shuffle()
 {
     for (uint32 i = size; i != 0; i--) {
