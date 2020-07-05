@@ -50,10 +50,13 @@ _DeferFunctionObject<F> _DeferFunction(F function) {
     return _DeferFunctionObject<F>(function);
 }
 
-#define DEFER_1(x, y) x##y
-#define DEFER_2(x, y) DEFER_1(x, y)
-#define DEFER_3(x)    DEFER_2(x, __COUNTER__)
-#define defer(code)   auto DEFER_3(_defer_) = _DeferFunction([&](){code;})
+#define KM_CONCAT_(x, y) x##y
+#define KM_CONCAT(x, y)  KM_CONCAT_(x, y)
+
+#define KM_UNIQUE_NAME_COUNTER(x) KM_CONCAT(x, __COUNTER__)
+#define KM_UNIQUE_NAME_LINE(x)    KM_CONCAT(x, __LINE__)
+
+#define defer(code) auto KM_UNIQUE_NAME_COUNTER(_defer_) = _DeferFunction([&](){code;})
 
 // NUMERIC TYPES
 using int8    = int8_t;

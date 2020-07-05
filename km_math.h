@@ -1074,36 +1074,6 @@ Mat4 UnitQuatToMat4(Quat q)
 
 // Misc, higher level geometry functions
 
-float32 TriangleArea(Vec3 v1, Vec3 v2, Vec3 v3)
-{
-    return Mag(Cross(v3 - v1, v2 - v1)) / 2.0f;
-}
-
-// Returns triangle normal out of the front face, where v1 -> v2 -> v3 are ordered clockwise
-Vec3 CalculateTriangleUnitNormal(Vec3 v1, Vec3 v2, Vec3 v3)
-{
-    return Normalize(Cross(v3 - v1, v2 - v1));
-}
-
-Vec3 BarycentricCoordinates(Vec2 p, Vec2 a, Vec2 b, Vec2 c)
-{
-    const Vec2 v0 = b - a;
-    const Vec2 v1 = c - a;
-    const Vec2 v2 = p - a;
-    const float32 d00 = Dot(v0, v0);
-    const float32 d01 = Dot(v0, v1);
-    const float32 d11 = Dot(v1, v1);
-    const float32 d20 = Dot(v2, v0);
-    const float32 d21 = Dot(v2, v1);
-    const float32 denom = d00 * d11 - d01 * d01;
-
-    Vec3 result;
-    result.y = (d11 * d20 - d01 * d21) / denom;
-    result.z = (d00 * d21 - d01 * d20) / denom;
-    result.x = 1.0f - result.y - result.z;
-    return result;
-}
-
 bool RayPlaneIntersection(Vec3 rayOrigin, Vec3 rayDir, Vec3 planeOrigin, Vec3 planeNormal, float32* t)
 {
     float32 dotDirNormal = Dot(rayDir, planeNormal);
@@ -1140,6 +1110,69 @@ bool RayAxisAlignedBoxIntersection(Vec3 rayOrigin, Vec3 rayDirInv, Vec3 boxMin, 
     *t = tMin;
 
     return tMax >= tMin;
+}
+
+float32 TriangleArea(Vec3 v1, Vec3 v2, Vec3 v3)
+{
+    return Mag(Cross(v3 - v1, v2 - v1)) / 2.0f;
+}
+
+// Returns triangle normal out of the front face, where v1 -> v2 -> v3 are ordered clockwise
+Vec3 CalculateTriangleUnitNormal(Vec3 v1, Vec3 v2, Vec3 v3)
+{
+    return Normalize(Cross(v3 - v1, v2 - v1));
+}
+
+Vec3 BarycentricCoordinates(Vec2 p, Vec2 a, Vec2 b, Vec2 c)
+{
+    const Vec2 v0 = b - a;
+    const Vec2 v1 = c - a;
+    const Vec2 v2 = p - a;
+    const float32 d00 = Dot(v0, v0);
+    const float32 d01 = Dot(v0, v1);
+    const float32 d11 = Dot(v1, v1);
+    const float32 d20 = Dot(v2, v0);
+    const float32 d21 = Dot(v2, v1);
+    const float32 denom = d00 * d11 - d01 * d01;
+
+    Vec3 result;
+    result.y = (d11 * d20 - d01 * d21) / denom;
+    result.z = (d00 * d21 - d01 * d20) / denom;
+    result.x = 1.0f - result.y - result.z;
+    return result;
+}
+
+bool BarycentricCoordinates(Vec3 rayOrigin, Vec3 rayDir, Vec3 a, Vec3 b, Vec3 c, Vec3* bCoords)
+{
+    const float32 EPSILON = 0.000001f;
+
+    const Vec3 ab = b - a;
+    const Vec3 ac = c - a;
+    const Vec3 h = Cross(rayDir, ac);
+    const float32 x = Dot(ab, h);
+    if (x > -EPSILON && x < EPSILON) {
+        // Ray is parallel to triangle
+        return false;
+    }
+
+    const float32 f = 1.0f / x;
+    const Vec3 s = rayOrigin - a;
+    const float32 u = f * Dot(s, h);
+    if (u < 0.0f || u > 1.0f) {
+        return false;
+    }
+
+    const Vec3 q = Cross(s, ab);
+    const float32 v = f * Dot(rayDir, q);
+    const float32 sumUV = u + v;
+    if (v < 0.0f || sumUV > 1.0f) {
+        return false;
+    }
+
+    bCoords->x = u;
+    bCoords->y = v;
+    bCoords->z = 1.0f - sumUV;
+    return true;
 }
 
 bool RayTriangleIntersection(Vec3 rayOrigin, Vec3 rayDir, Vec3 a, Vec3 b, Vec3 c, float32* t)
