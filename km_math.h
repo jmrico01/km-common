@@ -1074,6 +1074,12 @@ Mat4 UnitQuatToMat4(Quat q)
 
 // Misc, higher level geometry functions
 
+float32 SmoothStep(float32 edge0, float32 edge1, float32 x)
+{
+    x = ClampFloat32((x - edge0) / (edge1 - edge0), 0.0f, 1.0f);
+    return x * x * (3.0f - 2.0f * x);
+}
+
 bool RayPlaneIntersection(Vec3 rayOrigin, Vec3 rayDir, Vec3 planeOrigin, Vec3 planeNormal, float32* t)
 {
     float32 dotDirNormal = Dot(rayDir, planeNormal);
