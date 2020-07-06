@@ -44,7 +44,7 @@ uint32 Array<T>::FindLast(const T& value) const
 template <typename T>
 Array<T> Array<T>::Slice(uint32 start, uint32 end) const
 {
-    DEBUG_ASSERT(start < size);
+    DEBUG_ASSERT(start <= size);
     DEBUG_ASSERT(end <= size);
     DEBUG_ASSERT(start <= end);
     Array<T> slice;
