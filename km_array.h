@@ -31,6 +31,8 @@ struct Array
 template <typename T, uint32 S>
 struct StaticArray
 {
+    static const uint32 SIZE = S;
+
     T data[S];
 
     Array<T> ToArray() const;
@@ -44,6 +46,8 @@ struct StaticArray
 template <typename T, uint32 S>
 struct FixedArray
 {
+    static const uint32 MAX_SIZE = S;
+
     uint32 size;
     T data[S];
 
