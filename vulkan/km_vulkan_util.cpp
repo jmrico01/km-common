@@ -318,13 +318,13 @@ bool LoadVulkanImage(VkDevice device, VkPhysicalDevice physicalDevice, VkQueue q
     VkFormat format;
     switch (channels) {
         case 1: {
-            format = VK_FORMAT_R8_SRGB;
+            format = VK_FORMAT_R8_UNORM;
         } break;
         case 3: {
-            format = VK_FORMAT_R8G8B8_SRGB;
+            format = VK_FORMAT_R8G8B8_UNORM;
         } break;
         case 4: {
-            format = VK_FORMAT_R8G8B8A8_SRGB;
+            format = VK_FORMAT_R8G8B8A8_UNORM;
         } break;
         default: {
             LOG_ERROR("Unsupported image number of channels: %lu\n", channels);
@@ -332,11 +332,31 @@ bool LoadVulkanImage(VkDevice device, VkPhysicalDevice physicalDevice, VkQueue q
         } break;
     }
 
+    const VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL;
+    const VkImageUsageFlags usageFlags = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+
+#if 0
+    // TODO might want something like this eventually that covers all image formats we'll be using
+    VkFormat monochromeFormats[] = {
+        VK_FORMAT_R8_UNORM,
+        VK_FORMAT_R8_SNORM,
+        VK_FORMAT_R8_USCALED,
+        VK_FORMAT_R8_SSCALED,
+        VK_FORMAT_R8_UINT,
+        VK_FORMAT_R8_SINT,
+        VK_FORMAT_R8_SRGB,
+    };
+    for (int i = 0; i < C_ARRAY_LENGTH(monochromeFormats); i++) {
+        VkImageFormatProperties properties;
+        VkResult result = vkGetPhysicalDeviceImageFormatProperties(physicalDevice, monochromeFormats[i],
+                                                                   VK_IMAGE_TYPE_2D, tiling, usageFlags, 0, &properties);
+        LOG_INFO("%d - result %d\n", i, result);
+    }
+#endif
+
     // Create image
-    if (!CreateImage(device, physicalDevice, width, height, format, VK_IMAGE_TILING_OPTIMAL,
-                     VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-                     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                     &image->image, &image->memory)) {
+    if (!CreateImage(device, physicalDevice, width, height, format, tiling, usageFlags,
+                     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &image->image, &image->memory)) {
         LOG_ERROR("CreateImage failed\n");
         return false;
     }
