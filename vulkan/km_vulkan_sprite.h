@@ -8,7 +8,7 @@
 // Shared utility for rendering sprites in Vulkan
 //
 // Your app's Vulkan state should have a VulkanSpritePipeline object, with template parameter S
-// specifying the maximum number of sprites that you app will use.
+// specifying the maximum number of sprites that you app will use
 //
 // Loaded by calling LoadSpritePipelineWindow(...) and LoadSpritePipelineSwapchain(...), in that order
 // Unloaded by calling UnloadSpritePipelineSwapchain(...) and UnloadSpritePipelineWindow(...), in that order

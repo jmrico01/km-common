@@ -11,9 +11,12 @@
 //
 // Shared utility for rendering text in Vulkan
 //
-// Your app's Vulkan state should have a VulkanTextPipeline object
+// Your app's Vulkan state should have a VulkanTextPipeline object, with template parameter S
+// specifying the maximum number of fonts (atlas textures) that your app will use
+//
 // Loaded by calling LoadTextPipelineWindow(...) and LoadTextPipelineSwapchain(...), in that order
 // Unloaded by calling UnloadTextPipelineSwapchain(...) and UnloadTextPipelineWindow(...), in that order
+// Register fonts (texture atlases) through RegisterFont(...), and keep each returned fontId to reference them
 //
 // Your app should have a VulkanTextRenderState, initially cleared through ResetTextRenderState(...)
 // Then you can repeatedly call PushText(...) to push text render operations into the VulkanTextRenderState object
@@ -21,15 +24,6 @@
 // When your app is filling the command buffer for rendering, you should call UploadAndSubmitTextDrawCommands(...)
 // to draw all text recorded through PushText(...)
 //
-
-// TODO this should be per-app... oh well
-enum class FontId
-{
-    OCR_A_REGULAR_18,
-    OCR_A_REGULAR_24,
-
-    COUNT
-};
 
 struct FontFace
 {
@@ -39,12 +33,11 @@ struct FontFace
 	FixedArray<GlyphInfo, MAX_GLYPHS> glyphInfo;
 };
 
+template <uint32 S>
 struct VulkanTextPipeline
 {
-    static const uint32 MAX_FONTS = (uint32)FontId::COUNT;
+    static const uint32 MAX_FONTS = S;
     static const uint32 MAX_INSTANCES = 4096;
-
-    FontFace fontFaces[MAX_FONTS];
 
     VkBuffer vertexBuffer;
     VkDeviceMemory vertexBufferMemory;
@@ -52,15 +45,16 @@ struct VulkanTextPipeline
     VkBuffer instanceBuffer;
     VkDeviceMemory instanceBufferMemory;
 
-    VulkanImage atlases[MAX_FONTS];
     VkSampler atlasSampler;
 
     VkDescriptorSetLayout descriptorSetLayout;
     VkDescriptorPool descriptorPool;
-    VkDescriptorSet descriptorSets[MAX_FONTS];
 
     VkPipelineLayout pipelineLayout;
     VkPipeline pipeline;
+
+    FixedArray<VulkanImage, MAX_FONTS> atlases;
+    FixedArray<VkDescriptorSet, MAX_FONTS> descriptorSets;
 };
 
 struct VulkanTextInstanceData
@@ -71,25 +65,37 @@ struct VulkanTextInstanceData
     Vec4 color;
 };
 
+template <uint32 S>
 struct VulkanTextRenderState
 {
-    using TextInstanceData = FixedArray<VulkanTextInstanceData, VulkanTextPipeline::MAX_INSTANCES>;
-    StaticArray<TextInstanceData, VulkanTextPipeline::MAX_FONTS> textInstanceData;
+    using TextInstanceData = FixedArray<VulkanTextInstanceData, VulkanTextPipeline<S>::MAX_INSTANCES>;
+    StaticArray<TextInstanceData, VulkanTextPipeline<S>::MAX_FONTS> textInstanceData;
 };
 
-void PushText(FontId fontId, const_string text, Vec2Int pos, float32 depth, Vec2Int screenSize, Vec4 color,
-              const VulkanTextPipeline& textPipeline, VulkanTextRenderState* renderState);
+template <uint32 S>
+void PushText(uint32 fontIndex, const FontFace& fontFace, const_string text, Vec2Int pos, float32 depth,
+              Vec2Int screenSize, Vec4 color, const VulkanTextPipeline<S>& textPipeline,
+              VulkanTextRenderState<S>* renderState);
 
-void ResetTextRenderState(VulkanTextRenderState* renderState);
+template <uint32 S>
+void ResetTextRenderState(VulkanTextRenderState<S>* renderState);
 
+template <uint32 S>
 void UploadAndSubmitTextDrawCommands(VkDevice device, VkCommandBuffer commandBuffer,
-                                     const VulkanTextPipeline& textPipeline, const VulkanTextRenderState& renderState,
+                                     const VulkanTextPipeline<S>& textPipeline, const VulkanTextRenderState<S>& renderState,
                                      LinearAllocator* allocator);
 
-bool LoadTextPipelineSwapchain(const VulkanWindow& window, const VulkanSwapchain& swapchain, LinearAllocator* allocator,
-                               VulkanTextPipeline* textPipeline);
-void UnloadTextPipelineSwapchain(VkDevice device, VulkanTextPipeline* textPipeline);
+template <uint32 S>
+bool RegisterFont(VkDevice device, VulkanTextPipeline<S>* textPipeline, VulkanImage fontAtlas, uint32* fontIndex);
 
+template <uint32 S>
+bool LoadTextPipelineSwapchain(const VulkanWindow& window, const VulkanSwapchain& swapchain, LinearAllocator* allocator,
+                               VulkanTextPipeline<S>* textPipeline);
+template <uint32 S>
+void UnloadTextPipelineSwapchain(VkDevice device, VulkanTextPipeline<S>* textPipeline);
+
+template <uint32 S>
 bool LoadTextPipelineWindow(const VulkanWindow& window, VkCommandPool commandPool, LinearAllocator* allocator,
-                            VulkanTextPipeline* textPipeline);
-void UnloadTextPipelineWindow(VkDevice device, VulkanTextPipeline* textPipeline);
+                            VulkanTextPipeline<S>* textPipeline);
+template <uint32 S>
+void UnloadTextPipelineWindow(VkDevice device, VulkanTextPipeline<S>* textPipeline);

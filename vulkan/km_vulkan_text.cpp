@@ -1,11 +1,10 @@
 #include "km_vulkan_text.h"
 
-void PushText(FontId fontId, const_string text, Vec2Int pos, float32 depth, Vec2Int screenSize, Vec4 color,
-              const VulkanTextPipeline& textPipeline, VulkanTextRenderState* renderState)
+template <uint32 S>
+void PushText(uint32 fontIndex, const FontFace& fontFace, const_string text, Vec2Int pos, float32 depth,
+              Vec2Int screenSize, Vec4 color, const VulkanTextPipeline<S>& textPipeline,
+              VulkanTextRenderState<S>* renderState)
 {
-    const uint32 fontIndex = (uint32)fontId;
-    const FontFace& fontFace = textPipeline.fontFaces[fontIndex];
-
     Vec2Int offset = Vec2Int::zero;
     int ind = 0;
     for (uint32 i = 0; i < text.size; i++) {
@@ -29,33 +28,35 @@ void PushText(FontId fontId, const_string text, Vec2Int pos, float32 depth, Vec2
     }
 }
 
-void ResetTextRenderState(VulkanTextRenderState* renderState)
+template <uint32 S>
+void ResetTextRenderState(VulkanTextRenderState<S>* renderState)
 {
     for (uint32 i = 0; i < renderState->textInstanceData.SIZE; i++) {
         renderState->textInstanceData[i].Clear();
     }
 }
 
+template <uint32 S>
 void UploadAndSubmitTextDrawCommands(VkDevice device, VkCommandBuffer commandBuffer,
-                                     const VulkanTextPipeline& textPipeline, const VulkanTextRenderState& renderState,
+                                     const VulkanTextPipeline<S>& textPipeline, const VulkanTextRenderState<S>& renderState,
                                      LinearAllocator* allocator)
 {
-    Array<uint32> fontNumInstances = allocator->NewArray<uint32>(VulkanTextPipeline::MAX_FONTS);
+    Array<uint32> fontNumInstances = allocator->NewArray<uint32>(textPipeline.atlases.size);
     uint32 totalNumInstances = 0;
-    for (uint32 i = 0; i < VulkanTextPipeline::MAX_FONTS; i++) {
+    for (uint32 i = 0; i < fontNumInstances.size; i++) {
         fontNumInstances[i] = renderState.textInstanceData[i].size;
         totalNumInstances += fontNumInstances[i];
     }
 
-    if (totalNumInstances > VulkanTextPipeline::MAX_INSTANCES) {
-        LOG_ERROR("Too many text instances: %lu, max %lu\n", totalNumInstances, VulkanTextPipeline::MAX_INSTANCES);
+    if (totalNumInstances > textPipeline.MAX_INSTANCES) {
+        LOG_ERROR("Too many text instances: %lu, max %lu\n", totalNumInstances, textPipeline.MAX_INSTANCES);
         // TODO what to do here?
         DEBUG_PANIC("too many text instances (chars)!\n");
     }
 
     Array<VulkanTextInstanceData> instanceData = allocator->NewArray<VulkanTextInstanceData>(totalNumInstances);
     uint32 instances = 0;
-    for (uint32 i = 0; i < VulkanTextPipeline::MAX_FONTS; i++) {
+    for (uint32 i = 0; i < fontNumInstances.size; i++) {
         const uint32 numInstances = renderState.textInstanceData[i].size;
         const uint32 numBytes = numInstances * sizeof(VulkanTextInstanceData);
         MemCopy(instanceData.data + instances * sizeof(VulkanTextInstanceData),
@@ -89,8 +90,51 @@ void UploadAndSubmitTextDrawCommands(VkDevice device, VkCommandBuffer commandBuf
     }
 }
 
+template <uint32 S>
+bool RegisterFont(VkDevice device, VulkanTextPipeline<S>* textPipeline, VulkanImage fontAtlas, uint32* fontIndex)
+{
+    const uint32 index = textPipeline->atlases.size;
+    if (index >= textPipeline->MAX_FONTS) {
+        return false;
+    }
+    *fontIndex = index;
+
+    VulkanImage* newAtlas = textPipeline->atlases.Append(fontAtlas);
+
+    VkDescriptorSetAllocateInfo allocInfo = {};
+    allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    allocInfo.descriptorPool = textPipeline->descriptorPool;
+    allocInfo.descriptorSetCount = 1;
+    allocInfo.pSetLayouts = &textPipeline->descriptorSetLayout;
+
+    VkDescriptorSet* newDescriptorSet = textPipeline->descriptorSets.Append();
+    if (vkAllocateDescriptorSets(device, &allocInfo, newDescriptorSet) != VK_SUCCESS) {
+        LOG_ERROR("vkAllocateDescriptorSets failed\n");
+        return false;
+    }
+
+    VkDescriptorImageInfo imageInfo = {};
+    imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    imageInfo.imageView = newAtlas->view;
+    imageInfo.sampler = textPipeline->atlasSampler;
+
+    VkWriteDescriptorSet descriptorWrite = {};
+    descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    descriptorWrite.dstSet = *newDescriptorSet;
+    descriptorWrite.dstBinding = 0;
+    descriptorWrite.dstArrayElement = 0;
+    descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    descriptorWrite.descriptorCount = 1;
+    descriptorWrite.pImageInfo = &imageInfo;
+
+    vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
+
+    return true;
+}
+
+template <uint32 S>
 bool LoadTextPipelineSwapchain(const VulkanWindow& window, const VulkanSwapchain& swapchain, LinearAllocator* allocator,
-                               VulkanTextPipeline* textPipeline)
+                               VulkanTextPipeline<S>* textPipeline)
 {
     const Array<uint8> vertShaderCode = LoadEntireFile(ToString("data/shaders/text.vert.spv"), allocator);
     if (vertShaderCode.data == nullptr) {
@@ -299,15 +343,20 @@ bool LoadTextPipelineSwapchain(const VulkanWindow& window, const VulkanSwapchain
     return true;
 }
 
-void UnloadTextPipelineSwapchain(VkDevice device, VulkanTextPipeline* textPipeline)
+template <uint32 S>
+void UnloadTextPipelineSwapchain(VkDevice device, VulkanTextPipeline<S>* textPipeline)
 {
     vkDestroyPipeline(device, textPipeline->pipeline, nullptr);
     vkDestroyPipelineLayout(device, textPipeline->pipelineLayout, nullptr);
 }
 
+template <uint32 S>
 bool LoadTextPipelineWindow(const VulkanWindow& window, VkCommandPool commandPool, LinearAllocator* allocator,
-                            VulkanTextPipeline* textPipeline)
+                            VulkanTextPipeline<S>* textPipeline)
 {
+    textPipeline->atlases.Clear();
+    textPipeline->descriptorSets.Clear();
+
     // Create vertex buffer
     {
         // NOTE: text pipeline uses the same vertex data format as the sprite pipeline
@@ -360,7 +409,7 @@ bool LoadTextPipelineWindow(const VulkanWindow& window, VkCommandPool commandPoo
 
     // Create instance buffer
     {
-        const VkDeviceSize bufferSize = VulkanTextPipeline::MAX_INSTANCES * sizeof(VulkanTextInstanceData);
+        const VkDeviceSize bufferSize = textPipeline->MAX_INSTANCES * sizeof(VulkanTextInstanceData);
 
         if (!CreateBuffer(bufferSize,
                           VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
@@ -369,50 +418,6 @@ bool LoadTextPipelineWindow(const VulkanWindow& window, VkCommandPool commandPoo
                           &textPipeline->instanceBuffer, &textPipeline->instanceBufferMemory)) {
             LOG_ERROR("CreateBuffer failed for instance buffer\n");
             return false;
-        }
-    }
-
-    // Load font faces
-    StaticArray<LoadFontFaceResult, VulkanTextPipeline::MAX_FONTS> fontFaces;
-    {
-        struct FontData {
-            const_string filePath;
-            uint32 height;
-        };
-        const FontData fontData[] = {
-            { ToString("data/fonts/ocr-a/regular.ttf"), 18 },
-            { ToString("data/fonts/ocr-a/regular.ttf"), 24 },
-        };
-
-        FT_Library ftLibrary;
-        FT_Error error = FT_Init_FreeType(&ftLibrary);
-        if (error) {
-            LOG_ERROR("FreeType init error: %d\n", error);
-            return false;
-        }
-
-        for (uint32 i = 0; i < C_ARRAY_LENGTH(fontData); i++) {
-            if (!LoadFontFace(ftLibrary, fontData[i].filePath, fontData[i].height, allocator, &fontFaces[i])) {
-                LOG_ERROR("Failed to load font face at %.*s\n", fontData[i].filePath.size, fontData[i].filePath.data);
-                return false;
-            }
-        }
-
-        for (uint32 i = 0; i < fontFaces.SIZE; i++) {
-            textPipeline->fontFaces[i].height = fontFaces[i].height;
-            textPipeline->fontFaces[i].glyphInfo.FromArray(fontFaces[i].glyphInfo);
-        }
-    }
-
-    // Create atlases
-    {
-        for (uint32 i = 0; i < fontFaces.SIZE; i++) {
-            if (!LoadVulkanImage(window.device, window.physicalDevice, window.graphicsQueue, commandPool,
-                                 fontFaces[i].atlasWidth, fontFaces[i].atlasHeight, 1, fontFaces[i].atlasData,
-                                 &textPipeline->atlases[i])) {
-                LOG_ERROR("Failed to Vulkan image for font atlas %lu\n", i);
-                return false;
-            }
         }
     }
 
@@ -467,13 +472,13 @@ bool LoadTextPipelineWindow(const VulkanWindow& window, VkCommandPool commandPoo
     {
         VkDescriptorPoolSize poolSize = {};
         poolSize.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        poolSize.descriptorCount = VulkanTextPipeline::MAX_FONTS;
+        poolSize.descriptorCount = textPipeline->MAX_FONTS;
 
         VkDescriptorPoolCreateInfo poolInfo = {};
         poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
         poolInfo.poolSizeCount = 1;
         poolInfo.pPoolSizes = &poolSize;
-        poolInfo.maxSets = VulkanTextPipeline::MAX_FONTS;
+        poolInfo.maxSets = textPipeline->MAX_FONTS;
 
         if (vkCreateDescriptorPool(window.device, &poolInfo, nullptr, &textPipeline->descriptorPool) != VK_SUCCESS) {
             LOG_ERROR("vkCreateDescriptorPool failed\n");
@@ -481,55 +486,18 @@ bool LoadTextPipelineWindow(const VulkanWindow& window, VkCommandPool commandPoo
         }
     }
 
-    // Create descriptor set
-    {
-        FixedArray<VkDescriptorSetLayout, VulkanTextPipeline::MAX_FONTS> layouts;
-        layouts.size = VulkanTextPipeline::MAX_FONTS;
-        for (uint32 i = 0; i < VulkanTextPipeline::MAX_FONTS; i++) {
-            layouts[i] = textPipeline->descriptorSetLayout;
-        }
-
-        VkDescriptorSetAllocateInfo allocInfo = {};
-        allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-        allocInfo.descriptorPool = textPipeline->descriptorPool;
-        allocInfo.descriptorSetCount = VulkanTextPipeline::MAX_FONTS;
-        allocInfo.pSetLayouts = layouts.data;
-
-        if (vkAllocateDescriptorSets(window.device, &allocInfo, textPipeline->descriptorSets) != VK_SUCCESS) {
-            LOG_ERROR("vkAllocateDescriptorSets failed\n");
-            return false;
-        }
-
-        for (uint32 i = 0; i < VulkanTextPipeline::MAX_FONTS; i++) {
-            VkDescriptorImageInfo imageInfo = {};
-            imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            imageInfo.imageView = textPipeline->atlases[i].view;
-            imageInfo.sampler = textPipeline->atlasSampler;
-
-            VkWriteDescriptorSet descriptorWrite = {};
-            descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            descriptorWrite.dstSet = textPipeline->descriptorSets[i];
-            descriptorWrite.dstBinding = 0;
-            descriptorWrite.dstArrayElement = 0;
-            descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-            descriptorWrite.descriptorCount = 1;
-            descriptorWrite.pImageInfo = &imageInfo;
-
-            vkUpdateDescriptorSets(window.device, 1, &descriptorWrite, 0, nullptr);
-        }
-    }
-
     return true;
 }
 
-void UnloadTextPipelineWindow(VkDevice device, VulkanTextPipeline* textPipeline)
+template <uint32 S>
+void UnloadTextPipelineWindow(VkDevice device, VulkanTextPipeline<S>* textPipeline)
 {
     vkDestroyDescriptorPool(device, textPipeline->descriptorPool, nullptr);
     vkDestroyDescriptorSetLayout(device, textPipeline->descriptorSetLayout, nullptr);
 
     vkDestroySampler(device, textPipeline->atlasSampler, nullptr);
 
-    for (uint32 i = 0; i < VulkanTextPipeline::MAX_FONTS; i++) {
+    for (uint32 i = 0; i < textPipeline->atlases.size; i++) {
         DestroyVulkanImage(device, &textPipeline->atlases[i]);
     }
 
