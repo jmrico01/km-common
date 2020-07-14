@@ -57,3 +57,4 @@ bool CreateImageView(VkDevice device, VkImage image, VkFormat format, VkImageAsp
 
 bool LoadVulkanImage(VkDevice device, VkPhysicalDevice physicalDevice, VkQueue queue, VkCommandPool commandPool,
                      uint32 width, uint32 height, uint32 channels, const uint8* data, VulkanImage* image);
+void DestroyVulkanImage(VkDevice device, VulkanImage* image);

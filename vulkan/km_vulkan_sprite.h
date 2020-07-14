@@ -7,9 +7,12 @@
 //
 // Shared utility for rendering sprites in Vulkan
 //
-// Your app's Vulkan state should have a VulkanSpritePipeline object
+// Your app's Vulkan state should have a VulkanSpritePipeline object, with template parameter S
+// specifying the maximum number of sprites that you app will use.
+//
 // Loaded by calling LoadSpritePipelineWindow(...) and LoadSpritePipelineSwapchain(...), in that order
 // Unloaded by calling UnloadSpritePipelineSwapchain(...) and UnloadSpritePipelineWindow(...), in that order
+// Register sprites through RegisterSprite(...), and keep each returned spriteIndex to reference them
 //
 // Your app should have a VulkanSpriteRenderState, initially cleared through ResetSpriteRenderState(...)
 // Then you can repeatedly call PushSprite(...) to push sprite render operations into the VulkanSpriteRenderState object
@@ -18,18 +21,10 @@
 // to draw all sprites recorded through PushSprite(...)
 //
 
-// TODO this should be per-app... oh well
-enum class SpriteId
-{
-    JON,
-    ROCK,
-
-    COUNT
-};
-
+template <uint32 S>
 struct VulkanSpritePipeline
 {
-    static const uint32 MAX_SPRITES = (uint32)SpriteId::COUNT;
+    static const uint32 MAX_SPRITES = S;
     static const uint32 MAX_INSTANCES = 64;
 
     VkBuffer vertexBuffer;
@@ -38,15 +33,16 @@ struct VulkanSpritePipeline
     VkBuffer instanceBuffer;
     VkDeviceMemory instanceBufferMemory;
 
-    VulkanImage sprites[MAX_SPRITES];
     VkSampler spriteSampler;
 
     VkDescriptorSetLayout descriptorSetLayout;
     VkDescriptorPool descriptorPool;
-    VkDescriptorSet descriptorSets[MAX_SPRITES];
 
     VkPipelineLayout pipelineLayout;
     VkPipeline pipeline;
+
+    FixedArray<VulkanImage, MAX_SPRITES> sprites;
+    FixedArray<VkDescriptorSet, MAX_SPRITES> descriptorSets;
 };
 
 struct VulkanSpriteVertex
@@ -61,25 +57,36 @@ struct VulkanSpriteInstanceData
     Vec2 size;
 };
 
+template <uint32 S>
 struct VulkanSpriteRenderState
 {
-    using SpriteInstanceData = FixedArray<VulkanSpriteInstanceData, VulkanSpritePipeline::MAX_INSTANCES>;
-    StaticArray<SpriteInstanceData, VulkanSpritePipeline::MAX_SPRITES> spriteInstanceData;
+    using SpriteInstanceData = FixedArray<VulkanSpriteInstanceData, VulkanSpritePipeline<S>::MAX_INSTANCES>;
+    StaticArray<SpriteInstanceData, VulkanSpritePipeline<S>::MAX_SPRITES> spriteInstanceData;
 };
 
-void PushSprite(SpriteId spriteId, Vec2Int pos, Vec2Int size, float32 depth, Vec2Int screenSize,
-                VulkanSpriteRenderState* renderState);
+template <uint32 S>
+void PushSprite(uint32 spriteIndex, Vec2Int pos, Vec2Int size, float32 depth, Vec2Int screenSize,
+                VulkanSpriteRenderState<S>* renderState);
 
-void ResetSpriteRenderState(VulkanSpriteRenderState* renderState);
+template <uint32 S>
+void ResetSpriteRenderState(VulkanSpriteRenderState<S>* renderState);
 
+template <uint32 S>
 void UploadAndSubmitSpriteDrawCommands(VkDevice device, VkCommandBuffer commandBuffer,
-                                       const VulkanSpritePipeline& spritePipeline, const VulkanSpriteRenderState& renderState,
+                                       const VulkanSpritePipeline<S>& spritePipeline, const VulkanSpriteRenderState<S>& renderState,
                                        LinearAllocator* allocator);
 
-bool LoadSpritePipelineSwapchain(const VulkanWindow& window, const VulkanSwapchain& swapchain, LinearAllocator* allocator,
-                                 VulkanSpritePipeline* spritePipeline);
-void UnloadSpritePipelineSwapchain(VkDevice device, VulkanSpritePipeline* spritePipeline);
+template <uint32 S>
+bool RegisterSprite(VkDevice device, VulkanSpritePipeline<S>* spritePipeline, VulkanImage sprite, uint32* spriteIndex);
 
+template <uint32 S>
+bool LoadSpritePipelineSwapchain(const VulkanWindow& window, const VulkanSwapchain& swapchain, LinearAllocator* allocator,
+                                 VulkanSpritePipeline<S>* spritePipeline);
+template <uint32 S>
+void UnloadSpritePipelineSwapchain(VkDevice device, VulkanSpritePipeline<S>* spritePipeline);
+
+template <uint32 S>
 bool LoadSpritePipelineWindow(const VulkanWindow& window, VkCommandPool commandPool, LinearAllocator* allocator,
-                              VulkanSpritePipeline* spritePipeline);
-void UnloadSpritePipelineWindow(VkDevice device, VulkanSpritePipeline* spritePipeline);
+                              VulkanSpritePipeline<S>* spritePipeline);
+template <uint32 S>
+void UnloadSpritePipelineWindow(VkDevice device, VulkanSpritePipeline<S>* spritePipeline);

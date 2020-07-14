@@ -397,3 +397,10 @@ bool LoadVulkanImage(VkDevice device, VkPhysicalDevice physicalDevice, VkQueue q
 
     return true;
 }
+
+void DestroyVulkanImage(VkDevice device, VulkanImage* image)
+{
+    vkDestroyImageView(device, image->view, nullptr);
+    vkDestroyImage(device, image->image, nullptr);
+    vkFreeMemory(device, image->memory, nullptr);
+}

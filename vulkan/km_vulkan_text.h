@@ -68,6 +68,7 @@ struct VulkanTextInstanceData
     Vec3 pos;
     Vec2 size;
     Vec4 uvInfo;
+    Vec4 color;
 };
 
 struct VulkanTextRenderState
@@ -76,7 +77,7 @@ struct VulkanTextRenderState
     StaticArray<TextInstanceData, VulkanTextPipeline::MAX_FONTS> textInstanceData;
 };
 
-void PushText(FontId fontId, const_string text, Vec2Int pos, float32 depth, Vec2Int screenSize,
+void PushText(FontId fontId, const_string text, Vec2Int pos, float32 depth, Vec2Int screenSize, Vec4 color,
               const VulkanTextPipeline& textPipeline, VulkanTextRenderState* renderState);
 
 void ResetTextRenderState(VulkanTextRenderState* renderState);

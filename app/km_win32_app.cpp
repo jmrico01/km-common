@@ -373,7 +373,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     UNREFERENCED_PARAMETER(lpCmdLine);
     UNREFERENCED_PARAMETER(nShowCmd);
 
-    HWND hWnd = Win32CreateWindow(hInstance, WndProc, "VulkanWindowClass", "vulkan",
+    HWND hWnd = Win32CreateWindow(hInstance, WndProc, "VulkanWindowClass", WINDOW_NAME,
                                   100, 100, WINDOW_START_WIDTH, WINDOW_START_HEIGHT);
     if (!hWnd) {
         LOG_ERROR("Win32CreateWindow failed\n");

@@ -1,43 +1,44 @@
 #include "km_vulkan_sprite.h"
 
-void PushSprite(SpriteId spriteId, Vec2Int pos, Vec2Int size, float32 depth, Vec2Int screenSize,
-                VulkanSpriteRenderState* renderState)
+template <uint32 S>
+void PushSprite(uint32 spriteIndex, Vec2Int pos, Vec2Int size, float32 depth, Vec2Int screenSize,
+                VulkanSpriteRenderState<S>* renderState)
 {
-    const uint32 spriteIndex = (uint32)spriteId;
-
     VulkanSpriteInstanceData* instanceData = renderState->spriteInstanceData[spriteIndex].Append();
     const RectCoordsNdc ndc = ToRectCoordsNdc(pos, size, screenSize);
     instanceData->pos = ToVec3(ndc.pos, depth);
     instanceData->size = ndc.size;
 }
 
-void ResetSpriteRenderState(VulkanSpriteRenderState* renderState)
+template <uint32 S>
+void ResetSpriteRenderState(VulkanSpriteRenderState<S>* renderState)
 {
     for (uint32 i = 0; i < renderState->spriteInstanceData.SIZE; i++) {
         renderState->spriteInstanceData[i].Clear();
     }
 }
 
+template <uint32 S>
 void UploadAndSubmitSpriteDrawCommands(VkDevice device, VkCommandBuffer commandBuffer,
-                                       const VulkanSpritePipeline& spritePipeline, const VulkanSpriteRenderState& renderState,
+                                       const VulkanSpritePipeline<S>& spritePipeline, const VulkanSpriteRenderState<S>& renderState,
                                        LinearAllocator* allocator)
 {
-    Array<uint32> spriteNumInstances = allocator->NewArray<uint32>(VulkanSpritePipeline::MAX_SPRITES);
+    Array<uint32> spriteNumInstances = allocator->NewArray<uint32>(spritePipeline.sprites.size);
     uint32 totalNumInstances = 0;
     for (uint32 i = 0; i < spriteNumInstances.size; i++) {
         spriteNumInstances[i] = renderState.spriteInstanceData[i].size;
         totalNumInstances += spriteNumInstances[i];
     }
 
-    if (totalNumInstances > VulkanSpritePipeline::MAX_INSTANCES) {
-        LOG_ERROR("Too many sprite instances: %lu, max %lu\n", totalNumInstances, VulkanSpritePipeline::MAX_INSTANCES);
+    if (totalNumInstances > spritePipeline.MAX_INSTANCES) {
+        LOG_ERROR("Too many sprite instances: %lu, max %lu\n", totalNumInstances, spritePipeline.MAX_INSTANCES);
         // TODO what to do here?
         DEBUG_PANIC("too many sprites!\n");
     }
 
     Array<VulkanSpriteInstanceData> instanceData = allocator->NewArray<VulkanSpriteInstanceData>(totalNumInstances);
     uint32 instances = 0;
-    for (uint32 i = 0; i < VulkanSpritePipeline::MAX_SPRITES; i++) {
+    for (uint32 i = 0; i < spritePipeline.sprites.size; i++) {
         const uint32 numInstances = renderState.spriteInstanceData[i].size;
         const uint32 numBytes = numInstances * sizeof(VulkanSpriteInstanceData);
         MemCopy(instanceData.data + instances * sizeof(VulkanSpriteInstanceData),
@@ -71,8 +72,51 @@ void UploadAndSubmitSpriteDrawCommands(VkDevice device, VkCommandBuffer commandB
     }
 }
 
+template <uint32 S>
+bool RegisterSprite(VkDevice device, VulkanSpritePipeline<S>* spritePipeline, VulkanImage sprite, uint32* spriteIndex)
+{
+    const uint32 index = spritePipeline->sprites.size;
+    if (index >= spritePipeline->MAX_SPRITES) {
+        return false;
+    }
+    *spriteIndex = index;
+
+    VulkanImage* newSprite = spritePipeline->sprites.Append(sprite);
+
+    VkDescriptorSetAllocateInfo allocInfo = {};
+    allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    allocInfo.descriptorPool = spritePipeline->descriptorPool;
+    allocInfo.descriptorSetCount = 1;
+    allocInfo.pSetLayouts = &spritePipeline->descriptorSetLayout;
+
+    VkDescriptorSet* newDescriptorSet = spritePipeline->descriptorSets.Append();
+    if (vkAllocateDescriptorSets(device, &allocInfo, newDescriptorSet) != VK_SUCCESS) {
+        LOG_ERROR("vkAllocateDescriptorSets failed\n");
+        return false;
+    }
+
+    VkDescriptorImageInfo imageInfo = {};
+    imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    imageInfo.imageView = newSprite->view;
+    imageInfo.sampler = spritePipeline->spriteSampler;
+
+    VkWriteDescriptorSet descriptorWrite = {};
+    descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    descriptorWrite.dstSet = *newDescriptorSet;
+    descriptorWrite.dstBinding = 0;
+    descriptorWrite.dstArrayElement = 0;
+    descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    descriptorWrite.descriptorCount = 1;
+    descriptorWrite.pImageInfo = &imageInfo;
+
+    vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
+
+    return true;
+}
+
+template <uint32 S>
 bool LoadSpritePipelineSwapchain(const VulkanWindow& window, const VulkanSwapchain& swapchain, LinearAllocator* allocator,
-                                 VulkanSpritePipeline* spritePipeline)
+                                 VulkanSpritePipeline<S>* spritePipeline)
 {
     const Array<uint8> vertShaderCode = LoadEntireFile(ToString("data/shaders/sprite.vert.spv"), allocator);
     if (vertShaderCode.data == nullptr) {
@@ -271,16 +315,21 @@ bool LoadSpritePipelineSwapchain(const VulkanWindow& window, const VulkanSwapcha
     return true;
 }
 
-void UnloadSpritePipelineSwapchain(VkDevice device, VulkanSpritePipeline* spritePipeline)
+template <uint32 S>
+void UnloadSpritePipelineSwapchain(VkDevice device, VulkanSpritePipeline<S>* spritePipeline)
 {
     vkDestroyPipeline(device, spritePipeline->pipeline, nullptr);
     vkDestroyPipelineLayout(device, spritePipeline->pipelineLayout, nullptr);
 }
 
+template <uint32 S>
 bool LoadSpritePipelineWindow(const VulkanWindow& window, VkCommandPool commandPool, LinearAllocator* allocator,
-                              VulkanSpritePipeline* spritePipeline)
+                              VulkanSpritePipeline<S>* spritePipeline)
 {
     UNREFERENCED_PARAMETER(allocator);
+
+    spritePipeline->sprites.Clear();
+    spritePipeline->descriptorSets.Clear();
 
     // Create vertex buffer
     {
@@ -333,7 +382,7 @@ bool LoadSpritePipelineWindow(const VulkanWindow& window, VkCommandPool commandP
 
     // Create instance buffer
     {
-        const VkDeviceSize bufferSize = VulkanSpritePipeline::MAX_INSTANCES * sizeof(VulkanSpriteInstanceData);
+        const VkDeviceSize bufferSize = spritePipeline->MAX_INSTANCES * sizeof(VulkanSpriteInstanceData);
 
         if (!CreateBuffer(bufferSize,
                           VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
@@ -342,30 +391,6 @@ bool LoadSpritePipelineWindow(const VulkanWindow& window, VkCommandPool commandP
                           &spritePipeline->instanceBuffer, &spritePipeline->instanceBufferMemory)) {
             LOG_ERROR("CreateBuffer failed for instance buffer\n");
             return false;
-        }
-    }
-
-    // Create sprites
-    {
-        const char* spriteFilePaths[] = {
-            "data/sprites/jon.png",
-            "data/sprites/rock.png"
-        };
-
-        for (int i = 0; i < C_ARRAY_LENGTH(spriteFilePaths); i++) {
-            int width, height, channels;
-            unsigned char* imageData = stbi_load(spriteFilePaths[i], &width, &height, &channels, 0);
-            if (imageData == NULL) {
-                LOG_ERROR("Failed to load sprite: %s\n", spriteFilePaths[i]);
-                return false;
-            }
-            defer(stbi_image_free(imageData));
-
-            if (!LoadVulkanImage(window.device, window.physicalDevice, window.graphicsQueue, commandPool, width, height,
-                                 channels, (const uint8*)imageData, &spritePipeline->sprites[i])) {
-                LOG_ERROR("Failed to Vulkan image for sprite %s\n", spriteFilePaths[i]);
-                return false;
-            }
         }
     }
 
@@ -420,13 +445,13 @@ bool LoadSpritePipelineWindow(const VulkanWindow& window, VkCommandPool commandP
     {
         VkDescriptorPoolSize poolSize = {};
         poolSize.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        poolSize.descriptorCount = VulkanSpritePipeline::MAX_SPRITES;
+        poolSize.descriptorCount = spritePipeline->MAX_SPRITES;
 
         VkDescriptorPoolCreateInfo poolInfo = {};
         poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
         poolInfo.poolSizeCount = 1;
         poolInfo.pPoolSizes = &poolSize;
-        poolInfo.maxSets = VulkanSpritePipeline::MAX_SPRITES;
+        poolInfo.maxSets = spritePipeline->MAX_SPRITES;
 
         if (vkCreateDescriptorPool(window.device, &poolInfo, nullptr, &spritePipeline->descriptorPool) != VK_SUCCESS) {
             LOG_ERROR("vkCreateDescriptorPool failed\n");
@@ -434,58 +459,19 @@ bool LoadSpritePipelineWindow(const VulkanWindow& window, VkCommandPool commandP
         }
     }
 
-    // Create descriptor set
-    {
-        FixedArray<VkDescriptorSetLayout, VulkanSpritePipeline::MAX_SPRITES> layouts;
-        layouts.size = VulkanSpritePipeline::MAX_SPRITES;
-        for (uint32 i = 0; i < VulkanSpritePipeline::MAX_SPRITES; i++) {
-            layouts[i] = spritePipeline->descriptorSetLayout;
-        }
-
-        VkDescriptorSetAllocateInfo allocInfo = {};
-        allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-        allocInfo.descriptorPool = spritePipeline->descriptorPool;
-        allocInfo.descriptorSetCount = VulkanSpritePipeline::MAX_SPRITES;
-        allocInfo.pSetLayouts = layouts.data;
-
-        if (vkAllocateDescriptorSets(window.device, &allocInfo, spritePipeline->descriptorSets) != VK_SUCCESS) {
-            LOG_ERROR("vkAllocateDescriptorSets failed\n");
-            return false;
-        }
-
-        for (uint32 i = 0; i < VulkanSpritePipeline::MAX_SPRITES; i++) {
-            VkDescriptorImageInfo imageInfo = {};
-            imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            imageInfo.imageView = spritePipeline->sprites[i].view;
-            imageInfo.sampler = spritePipeline->spriteSampler;
-
-            VkWriteDescriptorSet descriptorWrite = {};
-            descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            descriptorWrite.dstSet = spritePipeline->descriptorSets[i];
-            descriptorWrite.dstBinding = 0;
-            descriptorWrite.dstArrayElement = 0;
-            descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-            descriptorWrite.descriptorCount = 1;
-            descriptorWrite.pImageInfo = &imageInfo;
-
-            vkUpdateDescriptorSets(window.device, 1, &descriptorWrite, 0, nullptr);
-        }
-    }
-
     return true;
 }
 
-void UnloadSpritePipelineWindow(VkDevice device, VulkanSpritePipeline* spritePipeline)
+template <uint32 S>
+void UnloadSpritePipelineWindow(VkDevice device, VulkanSpritePipeline<S>* spritePipeline)
 {
     vkDestroyDescriptorPool(device, spritePipeline->descriptorPool, nullptr);
     vkDestroyDescriptorSetLayout(device, spritePipeline->descriptorSetLayout, nullptr);
 
     vkDestroySampler(device, spritePipeline->spriteSampler, nullptr);
 
-    for (uint32 i = 0; i < VulkanSpritePipeline::MAX_SPRITES; i++) {
-        vkDestroyImageView(device, spritePipeline->sprites[i].view, nullptr);
-        vkDestroyImage(device, spritePipeline->sprites[i].image, nullptr);
-        vkFreeMemory(device, spritePipeline->sprites[i].memory, nullptr);
+    for (uint32 i = 0; i < spritePipeline->sprites.size; i++) {
+        DestroyVulkanImage(device, &spritePipeline->sprites[i]);
     }
 
     vkDestroyBuffer(device, spritePipeline->instanceBuffer, nullptr);

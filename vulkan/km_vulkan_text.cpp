@@ -1,6 +1,6 @@
 #include "km_vulkan_text.h"
 
-void PushText(FontId fontId, const_string text, Vec2Int pos, float32 depth, Vec2Int screenSize,
+void PushText(FontId fontId, const_string text, Vec2Int pos, float32 depth, Vec2Int screenSize, Vec4 color,
               const VulkanTextPipeline& textPipeline, VulkanTextRenderState* renderState)
 {
     const uint32 fontIndex = (uint32)fontId;
@@ -20,8 +20,9 @@ void PushText(FontId fontId, const_string text, Vec2Int pos, float32 depth, Vec2
         instanceData->size = ndc.size;
         instanceData->uvInfo = {
             glyphInfo.uvOrigin.x, glyphInfo.uvOrigin.y,
-            glyphInfo.uvSize.x, glyphInfo.uvSize.y
+            glyphInfo.uvSize.x, glyphInfo.uvSize.y,
         };
+        instanceData->color = color;
 
         offset += glyphInfo.advance / 64;
         ind++;
@@ -132,7 +133,7 @@ bool LoadTextPipelineSwapchain(const VulkanWindow& window, const VulkanSwapchain
     VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageCreateInfo, fragShaderStageCreateInfo };
 
     VkVertexInputBindingDescription bindingDescriptions[2] = {};
-    VkVertexInputAttributeDescription attributeDescriptions[5] = {};
+    VkVertexInputAttributeDescription attributeDescriptions[6] = {};
 
     // Per-vertex attribute bindings
     bindingDescriptions[0].binding = 0;
@@ -168,6 +169,11 @@ bool LoadTextPipelineSwapchain(const VulkanWindow& window, const VulkanSwapchain
     attributeDescriptions[4].location = 4;
     attributeDescriptions[4].format = VK_FORMAT_R32G32B32A32_SFLOAT;
     attributeDescriptions[4].offset = offsetof(VulkanTextInstanceData, uvInfo);
+
+    attributeDescriptions[5].binding = 1;
+    attributeDescriptions[5].location = 5;
+    attributeDescriptions[5].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+    attributeDescriptions[5].offset = offsetof(VulkanTextInstanceData, color);
 
     VkPipelineVertexInputStateCreateInfo vertexInputCreateInfo = {};
     vertexInputCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -302,8 +308,6 @@ void UnloadTextPipelineSwapchain(VkDevice device, VulkanTextPipeline* textPipeli
 bool LoadTextPipelineWindow(const VulkanWindow& window, VkCommandPool commandPool, LinearAllocator* allocator,
                             VulkanTextPipeline* textPipeline)
 {
-    UNREFERENCED_PARAMETER(allocator);
-
     // Create vertex buffer
     {
         // NOTE: text pipeline uses the same vertex data format as the sprite pipeline
@@ -463,13 +467,13 @@ bool LoadTextPipelineWindow(const VulkanWindow& window, VkCommandPool commandPoo
     {
         VkDescriptorPoolSize poolSize = {};
         poolSize.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        poolSize.descriptorCount = VulkanSpritePipeline::MAX_SPRITES;
+        poolSize.descriptorCount = VulkanTextPipeline::MAX_FONTS;
 
         VkDescriptorPoolCreateInfo poolInfo = {};
         poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
         poolInfo.poolSizeCount = 1;
         poolInfo.pPoolSizes = &poolSize;
-        poolInfo.maxSets = VulkanSpritePipeline::MAX_SPRITES;
+        poolInfo.maxSets = VulkanTextPipeline::MAX_FONTS;
 
         if (vkCreateDescriptorPool(window.device, &poolInfo, nullptr, &textPipeline->descriptorPool) != VK_SUCCESS) {
             LOG_ERROR("vkCreateDescriptorPool failed\n");
@@ -479,16 +483,16 @@ bool LoadTextPipelineWindow(const VulkanWindow& window, VkCommandPool commandPoo
 
     // Create descriptor set
     {
-        FixedArray<VkDescriptorSetLayout, VulkanSpritePipeline::MAX_SPRITES> layouts;
-        layouts.size = VulkanSpritePipeline::MAX_SPRITES;
-        for (uint32 i = 0; i < VulkanSpritePipeline::MAX_SPRITES; i++) {
+        FixedArray<VkDescriptorSetLayout, VulkanTextPipeline::MAX_FONTS> layouts;
+        layouts.size = VulkanTextPipeline::MAX_FONTS;
+        for (uint32 i = 0; i < VulkanTextPipeline::MAX_FONTS; i++) {
             layouts[i] = textPipeline->descriptorSetLayout;
         }
 
         VkDescriptorSetAllocateInfo allocInfo = {};
         allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
         allocInfo.descriptorPool = textPipeline->descriptorPool;
-        allocInfo.descriptorSetCount = VulkanSpritePipeline::MAX_SPRITES;
+        allocInfo.descriptorSetCount = VulkanTextPipeline::MAX_FONTS;
         allocInfo.pSetLayouts = layouts.data;
 
         if (vkAllocateDescriptorSets(window.device, &allocInfo, textPipeline->descriptorSets) != VK_SUCCESS) {
@@ -496,7 +500,7 @@ bool LoadTextPipelineWindow(const VulkanWindow& window, VkCommandPool commandPoo
             return false;
         }
 
-        for (uint32 i = 0; i < VulkanSpritePipeline::MAX_SPRITES; i++) {
+        for (uint32 i = 0; i < VulkanTextPipeline::MAX_FONTS; i++) {
             VkDescriptorImageInfo imageInfo = {};
             imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
             imageInfo.imageView = textPipeline->atlases[i].view;
@@ -526,9 +530,7 @@ void UnloadTextPipelineWindow(VkDevice device, VulkanTextPipeline* textPipeline)
     vkDestroySampler(device, textPipeline->atlasSampler, nullptr);
 
     for (uint32 i = 0; i < VulkanTextPipeline::MAX_FONTS; i++) {
-        vkDestroyImageView(device, textPipeline->atlases[i].view, nullptr);
-        vkDestroyImage(device, textPipeline->atlases[i].image, nullptr);
-        vkFreeMemory(device, textPipeline->atlases[i].memory, nullptr);
+        DestroyVulkanImage(device, &textPipeline->atlases[i]);
     }
 
     vkDestroyBuffer(device, textPipeline->instanceBuffer, nullptr);
