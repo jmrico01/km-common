@@ -4,6 +4,11 @@
 #include "km_defines.h"
 #include "km_memory.h"
 
+static const uint32 DYNAMIC_ARRAY_START_CAPACITY = 16;
+
+// TODO pretty high, maybe do lower
+static const uint32 HASH_TABLE_START_CAPACITY = 89;
+
 // NOTE: Adding things to this container might invalidate pointers to elements.
 // Subtle case that confused me: getting pointers through Append 3 times in a row, and only afterward
 // setting the 3 values through the pointers. Some values would be unset if a resize was triggered.
@@ -84,6 +89,7 @@ struct HashTable
     bool Remove(const HashKey& key);
 
     void Clear();
+    void Initialize(uint32 capacity = HASH_TABLE_START_CAPACITY, Allocator* allocator = nullptr);
     void Free();
 
     HashTable<V, Allocator>& operator=(const HashTable<V, Allocator>& other);
