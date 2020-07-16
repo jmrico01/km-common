@@ -49,14 +49,14 @@ void UploadAndSubmitSpriteDrawCommands(VkDevice device, VkCommandBuffer commandB
     if (instanceData.size > 0) {
         void* data;
         const uint32 bufferSize = instanceData.size * sizeof(VulkanSpriteInstanceData);
-        vkMapMemory(device, spritePipeline.instanceBufferMemory, 0, bufferSize, 0, &data);
+        vkMapMemory(device, spritePipeline.instanceBuffer.memory, 0, bufferSize, 0, &data);
         MemCopy(data, instanceData.data, bufferSize);
-        vkUnmapMemory(device, spritePipeline.instanceBufferMemory);
+        vkUnmapMemory(device, spritePipeline.instanceBuffer.memory);
     }
 
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, spritePipeline.pipeline);
 
-    const VkBuffer vertexBuffers[] = { spritePipeline.vertexBuffer, spritePipeline.instanceBuffer };
+    const VkBuffer vertexBuffers[] = { spritePipeline.vertexBuffer.buffer, spritePipeline.instanceBuffer.buffer };
     const VkDeviceSize offsets[] = { 0, 0 };
     vkCmdBindVertexBuffers(commandBuffer, 0, C_ARRAY_LENGTH(vertexBuffers), vertexBuffers, offsets);
 
@@ -345,50 +345,47 @@ bool LoadSpritePipelineWindow(const VulkanWindow& window, VkCommandPool commandP
 
         const VkDeviceSize vertexBufferSize = C_ARRAY_LENGTH(VERTICES) * sizeof(VulkanSpriteVertex);
 
-        VkBuffer stagingBuffer;
-        VkDeviceMemory stagingBufferMemory;
-        if (!CreateBuffer(vertexBufferSize,
-                          VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                          VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                          window.device, window.physicalDevice, &stagingBuffer, &stagingBufferMemory)) {
+        VulkanBuffer stagingBuffer;
+        if (!CreateVulkanBuffer(vertexBufferSize,
+                                VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                                window.device, window.physicalDevice, &stagingBuffer)) {
             LOG_ERROR("CreateBuffer failed for staging buffer\n");
             return false;
         }
 
         // Copy vertex data from CPU into memory-mapped staging buffer
         void* data;
-        vkMapMemory(window.device, stagingBufferMemory, 0, vertexBufferSize, 0, &data);
+        vkMapMemory(window.device, stagingBuffer.memory, 0, vertexBufferSize, 0, &data);
 
         MemCopy(data, VERTICES, vertexBufferSize);
 
-        vkUnmapMemory(window.device, stagingBufferMemory);
+        vkUnmapMemory(window.device, stagingBuffer.memory);
 
-        if (!CreateBuffer(vertexBufferSize,
-                          VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-                          VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                          window.device, window.physicalDevice,
-                          &spritePipeline->vertexBuffer, &spritePipeline->vertexBufferMemory)) {
+        if (!CreateVulkanBuffer(vertexBufferSize,
+                                VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+                                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                                window.device, window.physicalDevice,
+                                &spritePipeline->vertexBuffer)) {
             LOG_ERROR("CreateBuffer failed for vertex buffer\n");
             return false;
         }
 
         // Copy vertex data from staging buffer into GPU vertex buffer
         CopyBuffer(window.device, commandPool, window.graphicsQueue,
-                   stagingBuffer, spritePipeline->vertexBuffer, vertexBufferSize);
+                   stagingBuffer.buffer, spritePipeline->vertexBuffer.buffer, vertexBufferSize);
 
-        vkDestroyBuffer(window.device, stagingBuffer, nullptr);
-        vkFreeMemory(window.device, stagingBufferMemory, nullptr);
+        DestroyVulkanBuffer(window.device, &stagingBuffer);
     }
 
     // Create instance buffer
     {
         const VkDeviceSize bufferSize = spritePipeline->MAX_INSTANCES * sizeof(VulkanSpriteInstanceData);
 
-        if (!CreateBuffer(bufferSize,
-                          VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-                          VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                          window.device, window.physicalDevice,
-                          &spritePipeline->instanceBuffer, &spritePipeline->instanceBufferMemory)) {
+        if (!CreateVulkanBuffer(bufferSize,
+                                VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+                                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                                window.device, window.physicalDevice, &spritePipeline->instanceBuffer)) {
             LOG_ERROR("CreateBuffer failed for instance buffer\n");
             return false;
         }
@@ -474,9 +471,6 @@ void UnloadSpritePipelineWindow(VkDevice device, VulkanSpritePipeline<S>* sprite
         DestroyVulkanImage(device, &spritePipeline->sprites[i]);
     }
 
-    vkDestroyBuffer(device, spritePipeline->instanceBuffer, nullptr);
-    vkFreeMemory(device, spritePipeline->instanceBufferMemory, nullptr);
-
-    vkDestroyBuffer(device, spritePipeline->vertexBuffer, nullptr);
-    vkFreeMemory(device, spritePipeline->vertexBufferMemory, nullptr);
+    DestroyVulkanBuffer(device, &spritePipeline->instanceBuffer);
+    DestroyVulkanBuffer(device, &spritePipeline->vertexBuffer);
 }

@@ -27,11 +27,8 @@ struct VulkanSpritePipeline
     static const uint32 MAX_SPRITES = S;
     static const uint32 MAX_INSTANCES = 64;
 
-    VkBuffer vertexBuffer;
-    VkDeviceMemory vertexBufferMemory;
-
-    VkBuffer instanceBuffer;
-    VkDeviceMemory instanceBufferMemory;
+    VulkanBuffer vertexBuffer;
+    VulkanBuffer instanceBuffer;
 
     VkSampler spriteSampler;
 

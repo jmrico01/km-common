@@ -15,7 +15,10 @@ bool StringToObjFaceInds(const_string str, FaceIndices* faceInds)
 {
     int numElements;
     bool result = StringToElementArray(str, '/', false, StringToIntBase10, 2, faceInds->values, &numElements);
-    return result && numElements == 2;
+    if (numElements == 1) {
+        faceInds->uv = -1;
+    }
+    return result && (numElements == 1 || numElements == 2);
 }
 
 bool LoadObj(const_string filePath, LoadObjResult* result, LinearAllocator* allocator)
@@ -32,22 +35,21 @@ bool LoadObj(const_string filePath, LoadObjResult* result, LinearAllocator* allo
     DynamicArray<uint32, LinearAllocator> startTriangleInds(allocator);
     DynamicArray<uint32, LinearAllocator> startQuadInds(allocator);
 
+
     string fileString = {
         .size = result->file.size,
         .data = (char*)result->file.data
     };
     string next;
+
+    bool firstMesh = true;
     while (true) {
         next = NextSplitElement(&fileString, '\n');
-        // Handle end-of-file conditions
-        if (next.size == 0) {
-            break;
-        }
-        else if (next[next.size - 1] == '\r') {
+        if (next.size > 0 && next[next.size - 1] == '\r') {
             next.size--;
-            if (next.size == 0) {
-                break;
-            }
+        }
+        if (fileString.size == 0 && next.size == 0) {
+            break;
         }
 
         if (next.size < 2) continue;
@@ -56,9 +58,16 @@ bool LoadObj(const_string filePath, LoadObjResult* result, LinearAllocator* allo
         if (next[0] == 'o' && next[1] == ' ') {
             startTriangleInds.Append(triangles.size);
             startQuadInds.Append(quads.size);
+            firstMesh = false;
         }
         // Handle new vertex position
         else if (next[0] == 'v' && next[1] == ' ') {
+            if (firstMesh) {
+                startTriangleInds.Append(triangles.size);
+                startQuadInds.Append(quads.size);
+                firstMesh = false;
+            }
+
             next.data += 2;
             next.size -= 2;
 
@@ -74,6 +83,12 @@ bool LoadObj(const_string filePath, LoadObjResult* result, LinearAllocator* allo
         }
         // Handle new vertex UV
         else if (next.size > 2 && next[0] == 'v' && next[1] == 't' && next[2] == ' ') {
+            if (firstMesh) {
+                startTriangleInds.Append(triangles.size);
+                startQuadInds.Append(quads.size);
+                firstMesh = false;
+            }
+
             next.data += 3;
             next.size -= 3;
 
@@ -89,6 +104,12 @@ bool LoadObj(const_string filePath, LoadObjResult* result, LinearAllocator* allo
         }
         // Handle new face
         else if (next[0] == 'f' && next[1] == ' ') {
+            if (firstMesh) {
+                startTriangleInds.Append(triangles.size);
+                startQuadInds.Append(quads.size);
+                firstMesh = false;
+            }
+
             next.data += 2;
             next.size -= 2;
 
@@ -103,23 +124,23 @@ bool LoadObj(const_string filePath, LoadObjResult* result, LinearAllocator* allo
             if (numElements == 3) {
                 ObjTriangle* triangle = triangles.Append();
                 triangle->v[0].pos = positions[indices[0].pos - 1];
-                triangle->v[0].uv = uvs[indices[0].uv - 1];
+                triangle->v[0].uv = indices[0].uv == -1 ? Vec2::zero : uvs[indices[0].uv - 1];
                 triangle->v[1].pos = positions[indices[2].pos - 1];
-                triangle->v[1].uv = uvs[indices[2].uv - 1];
+                triangle->v[1].uv = indices[2].uv == -1 ? Vec2::zero : uvs[indices[2].uv - 1];
                 triangle->v[2].pos = positions[indices[1].pos - 1];
-                triangle->v[2].uv = uvs[indices[1].uv - 1];
+                triangle->v[2].uv = indices[1].uv == -1 ? Vec2::zero : uvs[indices[1].uv - 1];
 
             }
             else if (numElements == 4) {
                 ObjQuad* quad = quads.Append();
                 quad->v[0].pos = positions[indices[0].pos - 1];
-                quad->v[0].uv = uvs[indices[0].uv - 1];
+                quad->v[0].uv = indices[0].uv == -1 ? Vec2::zero : uvs[indices[0].uv - 1];
                 quad->v[1].pos = positions[indices[3].pos - 1];
-                quad->v[1].uv = uvs[indices[3].uv - 1];
+                quad->v[1].uv = indices[3].uv == -1 ? Vec2::zero : uvs[indices[3].uv - 1];
                 quad->v[2].pos = positions[indices[2].pos - 1];
-                quad->v[2].uv = uvs[indices[2].uv - 1];
+                quad->v[2].uv = indices[2].uv == -1 ? Vec2::zero : uvs[indices[2].uv - 1];
                 quad->v[3].pos = positions[indices[1].pos - 1];
-                quad->v[3].uv = uvs[indices[1].uv - 1];
+                quad->v[3].uv = indices[1].uv == -1 ? Vec2::zero : uvs[indices[1].uv - 1];
             }
             else {
                 return false;

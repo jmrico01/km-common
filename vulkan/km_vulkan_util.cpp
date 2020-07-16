@@ -117,8 +117,8 @@ bool CreateShaderModule(const Array<uint8> code, VkDevice device, VkShaderModule
     return vkCreateShaderModule(device, &createInfo, nullptr, shaderModule) == VK_SUCCESS;
 }
 
-bool CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memoryPropertyFlags,
-                  VkDevice device, VkPhysicalDevice physicalDevice, VkBuffer* buffer, VkDeviceMemory* bufferMemory)
+bool CreateVulkanBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memoryPropertyFlags,
+                        VkDevice device, VkPhysicalDevice physicalDevice, VulkanBuffer* buffer)
 {
     VkBufferCreateInfo createInfo = {};
     createInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -127,13 +127,13 @@ bool CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyF
     createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     createInfo.flags = 0;
 
-    if (vkCreateBuffer(device, &createInfo, nullptr, buffer) != VK_SUCCESS) {
+    if (vkCreateBuffer(device, &createInfo, nullptr, &buffer->buffer) != VK_SUCCESS) {
         LOG_ERROR("vkCreateBuffer failed\n");
         return false;
     }
 
     VkMemoryRequirements memRequirements;
-    vkGetBufferMemoryRequirements(device, *buffer, &memRequirements);
+    vkGetBufferMemoryRequirements(device, buffer->buffer, &memRequirements);
 
     VkPhysicalDeviceMemoryProperties memProperties;
     vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
@@ -148,14 +148,20 @@ bool CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyF
     allocInfo.allocationSize = memRequirements.size;
     allocInfo.memoryTypeIndex = memoryTypeIndex;
 
-    if (vkAllocateMemory(device, &allocInfo, nullptr, bufferMemory) != VK_SUCCESS) {
+    if (vkAllocateMemory(device, &allocInfo, nullptr, &buffer->memory) != VK_SUCCESS) {
         LOG_ERROR("vkAllocateMemory failed\n");
         return false;
     }
 
-    vkBindBufferMemory(device, *buffer, *bufferMemory, 0);
+    vkBindBufferMemory(device, buffer->buffer, buffer->memory, 0);
 
     return true;
+}
+
+void DestroyVulkanBuffer(VkDevice device, VulkanBuffer* buffer)
+{
+    vkDestroyBuffer(device, buffer->buffer, nullptr);
+    vkFreeMemory(device, buffer->memory, nullptr);
 }
 
 void CopyBuffer(VkDevice device, VkCommandPool commandPool, VkQueue queue,
@@ -363,28 +369,24 @@ bool LoadVulkanImage(VkDevice device, VkPhysicalDevice physicalDevice, VkQueue q
 
     // Copy image data using a memory-mapped staging buffer
     const VkDeviceSize imageSize = width * height * channels;
-    VkBuffer stagingBuffer;
-    VkDeviceMemory stagingBufferMemory;
-    if (!CreateBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                      device, physicalDevice, &stagingBuffer, &stagingBufferMemory)) {
+    VulkanBuffer stagingBuffer;
+    if (!CreateVulkanBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                            device, physicalDevice, &stagingBuffer)) {
         LOG_ERROR("CreateBuffer failed for staging buffer\n");
         return false;
     }
-    defer({
-              vkDestroyBuffer(device, stagingBuffer, nullptr);
-              vkFreeMemory(device, stagingBufferMemory, nullptr);
-          });
+    defer(DestroyVulkanBuffer(device, &stagingBuffer));
 
     void* memoryMappedData;
-    vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, &memoryMappedData);
+    vkMapMemory(device, stagingBuffer.memory, 0, imageSize, 0, &memoryMappedData);
     MemCopy(memoryMappedData, data, imageSize);
-    vkUnmapMemory(device, stagingBufferMemory);
+    vkUnmapMemory(device, stagingBuffer.memory);
 
     TransitionImageLayout(device, commandPool, queue, image->image,
                           VK_IMAGE_LAYOUT_UNDEFINED,
                           VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-    CopyBufferToImage(device, commandPool, queue, stagingBuffer, image->image, width, height);
+    CopyBufferToImage(device, commandPool, queue, stagingBuffer.buffer, image->image, width, height);
     TransitionImageLayout(device, commandPool, queue, image->image,
                           VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                           VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);

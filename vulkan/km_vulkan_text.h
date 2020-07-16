@@ -39,11 +39,8 @@ struct VulkanTextPipeline
     static const uint32 MAX_FONTS = S;
     static const uint32 MAX_INSTANCES = 4096;
 
-    VkBuffer vertexBuffer;
-    VkDeviceMemory vertexBufferMemory;
-
-    VkBuffer instanceBuffer;
-    VkDeviceMemory instanceBufferMemory;
+    VulkanBuffer vertexBuffer;
+    VulkanBuffer instanceBuffer;
 
     VkSampler atlasSampler;
 
@@ -74,8 +71,7 @@ struct VulkanTextRenderState
 
 template <uint32 S>
 void PushText(uint32 fontIndex, const FontFace& fontFace, const_string text, Vec2Int pos, float32 depth,
-              Vec2Int screenSize, Vec4 color, const VulkanTextPipeline<S>& textPipeline,
-              VulkanTextRenderState<S>* renderState);
+              Vec2Int screenSize, Vec4 color, VulkanTextRenderState<S>* renderState);
 
 template <uint32 S>
 void ResetTextRenderState(VulkanTextRenderState<S>* renderState);

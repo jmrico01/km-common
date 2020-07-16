@@ -21,13 +21,18 @@ struct QueueFamilyInfo
     uint32_t presentFamilyIndex;
 };
 
+struct VulkanBuffer
+{
+    VkBuffer buffer;
+    VkDeviceMemory memory;
+};
+
 struct VulkanImage
 {
     VkImage image;
     VkDeviceMemory memory;
     VkImageView view;
 };
-
 
 RectCoordsNdc ToRectCoordsNdc(Vec2Int pos, Vec2Int size, Vec2Int screenSize);
 RectCoordsNdc ToRectCoordsNdc(Vec2Int pos, Vec2Int size, Vec2 anchor, Vec2Int screenSize);
@@ -36,8 +41,9 @@ QueueFamilyInfo GetQueueFamilyInfo(VkSurfaceKHR surface, VkPhysicalDevice physic
 
 bool CreateShaderModule(const Array<uint8> code, VkDevice device, VkShaderModule* shaderModule);
 
-bool CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memoryPropertyFlags,
-                  VkDevice device, VkPhysicalDevice physicalDevice, VkBuffer* buffer, VkDeviceMemory* bufferMemory);
+bool CreateVulkanBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memoryPropertyFlags,
+                        VkDevice device, VkPhysicalDevice physicalDevice, VulkanBuffer* buffer);
+void DestroyVulkanBuffer(VkDevice device, VulkanBuffer* buffer);
 
 void CopyBuffer(VkDevice device, VkCommandPool commandPool, VkQueue queue,
                 VkBuffer src, VkBuffer dst, VkDeviceSize size);
