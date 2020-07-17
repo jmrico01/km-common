@@ -2,10 +2,6 @@
 
 #include <cstring> // NOTE don't remove this! Otherwise MSVC freaks out about placement new
 
-static const uint32 DYNAMIC_ARRAY_START_CAPACITY = 16;
-
-// TODO pretty high, maybe do lower
-static const uint32 HASH_TABLE_START_CAPACITY = 89;
 static const float32 HASH_TABLE_MAX_SIZE_TO_CAPACITY = 0.7f;
 
 // Very simple string hash ( djb2 hash, source http://www.cse.yorku.ca/~oz/hash.html )
@@ -223,6 +219,7 @@ bool DynamicArray<T, Allocator>::UpdateCapacity(uint32 newCapacity)
 
 HashKey::HashKey()
 {
+    s.Clear();
 }
 
 HashKey::HashKey(string str)
@@ -271,20 +268,7 @@ HashTable<V, Allocator>::HashTable(Allocator* allocator)
 template <typename V, typename Allocator>
 HashTable<V, Allocator>::HashTable(uint32 capacity, Allocator* allocator)
 {
-    size = 0;
-    uint32 sizeBytes = sizeof(KeyValuePair<V>) * capacity;
-    pairs = (KeyValuePair<V>*)allocator->Allocate(sizeBytes);
-    if (pairs == nullptr) {
-        DEBUG_PANIC("ERROR: not enough memory!\n");
-    }
-
-    for (uint32 i = 0; i < capacity; i++) {
-        pairs[i].key.s.size = 0;
-        new (&pairs[i]) KeyValuePair<V>();
-    }
-
-    this->capacity = capacity;
-    this->allocator = allocator;
+    Initialize(capacity, allocator);
 }
 
 template <typename V, typename Allocator>
@@ -365,6 +349,25 @@ void HashTable<V, Allocator>::Clear()
     for (uint32 i = 0; i < capacity; i++) {
         pairs[i].key.s.size = 0;
     }
+}
+
+template <typename V, typename Allocator>
+void HashTable<V, Allocator>::Initialize(uint32 cap, Allocator* alloc)
+{
+    size = 0;
+    uint32 sizeBytes = sizeof(KeyValuePair<V>) * cap;
+    pairs = (KeyValuePair<V>*)alloc->Allocate(sizeBytes);
+    if (pairs == nullptr) {
+        DEBUG_PANIC("ERROR: not enough memory!\n");
+    }
+
+    for (uint32 i = 0; i < cap; i++) {
+        pairs[i].key.s.size = 0;
+        new (&pairs[i]) KeyValuePair<V>();
+    }
+
+    this->capacity = cap;
+    this->allocator = alloc;
 }
 
 template <typename V, typename Allocator>
