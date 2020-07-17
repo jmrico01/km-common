@@ -352,6 +352,8 @@ template <uint32 S>
 bool LoadTextPipelineWindow(const VulkanWindow& window, VkCommandPool commandPool, LinearAllocator* allocator,
                             VulkanTextPipeline<S>* textPipeline)
 {
+    UNREFERENCED_PARAMETER(allocator);
+
     textPipeline->atlases.Clear();
     textPipeline->descriptorSets.Clear();
 
