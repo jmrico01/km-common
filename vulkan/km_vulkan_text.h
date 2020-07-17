@@ -25,10 +25,11 @@
 // to draw all text recorded through PushText(...)
 //
 
-struct FontFace
+struct VulkanFontFace
 {
     static const uint32 MAX_GLYPHS = 256;
 
+    uint32 index;
 	uint32 height;
 	FixedArray<GlyphInfo, MAX_GLYPHS> glyphInfo;
 };
@@ -69,8 +70,14 @@ struct VulkanTextRenderState
     StaticArray<TextInstanceData, VulkanTextPipeline<S>::MAX_FONTS> textInstanceData;
 };
 
+uint32 GetTextWidth(const VulkanFontFace& fontFace, const_string text);
+
 template <uint32 S>
-void PushText(uint32 fontIndex, const FontFace& fontFace, const_string text, Vec2Int pos, float32 depth, Vec4 color,
+void PushText(const VulkanFontFace& fontFace, const_string text, Vec2Int pos, float32 depth, Vec4 color,
+              Vec2Int screenSize, VulkanTextRenderState<S>* renderState);
+
+template <uint32 S>
+void PushText(const VulkanFontFace& fontFace, const_string text, Vec2Int pos, float32 depth, float32 anchorX, Vec4 color,
               Vec2Int screenSize, VulkanTextRenderState<S>* renderState);
 
 template <uint32 S>
@@ -82,7 +89,8 @@ void UploadAndSubmitTextDrawCommands(VkDevice device, VkCommandBuffer commandBuf
                                      LinearAllocator* allocator);
 
 template <uint32 S>
-bool RegisterFont(VkDevice device, VulkanTextPipeline<S>* textPipeline, VulkanImage fontAtlas, uint32* fontIndex);
+bool RegisterFont(VkDevice device, VkPhysicalDevice physicalDevice, VkQueue queue, VkCommandPool commandPool,
+                  VulkanTextPipeline<S>* textPipeline, const LoadFontFaceResult& fontFaceResult, VulkanFontFace* fontFace);
 
 template <uint32 S>
 bool LoadTextPipelineSwapchain(const VulkanWindow& window, const VulkanSwapchain& swapchain, LinearAllocator* allocator,

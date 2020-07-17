@@ -12,6 +12,17 @@ void PushSprite(uint32 spriteIndex, Vec2Int pos, Vec2Int size, float32 depth, Ve
 }
 
 template <uint32 S>
+void PushSprite(uint32 spriteIndex, Vec2Int pos, Vec2Int size, float32 depth, Vec2 anchor, Vec4 color, Vec2Int screenSize,
+                VulkanSpriteRenderState<S>* renderState)
+{
+    VulkanSpriteInstanceData* instanceData = renderState->spriteInstanceData[spriteIndex].Append();
+    const RectCoordsNdc ndc = ToRectCoordsNdc(pos, size, anchor, screenSize);
+    instanceData->pos = ToVec3(ndc.pos, depth);
+    instanceData->size = ndc.size;
+    instanceData->color = color;
+}
+
+template <uint32 S>
 void ResetSpriteRenderState(VulkanSpriteRenderState<S>* renderState)
 {
     for (uint32 i = 0; i < renderState->spriteInstanceData.SIZE; i++) {

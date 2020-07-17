@@ -67,6 +67,10 @@ void PushSprite(uint32 spriteIndex, Vec2Int pos, Vec2Int size, float32 depth, Ve
                 VulkanSpriteRenderState<S>* renderState);
 
 template <uint32 S>
+void PushSprite(uint32 spriteIndex, Vec2Int pos, Vec2Int size, float32 depth, Vec2 anchor, Vec4 color, Vec2Int screenSize,
+                VulkanSpriteRenderState<S>* renderState);
+
+template <uint32 S>
 void ResetSpriteRenderState(VulkanSpriteRenderState<S>* renderState);
 
 template <uint32 S>

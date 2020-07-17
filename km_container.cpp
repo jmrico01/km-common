@@ -1,6 +1,7 @@
 #include "km_container.h"
 
 #include <cstring> // NOTE don't remove this! Otherwise MSVC freaks out about placement new
+#include <typeinfo>
 
 static const float32 HASH_TABLE_MAX_SIZE_TO_CAPACITY = 0.7f;
 
@@ -35,6 +36,7 @@ template <typename Allocator>
 void* AllocateOrUseDefaultIfNull(Allocator* allocator, uint32 size)
 {
     if (allocator == nullptr) {
+        DEBUG_ASSERT(typeid(Allocator) == typeid(StandardAllocator));
         return defaultAllocator_.Allocate(size);
     }
     else {
@@ -45,6 +47,7 @@ template <typename Allocator>
 void* ReAllocateOrUseDefaultIfNull(Allocator* allocator, void* memory, uint32 size)
 {
     if (allocator == nullptr) {
+        DEBUG_ASSERT(typeid(Allocator) == typeid(StandardAllocator));
         return defaultAllocator_.ReAllocate(memory, size);
     }
     else {
@@ -55,6 +58,7 @@ template <typename Allocator>
 void FreeOrUseDefautIfNull(Allocator* allocator, void* memory)
 {
     if (allocator == nullptr) {
+        DEBUG_ASSERT(typeid(Allocator) == typeid(StandardAllocator));
         defaultAllocator_.Free(memory);
     }
     else {
@@ -63,15 +67,9 @@ void FreeOrUseDefautIfNull(Allocator* allocator, void* memory)
 }
 
 template <typename T, typename Allocator>
-DynamicArray<T, Allocator>::DynamicArray()
-: DynamicArray(nullptr)
+DynamicArray<T, Allocator>::DynamicArray(Allocator* allocator, uint32 capacity)
 {
-}
-
-template <typename T, typename Allocator>
-DynamicArray<T, Allocator>::DynamicArray(Allocator* allocator)
-: DynamicArray(DYNAMIC_ARRAY_START_CAPACITY, allocator)
-{
+    Initialize(allocator, capacity);
 }
 
 template <typename T, typename Allocator>
@@ -79,16 +77,6 @@ DynamicArray<T, Allocator>::DynamicArray(const Array<T>& array, Allocator* alloc
 : DynamicArray(array.size < DYNAMIC_ARRAY_START_CAPACITY ? DYNAMIC_ARRAY_START_CAPACITY : array.size, allocator)
 {
     FromArray(array);
-}
-
-template <typename T, typename Allocator>
-DynamicArray<T, Allocator>::DynamicArray(uint32 capacity, Allocator* allocator)
-{
-    size = 0;
-    data = (T*)AllocateOrUseDefaultIfNull(allocator, capacity * sizeof(T));
-    DEBUG_ASSERT(data != nullptr);
-    this->capacity = capacity;
-    this->allocator = allocator;
 }
 
 template <typename T, typename Allocator>
@@ -159,12 +147,6 @@ void DynamicArray<T, Allocator>::RemoveLast()
 }
 
 template <typename T, typename Allocator>
-void DynamicArray<T, Allocator>::Clear()
-{
-    size = 0;
-}
-
-template <typename T, typename Allocator>
 uint32 DynamicArray<T, Allocator>::IndexOf(const T& value)
 {
     for (uint32 i = 0; i < size; i++) {
@@ -173,6 +155,23 @@ uint32 DynamicArray<T, Allocator>::IndexOf(const T& value)
         }
     }
     return size;
+}
+
+template <typename T, typename Allocator>
+void DynamicArray<T, Allocator>::Clear()
+{
+    size = 0;
+}
+
+template <typename T, typename Allocator>
+void DynamicArray<T, Allocator>::Initialize(Allocator* allocator, uint32 capacity)
+{
+    size = 0;
+    data = (T*)AllocateOrUseDefaultIfNull(allocator, capacity * sizeof(T));
+    DEBUG_ASSERT(data != nullptr);
+
+    this->capacity = capacity;
+    this->allocator = allocator;
 }
 
 template <typename T, typename Allocator>
@@ -254,21 +253,9 @@ bool HashKey::WriteString(const char* str)
 }
 
 template <typename V, typename Allocator>
-HashTable<V, Allocator>::HashTable()
-: HashTable(nullptr)
+HashTable<V, Allocator>::HashTable(Allocator* allocator, uint32 capacity)
 {
-}
-
-template <typename V, typename Allocator>
-HashTable<V, Allocator>::HashTable(Allocator* allocator)
-: HashTable(HASH_TABLE_START_CAPACITY, allocator)
-{
-}
-
-template <typename V, typename Allocator>
-HashTable<V, Allocator>::HashTable(uint32 capacity, Allocator* allocator)
-{
-    Initialize(capacity, allocator);
+    Initialize(allocator, capacity);
 }
 
 template <typename V, typename Allocator>
@@ -352,22 +339,22 @@ void HashTable<V, Allocator>::Clear()
 }
 
 template <typename V, typename Allocator>
-void HashTable<V, Allocator>::Initialize(uint32 cap, Allocator* alloc)
+void HashTable<V, Allocator>::Initialize(Allocator* allocator, uint32 capacity)
 {
     size = 0;
-    uint32 sizeBytes = sizeof(KeyValuePair<V>) * cap;
-    pairs = (KeyValuePair<V>*)alloc->Allocate(sizeBytes);
+    uint32 sizeBytes = sizeof(KeyValuePair<V>) * capacity;
+    pairs = (KeyValuePair<V>*)allocator->Allocate(sizeBytes);
     if (pairs == nullptr) {
         DEBUG_PANIC("ERROR: not enough memory!\n");
     }
 
-    for (uint32 i = 0; i < cap; i++) {
+    for (uint32 i = 0; i < capacity; i++) {
         pairs[i].key.s.size = 0;
         new (&pairs[i]) KeyValuePair<V>();
     }
 
-    this->capacity = cap;
-    this->allocator = alloc;
+    this->capacity = capacity;
+    this->allocator = allocator;
 }
 
 template <typename V, typename Allocator>

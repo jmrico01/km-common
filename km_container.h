@@ -20,10 +20,8 @@ struct DynamicArray
     uint32 capacity;
     Allocator* allocator;
 
-    DynamicArray();
-    DynamicArray(Allocator* allocator);
+    DynamicArray(Allocator* allocator = nullptr, uint32 capacity = DYNAMIC_ARRAY_START_CAPACITY);
     DynamicArray(const Array<T>& array, Allocator* allocator = nullptr);
-    DynamicArray(uint32 capacity, Allocator* allocator = nullptr);
     DynamicArray(const DynamicArray<T>& other) = delete;
 
     Array<T> ToArray() const;
@@ -34,8 +32,11 @@ struct DynamicArray
     void Append(const Array<T>& array);
     void Append(const Array<const T>& array);
     void RemoveLast();
-    void Clear();
+
     uint32 IndexOf(const T& value);
+
+    void Clear();
+    void Initialize(Allocator* allocator = nullptr, uint32 capacity = DYNAMIC_ARRAY_START_CAPACITY);
     void Free();
 
     inline T& operator[](uint32 index);
@@ -76,9 +77,7 @@ struct HashTable
     KeyValuePair<V>* pairs;
     Allocator* allocator;
 
-    HashTable();
-    HashTable(Allocator* allocator);
-    HashTable(uint32 capacity, Allocator* allocator = nullptr);
+    HashTable(Allocator* allocator = nullptr, uint32 capacity = HASH_TABLE_START_CAPACITY);
     HashTable(const HashTable<V, Allocator>& other) = delete;
     ~HashTable();
 
@@ -89,7 +88,7 @@ struct HashTable
     bool Remove(const HashKey& key);
 
     void Clear();
-    void Initialize(uint32 capacity = HASH_TABLE_START_CAPACITY, Allocator* allocator = nullptr);
+    void Initialize(Allocator* allocator = nullptr, uint32 capacity = HASH_TABLE_START_CAPACITY);
     void Free();
 
     HashTable<V, Allocator>& operator=(const HashTable<V, Allocator>& other);

@@ -1,7 +1,17 @@
 #include "km_vulkan_text.h"
 
+uint32 GetTextWidth(const VulkanFontFace& fontFace, const_string text)
+{
+    uint32 width = 0;
+    for (uint32 i = 0; i < text.size; i++) {
+        width += fontFace.glyphInfo[text[i]].advance.x / 64;
+    }
+
+    return width;
+}
+
 template <uint32 S>
-void PushText(uint32 fontIndex, const FontFace& fontFace, const_string text, Vec2Int pos, float32 depth, Vec4 color,
+void PushText(const VulkanFontFace& fontFace, const_string text, Vec2Int pos, float32 depth, Vec4 color,
               Vec2Int screenSize, VulkanTextRenderState<S>* renderState)
 {
     Vec2Int offset = Vec2Int::zero;
@@ -13,7 +23,37 @@ void PushText(uint32 fontIndex, const FontFace& fontFace, const_string text, Vec
         const Vec2Int glyphPos = pos + offset + glyphInfo.offset;
         const RectCoordsNdc ndc = ToRectCoordsNdc(glyphPos, glyphInfo.size, screenSize);
 
-        VulkanTextInstanceData* instanceData = renderState->textInstanceData[fontIndex].Append();
+        VulkanTextInstanceData* instanceData = renderState->textInstanceData[fontFace.index].Append();
+        instanceData->pos = ToVec3(ndc.pos, depth);
+        instanceData->size = ndc.size;
+        instanceData->uvInfo = {
+            glyphInfo.uvOrigin.x, glyphInfo.uvOrigin.y,
+            glyphInfo.uvSize.x, glyphInfo.uvSize.y,
+        };
+        instanceData->color = color;
+
+        offset += glyphInfo.advance / 64;
+        ind++;
+    }
+}
+
+template <uint32 S>
+void PushText(const VulkanFontFace& fontFace, const_string text, Vec2Int pos, float32 depth, float32 anchorX, Vec4 color,
+              Vec2Int screenSize, VulkanTextRenderState<S>* renderState)
+{
+    const uint32 textWidth = GetTextWidth(fontFace, text);
+
+    Vec2Int offset = Vec2Int::zero;
+    int ind = 0;
+    for (uint32 i = 0; i < text.size; i++) {
+        const uint32 ch = text[i];
+        const GlyphInfo& glyphInfo = fontFace.glyphInfo[ch];
+
+        Vec2Int glyphPos = pos + offset + glyphInfo.offset;
+        glyphPos.x -= (int)((float32)textWidth * anchorX);
+        const RectCoordsNdc ndc = ToRectCoordsNdc(glyphPos, glyphInfo.size, Vec2 { anchorX, 0.0f }, screenSize);
+
+        VulkanTextInstanceData* instanceData = renderState->textInstanceData[fontFace.index].Append();
         instanceData->pos = ToVec3(ndc.pos, depth);
         instanceData->size = ndc.size;
         instanceData->uvInfo = {
@@ -89,13 +129,25 @@ void UploadAndSubmitTextDrawCommands(VkDevice device, VkCommandBuffer commandBuf
 }
 
 template <uint32 S>
-bool RegisterFont(VkDevice device, VulkanTextPipeline<S>* textPipeline, VulkanImage fontAtlas, uint32* fontIndex)
+bool RegisterFont(VkDevice device, VkPhysicalDevice physicalDevice, VkQueue queue, VkCommandPool commandPool,
+                  VulkanTextPipeline<S>* textPipeline, const LoadFontFaceResult& fontFaceResult, VulkanFontFace* fontFace)
 {
     const uint32 index = textPipeline->atlases.size;
     if (index >= textPipeline->MAX_FONTS) {
         return false;
     }
-    *fontIndex = index;
+
+    fontFace->index = index;
+    fontFace->height = fontFaceResult.height;
+    fontFace->glyphInfo.FromArray(fontFaceResult.glyphInfo);
+
+    VulkanImage fontAtlas;
+    if (!LoadVulkanImage(device, physicalDevice, queue, commandPool,
+                         fontFaceResult.atlasWidth, fontFaceResult.atlasHeight, 1,
+                         fontFaceResult.atlasData, &fontAtlas)) {
+        LOG_ERROR("Failed to load Vulkan image for font atlas\n");
+        return false;
+    }
 
     VulkanImage* newAtlas = textPipeline->atlases.Append(fontAtlas);
 

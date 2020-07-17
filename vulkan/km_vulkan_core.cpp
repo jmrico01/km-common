@@ -32,28 +32,26 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugCallback(VkDebugUtilsMessageSev
 struct SwapchainSupportInfo
 {
     VkSurfaceCapabilitiesKHR capabilities;
-    DynamicArray<VkSurfaceFormatKHR, LinearAllocator> formats;
-    DynamicArray<VkPresentModeKHR, LinearAllocator> presentModes;
+    Array<VkSurfaceFormatKHR> formats;
+    Array<VkPresentModeKHR> presentModes;
 };
 
 internal void GetSwapchainSupportInfo(VkSurfaceKHR surface, VkPhysicalDevice physicalDevice,
-                                      SwapchainSupportInfo* supportInfo)
+                                      SwapchainSupportInfo* supportInfo, LinearAllocator* allocator)
 {
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &supportInfo->capabilities);
 
     uint32_t formatCount;
     vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &formatCount, nullptr);
     if (formatCount > 0) {
-        supportInfo->formats.UpdateCapacity(formatCount);
-        supportInfo->formats.size = formatCount;
+        supportInfo->formats = allocator->NewArray<VkSurfaceFormatKHR>(formatCount);
         vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &formatCount, supportInfo->formats.data);
     }
 
     uint32_t presentModeCount;
     vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, nullptr);
     if (presentModeCount > 0) {
-        supportInfo->presentModes.UpdateCapacity(presentModeCount);
-        supportInfo->presentModes.size = presentModeCount;
+        supportInfo->presentModes = allocator->NewArray<VkPresentModeKHR>(presentModeCount);
         vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount,
                                                   supportInfo->presentModes.data);
     }
@@ -105,8 +103,7 @@ internal bool IsPhysicalDeviceSuitable(VkSurfaceKHR surface, VkPhysicalDevice ph
         return false;
     }
 
-    DynamicArray<VkExtensionProperties, LinearAllocator> extensions(extensionCount, allocator);
-    extensions.size = extensionCount;
+    Array<VkExtensionProperties> extensions = allocator->NewArray<VkExtensionProperties>(extensionCount);
     if (vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &extensionCount, extensions.data) != VK_SUCCESS) {
         LOG_ERROR("vkEnumerateDeviceExtensionProperties failed\n");
         return false;
@@ -131,7 +128,7 @@ internal bool IsPhysicalDeviceSuitable(VkSurfaceKHR surface, VkPhysicalDevice ph
     }
 
     SwapchainSupportInfo swapchainSupport;
-    GetSwapchainSupportInfo(surface, physicalDevice, &swapchainSupport);
+    GetSwapchainSupportInfo(surface, physicalDevice, &swapchainSupport, allocator);
     if (swapchainSupport.formats.size == 0 || swapchainSupport.presentModes.size == 0) {
         LOG_ERROR("Insufficient swap chain capabilities (%lu formats, %lu presentModes)\n",
                   swapchainSupport.formats.size, swapchainSupport.presentModes.size);
@@ -146,9 +143,9 @@ bool LoadVulkanSwapchain(const VulkanWindow& window, Vec2Int size, VulkanSwapcha
     // Create swapchain
     {
         SwapchainSupportInfo swapchainSupportInfo;
-        GetSwapchainSupportInfo(window.surface, window.physicalDevice, &swapchainSupportInfo);
+        GetSwapchainSupportInfo(window.surface, window.physicalDevice, &swapchainSupportInfo, allocator);
 
-        const VkSurfaceFormatKHR surfaceFormat = ChooseSwapSurfaceFormat(swapchainSupportInfo.formats.ToArray());
+        const VkSurfaceFormatKHR surfaceFormat = ChooseSwapSurfaceFormat(swapchainSupportInfo.formats);
         const VkPresentModeKHR presentMode = VK_PRESENT_MODE_FIFO_KHR; // Guaranteed to be available
         const VkExtent2D extent = ChooseSwapExtent(swapchainSupportInfo.capabilities, size);
 
@@ -371,8 +368,7 @@ bool LoadVulkanWindow(const VulkanCore& core, HINSTANCE hInstance, HWND hWnd, Vu
             return false;
         }
 
-        DynamicArray<VkPhysicalDevice, LinearAllocator> devices(deviceCount, allocator);
-        devices.size = deviceCount;
+        Array<VkPhysicalDevice> devices = allocator->NewArray<VkPhysicalDevice>(deviceCount);
         vkEnumeratePhysicalDevices(core.instance, &deviceCount, devices.data);
 
         window->physicalDevice = VK_NULL_HANDLE;
@@ -477,8 +473,7 @@ bool LoadVulkanCore(VulkanCore* core, LinearAllocator* allocator)
             return false;
         }
 
-        DynamicArray<VkLayerProperties, LinearAllocator> layers(count, allocator);
-        layers.size = count;
+        Array<VkLayerProperties> layers = allocator->NewArray<VkLayerProperties>(count);
         if (vkEnumerateInstanceLayerProperties(&count, layers.data) != VK_SUCCESS) {
             LOG_ERROR("vkEnumerateInstanceLayerProperties failed\n");
             return false;
@@ -510,7 +505,7 @@ bool LoadVulkanCore(VulkanCore* core, LinearAllocator* allocator)
             return false;
         }
 
-        DynamicArray<VkExtensionProperties, LinearAllocator> extensions(count, allocator);
+        Array<VkExtensionProperties> extensions = allocator->NewArray<VkExtensionProperties>(count);
         extensions.size = count;
         if (vkEnumerateInstanceExtensionProperties(nullptr, &count, extensions.data) != VK_SUCCESS) {
             LOG_ERROR("vkEnumerateInstanceExtensionProperties failed\n");
