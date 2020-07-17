@@ -37,13 +37,12 @@ void UploadAndSubmitSpriteDrawCommands(VkDevice device, VkCommandBuffer commandB
     }
 
     Array<VulkanSpriteInstanceData> instanceData = allocator->NewArray<VulkanSpriteInstanceData>(totalNumInstances);
-    uint32 instances = 0;
+    uint32 instanceOffset = 0;
     for (uint32 i = 0; i < spritePipeline.sprites.size; i++) {
-        const uint32 numInstances = renderState.spriteInstanceData[i].size;
-        const uint32 numBytes = numInstances * sizeof(VulkanSpriteInstanceData);
-        MemCopy(instanceData.data + instances * sizeof(VulkanSpriteInstanceData),
-                renderState.spriteInstanceData[i].data, numBytes);
-        instances += numInstances;
+        const uint32 instances = renderState.spriteInstanceData[i].size;
+        MemCopy(instanceData.data + instanceOffset,
+                renderState.spriteInstanceData[i].data, instances * sizeof(VulkanSpriteInstanceData));
+        instanceOffset += instances;
     }
 
     if (instanceData.size > 0) {

@@ -9,6 +9,7 @@
 bool running_ = false;
 bool windowPropertiesChanged_ = false;
 bool windowSizeChanged_ = false;
+bool windowCursorVisible_ = !WINDOW_LOCK_CURSOR;
 AppInput* input_ = nullptr;
 global_var WINDOWPLACEMENT windowPlacementPrev_ = { sizeof(windowPlacementPrev_) };
 
@@ -440,6 +441,9 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     AppInput input[2] = {};
     AppInput *newInput = &input[0];
     AppInput *oldInput = &input[1];
+    if (WINDOW_LOCK_CURSOR) {
+        ShowCursor(FALSE);
+    }
 
     // Initialize app work queue
     AppWorkQueue appWorkQueue;
@@ -538,12 +542,31 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
             (int)vulkanState.swapchain.extent.height
         };
 
+        if (WINDOW_LOCK_CURSOR && KeyPressed(*newInput, KM_KEY_ESCAPE)) {
+            const BOOL show = windowCursorVisible_ ? FALSE : TRUE;
+            ShowCursor(show);
+            windowCursorVisible_ = !windowCursorVisible_;
+        }
+
         POINT mousePos;
         GetCursorPos(&mousePos);
         ScreenToClient(hWnd, &mousePos);
+
         Vec2Int mousePosPrev = newInput->mousePos;
+        if (WINDOW_LOCK_CURSOR && !windowCursorVisible_) {
+            const Vec2Int screenMid = screenSize / 2;
+
+            POINT windowMidScreen;
+            windowMidScreen.x = screenMid.x;
+            windowMidScreen.y = screenMid.y;
+            ClientToScreen(hWnd, &windowMidScreen);
+
+            SetCursorPos(windowMidScreen.x, windowMidScreen.y);
+            mousePosPrev = screenMid;
+        }
+
         newInput->mousePos.x = mousePos.x;
-        newInput->mousePos.y = screenSize.y - mousePos.y;
+        newInput->mousePos.y = mousePos.y;
         newInput->mouseDelta = newInput->mousePos - mousePosPrev;
         if (mousePos.x < 0 || mousePos.x > screenSize.x || mousePos.y < 0 || mousePos.y > screenSize.y) {
             for (int i = 0; i < 5; i++) {

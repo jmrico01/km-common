@@ -54,13 +54,12 @@ void UploadAndSubmitTextDrawCommands(VkDevice device, VkCommandBuffer commandBuf
     }
 
     Array<VulkanTextInstanceData> instanceData = allocator->NewArray<VulkanTextInstanceData>(totalNumInstances);
-    uint32 instances = 0;
+    uint32 instanceOffset = 0;
     for (uint32 i = 0; i < fontNumInstances.size; i++) {
-        const uint32 numInstances = renderState.textInstanceData[i].size;
-        const uint32 numBytes = numInstances * sizeof(VulkanTextInstanceData);
-        MemCopy(instanceData.data + instances * sizeof(VulkanTextInstanceData),
-                renderState.textInstanceData[i].data, numBytes);
-        instances += numInstances;
+        const uint32 instances = renderState.textInstanceData[i].size;
+        MemCopy(instanceData.data + instanceOffset,
+                renderState.textInstanceData[i].data, instances * sizeof(VulkanTextInstanceData));
+        instanceOffset += instances;
     }
 
     if (instanceData.size > 0) {
