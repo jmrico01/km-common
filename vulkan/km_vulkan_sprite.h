@@ -52,6 +52,7 @@ struct VulkanSpriteInstanceData
 {
     Vec3 pos;
     Vec2 size;
+    Vec4 color;
 };
 
 template <uint32 S>
@@ -62,7 +63,7 @@ struct VulkanSpriteRenderState
 };
 
 template <uint32 S>
-void PushSprite(uint32 spriteIndex, Vec2Int pos, Vec2Int size, float32 depth, Vec2Int screenSize,
+void PushSprite(uint32 spriteIndex, Vec2Int pos, Vec2Int size, float32 depth, Vec4 color, Vec2Int screenSize,
                 VulkanSpriteRenderState<S>* renderState);
 
 template <uint32 S>

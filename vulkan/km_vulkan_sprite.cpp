@@ -1,13 +1,14 @@
 #include "km_vulkan_sprite.h"
 
 template <uint32 S>
-void PushSprite(uint32 spriteIndex, Vec2Int pos, Vec2Int size, float32 depth, Vec2Int screenSize,
+void PushSprite(uint32 spriteIndex, Vec2Int pos, Vec2Int size, float32 depth, Vec4 color, Vec2Int screenSize,
                 VulkanSpriteRenderState<S>* renderState)
 {
     VulkanSpriteInstanceData* instanceData = renderState->spriteInstanceData[spriteIndex].Append();
     const RectCoordsNdc ndc = ToRectCoordsNdc(pos, size, screenSize);
     instanceData->pos = ToVec3(ndc.pos, depth);
     instanceData->size = ndc.size;
+    instanceData->color = color;
 }
 
 template <uint32 S>
@@ -158,7 +159,7 @@ bool LoadSpritePipelineSwapchain(const VulkanWindow& window, const VulkanSwapcha
     VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageCreateInfo, fragShaderStageCreateInfo };
 
     VkVertexInputBindingDescription bindingDescriptions[2] = {};
-    VkVertexInputAttributeDescription attributeDescriptions[4] = {};
+    VkVertexInputAttributeDescription attributeDescriptions[5] = {};
 
     // Per-vertex attribute bindings
     bindingDescriptions[0].binding = 0;
@@ -189,6 +190,11 @@ bool LoadSpritePipelineSwapchain(const VulkanWindow& window, const VulkanSwapcha
     attributeDescriptions[3].location = 3;
     attributeDescriptions[3].format = VK_FORMAT_R32G32_SFLOAT;
     attributeDescriptions[3].offset = offsetof(VulkanSpriteInstanceData, size);
+
+    attributeDescriptions[4].binding = 1;
+    attributeDescriptions[4].location = 4;
+    attributeDescriptions[4].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+    attributeDescriptions[4].offset = offsetof(VulkanSpriteInstanceData, color);
 
     VkPipelineVertexInputStateCreateInfo vertexInputCreateInfo = {};
     vertexInputCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;

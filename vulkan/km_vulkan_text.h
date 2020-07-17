@@ -70,8 +70,8 @@ struct VulkanTextRenderState
 };
 
 template <uint32 S>
-void PushText(uint32 fontIndex, const FontFace& fontFace, const_string text, Vec2Int pos, float32 depth,
-              Vec2Int screenSize, Vec4 color, VulkanTextRenderState<S>* renderState);
+void PushText(uint32 fontIndex, const FontFace& fontFace, const_string text, Vec2Int pos, float32 depth, Vec4 color,
+              Vec2Int screenSize, VulkanTextRenderState<S>* renderState);
 
 template <uint32 S>
 void ResetTextRenderState(VulkanTextRenderState<S>* renderState);

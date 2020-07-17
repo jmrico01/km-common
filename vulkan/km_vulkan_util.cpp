@@ -326,9 +326,6 @@ bool LoadVulkanImage(VkDevice device, VkPhysicalDevice physicalDevice, VkQueue q
         case 1: {
             format = VK_FORMAT_R8_UNORM;
         } break;
-        case 3: {
-            format = VK_FORMAT_R8G8B8_UNORM;
-        } break;
         case 4: {
             format = VK_FORMAT_R8G8B8A8_UNORM;
         } break;

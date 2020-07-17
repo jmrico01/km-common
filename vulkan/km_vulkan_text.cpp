@@ -1,8 +1,8 @@
 #include "km_vulkan_text.h"
 
 template <uint32 S>
-void PushText(uint32 fontIndex, const FontFace& fontFace, const_string text, Vec2Int pos, float32 depth,
-              Vec2Int screenSize, Vec4 color, VulkanTextRenderState<S>* renderState)
+void PushText(uint32 fontIndex, const FontFace& fontFace, const_string text, Vec2Int pos, float32 depth, Vec4 color,
+              Vec2Int screenSize, VulkanTextRenderState<S>* renderState)
 {
     Vec2Int offset = Vec2Int::zero;
     int ind = 0;
