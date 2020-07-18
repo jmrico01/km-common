@@ -51,7 +51,7 @@ void PushText(const VulkanFontFace& fontFace, const_string text, Vec2Int pos, fl
 
         Vec2Int glyphPos = pos + offset + glyphInfo.offset;
         glyphPos.x -= (int)((float32)textWidth * anchorX);
-        const RectCoordsNdc ndc = ToRectCoordsNdc(glyphPos, glyphInfo.size, Vec2 { anchorX, 0.0f }, screenSize);
+        const RectCoordsNdc ndc = ToRectCoordsNdc(glyphPos, glyphInfo.size, Vec2::zero, screenSize);
 
         VulkanTextInstanceData* instanceData = renderState->textInstanceData[fontFace.index].Append();
         instanceData->pos = ToVec3(ndc.pos, depth);
