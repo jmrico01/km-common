@@ -42,29 +42,8 @@ void PushText(const VulkanFontFace& fontFace, const_string text, Vec2Int pos, fl
               Vec2Int screenSize, VulkanTextRenderState<S>* renderState)
 {
     const uint32 textWidth = GetTextWidth(fontFace, text);
-
-    Vec2Int offset = Vec2Int::zero;
-    int ind = 0;
-    for (uint32 i = 0; i < text.size; i++) {
-        const uint32 ch = text[i];
-        const GlyphInfo& glyphInfo = fontFace.glyphInfo[ch];
-
-        Vec2Int glyphPos = pos + offset + glyphInfo.offset;
-        glyphPos.x -= (int)((float32)textWidth * anchorX);
-        const RectCoordsNdc ndc = ToRectCoordsNdc(glyphPos, glyphInfo.size, Vec2::zero, screenSize);
-
-        VulkanTextInstanceData* instanceData = renderState->textInstanceData[fontFace.index].Append();
-        instanceData->pos = ToVec3(ndc.pos, depth);
-        instanceData->size = ndc.size;
-        instanceData->uvInfo = {
-            glyphInfo.uvOrigin.x, glyphInfo.uvOrigin.y,
-            glyphInfo.uvSize.x, glyphInfo.uvSize.y,
-        };
-        instanceData->color = color;
-
-        offset += glyphInfo.advance / 64;
-        ind++;
-    }
+    const Vec2Int offset = { -(int)((float32)textWidth * anchorX), 0 };
+    PushText(fontFace, text, pos + offset, depth, color, screenSize, renderState);
 }
 
 template <uint32 S>
