@@ -302,6 +302,21 @@ string NextSplitElement(string* str, char separator)
     return next;
 }
 
+bool SizedPrintf(string* str, const char* format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    const int length = stbsp_vsnprintf(str->data, str->size, format, args);
+    va_end(args);
+
+    if (length < 0 || length >= (int)str->size) {
+        return false;
+    }
+
+    str->size = length;
+    return true;
+}
+
 template <typename Allocator>
 string AllocPrintf(Allocator* allocator, const char* format, ...)
 {

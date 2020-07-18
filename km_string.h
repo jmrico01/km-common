@@ -48,6 +48,7 @@ bool StringToElementArray(const_string str, char sep, bool trimElements,
                           bool (*conversionFunction)(const_string, T*),
                           int maxElements, T* array, int* numElements);
 
+bool SizedPrintf(string* str, const char* format, ...);
 template <typename Allocator>
 string AllocPrintf(Allocator* allocator, const char* format, ...);
 template <typename Allocator>

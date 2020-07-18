@@ -38,6 +38,9 @@ struct AppWorkQueue
 void CompleteAllWork(AppWorkQueue* queue);
 bool TryAddWork(AppWorkQueue* queue, AppWorkQueueCallbackFunction* callback, void* data);
 
+bool IsCursorLocked();
+void LockCursor(bool locked);
+
 struct AppAudio
 {
 };

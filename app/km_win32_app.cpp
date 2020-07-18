@@ -74,6 +74,17 @@ bool TryAddWork(AppWorkQueue* queue, AppWorkQueueCallbackFunction* callback, voi
     return true;
 }
 
+bool IsCursorLocked()
+{
+    return !windowCursorVisible_;
+}
+
+void LockCursor(bool locked)
+{
+    ShowCursor(!locked);
+    windowCursorVisible_ = !locked;
+}
+
 KmKeyCode Win32KeyCodeToKm(int vkCode)
 {
     // Numbers, letters, text
@@ -199,6 +210,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
         case WM_CHAR: {
             char c = (char)wParam;
+            if (c == '\r') c = '\n';
             input_->keyboardString[input_->keyboardStringLen++] = c;
             input_->keyboardString[input_->keyboardStringLen] = '\0';
         } break;
@@ -541,12 +553,6 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
             (int)vulkanState.swapchain.extent.width,
             (int)vulkanState.swapchain.extent.height
         };
-
-        if (WINDOW_LOCK_CURSOR && KeyPressed(*newInput, KM_KEY_ESCAPE)) {
-            const BOOL show = windowCursorVisible_ ? FALSE : TRUE;
-            ShowCursor(show);
-            windowCursorVisible_ = !windowCursorVisible_;
-        }
 
         POINT mousePos;
         GetCursorPos(&mousePos);
