@@ -81,7 +81,14 @@ bool IsCursorLocked()
 
 void LockCursor(bool locked)
 {
-    ShowCursor(!locked);
+    // Such a weird api...
+    const int targetDisplayCount = locked ? -1 : 0;
+
+    int displayCount = ShowCursor(TRUE);
+    while (displayCount != targetDisplayCount) {
+        displayCount = ShowCursor(displayCount < targetDisplayCount);
+    }
+
     windowCursorVisible_ = !locked;
 }
 
