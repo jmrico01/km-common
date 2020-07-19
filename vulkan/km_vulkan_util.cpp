@@ -49,13 +49,18 @@ uint32_t FindMemoryTypeIndex(VkPhysicalDeviceMemoryProperties properties,
     return memoryTypeIndex;
 }
 
+Vec2 ScreenPosToNdc(Vec2Int pos, Vec2Int screenSize)
+{
+	return Vec2 {
+        2.0f * pos.x / screenSize.x - 1.0f,
+        2.0f * pos.y / screenSize.y - 1.0f
+    };
+}
+
 RectCoordsNdc ToRectCoordsNdc(Vec2Int pos, Vec2Int size, Vec2Int screenSize)
 {
 	return RectCoordsNdc {
-        .pos = {
-            2.0f * pos.x / screenSize.x - 1.0f,
-            2.0f * pos.y / screenSize.y - 1.0f
-        },
+        .pos = ScreenPosToNdc(pos, screenSize),
         .size = {
             2.0f * size.x / screenSize.x,
             2.0f * size.y / screenSize.y

@@ -34,6 +34,7 @@ struct VulkanImage
     VkImageView view;
 };
 
+Vec2 ScreenPosToNdc(Vec2Int pos, Vec2Int screenSize);
 RectCoordsNdc ToRectCoordsNdc(Vec2Int pos, Vec2Int size, Vec2Int screenSize);
 RectCoordsNdc ToRectCoordsNdc(Vec2Int pos, Vec2Int size, Vec2 anchor, Vec2Int screenSize);
 
