@@ -260,7 +260,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
     switch (message) {
         case WM_ACTIVATEAPP: {
-            // TODO handle
+            if (WINDOW_LOCK_CURSOR) {
+                if (wParam == FALSE && !windowCursorVisible_) {
+                    LockCursor(false);
+                }
+                else if (wParam == TRUE && windowCursorVisible_) {
+                    LockCursor(true);
+                }
+            }
         } break;
         case WM_CLOSE: {
             // TODO handle this with a message?

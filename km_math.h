@@ -309,6 +309,16 @@ struct RectInt
     Vec2Int min, max;
 };
 
+struct Box
+{
+    Vec3 min, max;
+};
+
+struct BoxInt
+{
+    Vec3Int min, max;
+};
+
 // Column-major 4x4 matrix (columns stored contiguously)
 // ORDER IS OPPOSITE OF NORMAL MATH
 /*
@@ -577,11 +587,20 @@ inline Vec4 ToVec4(Vec3 v, float32 w)
 
 inline Vec3 operator-(Vec3 v)
 {
-    Vec3 result;
-    result.x = -v.x;
-    result.y = -v.y;
-    result.z = -v.z;
-    return result;
+    return Vec3 {
+        .x = -v.x,
+        .y = -v.y,
+        .z = -v.z,
+    };
+}
+
+inline Vec3 Reciprocal(Vec3 v)
+{
+    return Vec3 {
+        .x = 1.0f / v.x,
+        .y = 1.0f / v.y,
+        .z = 1.0f / v.z
+    };
 }
 
 inline Vec3 operator+(Vec3 v1, Vec3 v2)
@@ -704,10 +723,11 @@ inline Vec3 ToVec3(Vec3Int v)
 
 inline Vec3Int operator-(Vec3Int v)
 {
-    Vec3Int result;
-    result.x = -v.x;
-    result.y = -v.y;
-    return result;
+    return Vec3Int {
+        .x = -v.x,
+        .y = -v.y,
+        .z = -v.z,
+    };
 }
 
 inline Vec3Int operator+(Vec3Int v1, Vec3Int v2)
@@ -905,6 +925,22 @@ bool IsInside(Vec2 v, Rect rect)
 bool IsInside(Vec2Int v, RectInt rect)
 {
     return rect.min.x <= v.x && v.x < rect.max.x && rect.min.y <= v.y && v.y < rect.max.y;
+}
+
+// -------------------- Box ---------------------
+bool IsInside(Vec3 v, Box box)
+{
+    return box.min.x <= v.x && v.x < box.max.x
+        && box.min.y <= v.y && v.y < box.max.y
+        && box.min.z <= v.z && v.z < box.max.z;
+}
+
+// ------------------ BoxInt --------------------
+bool IsInside(Vec3Int v, BoxInt box)
+{
+    return box.min.x <= v.x && v.x < box.max.x
+        && box.min.y <= v.y && v.y < box.max.y
+        && box.min.z <= v.z && v.z < box.max.z;
 }
 
 // -------------------- Mat4 --------------------
@@ -1383,6 +1419,31 @@ bool RayAxisAlignedBoxIntersection(Vec3 rayOrigin, Vec3 rayDirInv, Vec3 boxMin, 
     // *point = 
     *t = tMin;
 
+    return tMax >= tMin;
+}
+
+// NOTE remember this takes in the INVERSE ray direction!
+bool RayAxisAlignedBoxIntersection(Vec3 rayOrigin, Vec3 rayDirInv, Box box, float32* t)
+{
+    float32 tMin = -INFINITY;
+    float32 tMax = INFINITY;
+
+    const float32 tX1 = (box.min.x - rayOrigin.x) * rayDirInv.x;
+    const float32 tX2 = (box.max.x - rayOrigin.x) * rayDirInv.x;
+    tMin = MaxFloat32(tMin, MinFloat32(tX1, tX2));
+    tMax = MinFloat32(tMax, MaxFloat32(tX1, tX2));
+
+    const float32 tY1 = (box.min.y - rayOrigin.y) * rayDirInv.y;
+    const float32 tY2 = (box.max.y - rayOrigin.y) * rayDirInv.y;
+    tMin = MaxFloat32(tMin, MinFloat32(tY1, tY2));
+    tMax = MinFloat32(tMax, MaxFloat32(tY1, tY2));
+
+    const float32 tZ1 = (box.min.z - rayOrigin.z) * rayDirInv.z;
+    const float32 tZ2 = (box.max.z - rayOrigin.z) * rayDirInv.z;
+    tMin = MaxFloat32(tMin, MinFloat32(tZ1, tZ2));
+    tMax = MinFloat32(tMax, MaxFloat32(tZ1, tZ2));
+
+    *t = tMin;
     return tMax >= tMin;
 }
 
