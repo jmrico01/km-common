@@ -54,6 +54,7 @@ struct FixedArray
     Array<T> ToArray() const; // NOTE modifying the returned array's size won't affect the FixedArray size
     const Array<const T> ToConstArray() const;
     void FromArray(const Array<T>& array);
+    void FromArray(const Array<const T>& array);
 
     T* Append();
     T* Append(const T& element);

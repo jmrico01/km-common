@@ -6,9 +6,6 @@
 using string = Array<char>;
 using const_string = const Array<const char>;
 
-// TODO pretty random, but ok
-#define PATH_MAX_LENGTH 256
-
 uint32 StringLength(const char* str);
 
 const_string ToString(const char* cString);

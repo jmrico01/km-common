@@ -7,9 +7,9 @@
 #define PI_F 3.14159265f
 #define E_F  2.71828182f
 
-inline int RoundToPowerOfTwo(int n, int powerOfTwo) {
-    DEBUG_ASSERTF(powerOfTwo && ((powerOfTwo & (powerOfTwo - 1)) == 0), "%d should be power of 2\n",
-                  powerOfTwo);
+inline int RoundToPowerOfTwo(int n, int powerOfTwo)
+{
+    DEBUG_ASSERTF(powerOfTwo && ((powerOfTwo & (powerOfTwo - 1)) == 0), "%d should be power of 2\n", powerOfTwo);
     return (n + powerOfTwo - 1) & -powerOfTwo;
 }
 

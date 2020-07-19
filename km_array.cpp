@@ -154,6 +154,12 @@ const Array<const T> FixedArray<T, S>::ToConstArray() const
 template <typename T, uint32 S>
 void FixedArray<T, S>::FromArray(const Array<T>& array)
 {
+    FromArray((const Array<const T>)array);
+}
+
+template <typename T, uint32 S>
+void FixedArray<T, S>::FromArray(const Array<const T>& array)
+{
     DEBUG_ASSERT(array.size <= S);
     MemCopy(data, array.data, array.size * sizeof(T));
     size = array.size;

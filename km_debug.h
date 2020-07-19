@@ -1,7 +1,5 @@
 #pragma once
 
-#include <stdlib.h>
-
 #include "km_defines.h"
 
 #if GAME_SLOW

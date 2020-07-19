@@ -83,3 +83,6 @@ const uint16 UINT16_MAX_VALUE = 0xffff;
 const uint32 UINT32_MAX_VALUE = 0xffffffff;
 
 const uint64 UINT64_MAX_VALUE = 0xffffffffffffffff;
+
+// TODO pretty random, but ok
+const uint32 PATH_MAX_LENGTH = 256;

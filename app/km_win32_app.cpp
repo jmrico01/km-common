@@ -11,7 +11,9 @@ bool windowPropertiesChanged_ = false;
 bool windowSizeChanged_ = false;
 bool windowCursorVisible_ = !WINDOW_LOCK_CURSOR;
 AppInput* input_ = nullptr;
-global_var WINDOWPLACEMENT windowPlacementPrev_ = { sizeof(windowPlacementPrev_) };
+WINDOWPLACEMENT windowPlacementPrev_ = { sizeof(windowPlacementPrev_) };
+
+FixedArray<char, PATH_MAX_LENGTH> logFilePath_;
 
 bool TryDoNextWorkEntry(AppWorkQueue* queue)
 {
@@ -90,6 +92,77 @@ void LockCursor(bool locked)
     }
 
     windowCursorVisible_ = !locked;
+}
+
+void LogString(const char* str, uint32 n)
+{
+    const int LOG_STRING_BUFFER_SIZE = 1024;
+    char buffer[LOG_STRING_BUFFER_SIZE];
+
+    uint32 remaining = n;
+    while (remaining > 0) {
+        uint32 copySize = remaining;
+        if (copySize > LOG_STRING_BUFFER_SIZE - 1) {
+            copySize = LOG_STRING_BUFFER_SIZE - 1;
+        }
+        MemCopy(buffer, str, copySize);
+        buffer[copySize] = '\0';
+        OutputDebugString(buffer);
+        printf("%s", buffer);
+        remaining -= copySize;
+    }
+
+    Array<uint8> logData = { .size = n, .data = (uint8*)str };
+    if (!WriteFile(logFilePath_.ToArray(), logData, true)) {
+        DEBUG_PANIC("failed to write to log file");
+    }
+}
+
+void PlatformFlushLogs(LogState* logState)
+{
+    // TODO fix this
+    for (uint32 i = 0; i < logState->eventCount; i++) {
+        uint32 eventIndex = (logState->eventFirst + i) % logState->logEvents.SIZE;
+        const LogEvent& event = logState->logEvents[eventIndex];
+        uint32 bufferStart = event.logStart;
+        uint32 bufferEnd = event.logStart + event.logSize;
+        if (bufferEnd >= logState->buffer.SIZE) {
+            bufferEnd -= logState->buffer.SIZE;
+        }
+        if (bufferEnd >= bufferStart) {
+            LogString(logState->buffer.data + bufferStart, event.logSize);
+        }
+        else {
+            LogString(logState->buffer.data + bufferStart, logState->buffer.SIZE - bufferStart);
+            LogString(logState->buffer.data, bufferEnd);
+        }
+    }
+
+    if (logState->eventCount > 0) {
+        fflush(stdout);
+    }
+
+    logState->eventFirst = (logState->eventFirst + logState->eventCount) % logState->logEvents.SIZE;
+    logState->eventCount = 0;
+    // uint64 toRead1, toRead2;
+    // if (logState->readIndex <= logState->writeIndex) {
+    //  toRead1 = logState->writeIndex - logState->readIndex;
+    //  toRead2 = 0;
+    // }
+    // else {
+    //  toRead1 = LOG_BUFFER_SIZE - logState->readIndex;
+    //  toRead2 = logState->writeIndex;
+    // }
+    // if (toRead1 != 0) {
+    //  LogString(logState->buffer + logState->readIndex, toRead1);
+    // }
+    // if (toRead2 != 0) {
+    //  LogString(logState->buffer, toRead2);
+    // }
+    // logState->readIndex += toRead1 + toRead2;
+    // if (logState->readIndex >= LOG_BUFFER_SIZE) {
+    //  logState->readIndex -= LOG_BUFFER_SIZE;
+    // }
 }
 
 KmKeyCode Win32KeyCodeToKm(int vkCode)
@@ -393,6 +466,24 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     UNREFERENCED_PARAMETER(lpCmdLine);
     UNREFERENCED_PARAMETER(nShowCmd);
 
+    SYSTEMTIME systemTime;
+    GetLocalTime(&systemTime);
+    int n = stbsp_snprintf(logFilePath_.data, PATH_MAX_LENGTH,
+                           "logs/log%04d-%02d-%02d_%02d-%02d-%02d.txt",
+                           systemTime.wYear, systemTime.wMonth, systemTime.wDay,
+                           systemTime.wHour, systemTime.wMinute, systemTime.wSecond);
+    logFilePath_.size += n;
+
+    LogState* logState = (LogState*)VirtualAlloc(0, sizeof(LogState), MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+    if (!logState) {
+        LOG_ERROR("Log state memory allocation failed\n");
+        PlatformFlushLogs(logState);
+        return 1;
+    }
+    logState->eventFirst = 0;
+    logState->eventCount = 0;
+    logState_ = logState;
+
     HWND hWnd = Win32CreateWindow(hInstance, WndProc, "VulkanWindowClass", WINDOW_NAME,
                                   100, 100, WINDOW_START_WIDTH, WINDOW_START_HEIGHT);
     if (!hWnd) {
@@ -655,6 +746,8 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
         newInput = oldInput;
         oldInput = temp;
         ClearInput(newInput, *oldInput);
+
+        LOG_FLUSH();
     }
 
     vkDeviceWaitIdle(vulkanState.window.device);
