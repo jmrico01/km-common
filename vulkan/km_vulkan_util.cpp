@@ -342,6 +342,14 @@ bool LoadVulkanImage(VkDevice device, VkPhysicalDevice physicalDevice, VkQueue q
     const VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL;
     const VkImageUsageFlags usageFlags = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 
+    VkImageFormatProperties properties;
+    const VkResult formatResult = vkGetPhysicalDeviceImageFormatProperties(physicalDevice, format, VK_IMAGE_TYPE_2D,
+                                                                           tiling, usageFlags, 0, &properties);
+    if (formatResult != VK_SUCCESS) {
+        LOG_ERROR("vkGetPhysicalDeviceImageFormatProperties returned %d for image format %d", formatResult, format);
+        return false;
+    }
+
 #if 0
     // TODO might want something like this eventually that covers all image formats we'll be using
     VkFormat monochromeFormats[] = {

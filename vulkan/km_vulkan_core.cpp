@@ -7,14 +7,16 @@
 #include "../km_os.h"
 #include "../km_string.h"
 
-const char* REQUIRED_LAYERS[] = {
-    "VK_LAYER_KHRONOS_validation"
-};
-
 const char* REQUIRED_EXTENSIONS[] = {
     "VK_KHR_surface",
     "VK_KHR_win32_surface",
     VK_EXT_DEBUG_UTILS_EXTENSION_NAME
+};
+
+#if GAME_SLOW
+
+const char* REQUIRED_LAYERS[] = {
+    "VK_LAYER_KHRONOS_validation"
 };
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
@@ -28,6 +30,8 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugCallback(VkDebugUtilsMessageSev
               messageSeverity, messageType, pCallbackData->pMessage);
     return VK_FALSE;
 }
+
+#endif
 
 struct SwapchainSupportInfo
 {
@@ -421,9 +425,13 @@ bool LoadVulkanWindow(const VulkanCore& core, HINSTANCE hInstance, HWND hWnd, Vu
 
         createInfo.enabledExtensionCount = (uint32_t)requiredDeviceExtensionsArray.size;
         createInfo.ppEnabledExtensionNames = requiredDeviceExtensionsArray.data;
-        // TODO don't do this in release mode
+#if GAME_SLOW
         createInfo.enabledLayerCount = C_ARRAY_LENGTH(REQUIRED_LAYERS);
         createInfo.ppEnabledLayerNames = REQUIRED_LAYERS;
+#else
+        createInfo.enabledLayerCount = 0;
+        createInfo.ppEnabledLayerNames = nullptr;
+#endif
 
         if (vkCreateDevice(window->physicalDevice, &createInfo, nullptr, &window->device) != VK_SUCCESS) {
             LOG_ERROR("vkCreateDevice failed\n");
@@ -465,6 +473,7 @@ void UnloadVulkanWindow(const VulkanCore& core, VulkanWindow* window)
 
 bool LoadVulkanCore(VulkanCore* core, LinearAllocator* allocator)
 {
+#if GAME_SLOW
     // Verify required layers
     {
         uint32_t count;
@@ -496,6 +505,7 @@ bool LoadVulkanCore(VulkanCore* core, LinearAllocator* allocator)
             }
         }
     }
+#endif
 
     // Verify required extensions
     {
@@ -543,9 +553,13 @@ bool LoadVulkanCore(VulkanCore* core, LinearAllocator* allocator)
         VkInstanceCreateInfo createInfo = {};
         createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
         createInfo.pApplicationInfo = &appInfo;
-        // TODO don't do this in release mode
+#if GAME_SLOW
         createInfo.enabledLayerCount = C_ARRAY_LENGTH(REQUIRED_LAYERS);
         createInfo.ppEnabledLayerNames = REQUIRED_LAYERS;
+#else
+        createInfo.enabledLayerCount = 0;
+        createInfo.ppEnabledLayerNames = nullptr;
+#endif
         createInfo.enabledExtensionCount = C_ARRAY_LENGTH(REQUIRED_EXTENSIONS);
         createInfo.ppEnabledExtensionNames = REQUIRED_EXTENSIONS;
 
@@ -555,6 +569,7 @@ bool LoadVulkanCore(VulkanCore* core, LinearAllocator* allocator)
         }
     }
 
+#if GAME_SLOW
     // Set up debug messenger
     {
         VkDebugUtilsMessengerCreateInfoEXT createInfo = {};
@@ -575,17 +590,20 @@ bool LoadVulkanCore(VulkanCore* core, LinearAllocator* allocator)
             return false;
         }
     }
+#endif
 
     return true;
 }
 
 void UnloadVulkanCore(VulkanCore* core)
 {
+#if GAME_SLOW
     auto vkDestroyDebugUtilsMessengerEXT = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(core->instance, "vkDestroyDebugUtilsMessengerEXT");
     if (vkDestroyDebugUtilsMessengerEXT == nullptr) {
         LOG_ERROR("vkGetInstanceProcAddr failed for vkDestroyDebugUtilsMessengerEXT\n");
     }
     vkDestroyDebugUtilsMessengerEXT(core->instance, core->debugMessenger, nullptr);
+#endif
 
     vkDestroyInstance(core->instance, nullptr);
 }
