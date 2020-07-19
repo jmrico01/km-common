@@ -33,6 +33,16 @@ inline float32 AbsFloat32(float32 f) {
     return f < 0.0f ? -f : f;
 }
 
+inline float32 FloorFloat32(float32 f)
+{
+    return (float32)floor(f);
+}
+
+inline float32 CeilFloat32(float32 f)
+{
+    return (float32)ceil(f);
+}
+
 inline int RandInt(int max)
 {
 	DEBUG_ASSERT(max > 0);
@@ -238,6 +248,25 @@ const Vec3 Vec3::one   = { 1.0f, 1.0f, 1.0f };
 const Vec3 Vec3::unitX = { 1.0f, 0.0f, 0.0f };
 const Vec3 Vec3::unitY = { 0.0f, 1.0f, 0.0f };
 const Vec3 Vec3::unitZ = { 0.0f, 0.0f, 1.0f };
+
+union Vec3Int
+{
+    const static Vec3Int zero;
+    const static Vec3Int unitX;
+    const static Vec3Int unitY;
+    const static Vec3Int unitZ;
+
+    struct
+    {
+        int x, y, z;
+    };
+    int e[3];
+};
+
+const Vec3Int Vec3Int::zero = { 0, 0, 0 };
+const Vec3Int Vec3Int::unitX = { 1, 0, 0 };
+const Vec3Int Vec3Int::unitY = { 0, 1, 0 };
+const Vec3Int Vec3Int::unitZ = { 0, 0, 1 };
 
 union Vec4
 {
@@ -495,23 +524,6 @@ inline Vec2Int& operator/=(Vec2Int& v, int s)
     return v;
 }
 
-/*inline Vec2Int operator*(float32 s, Vec2Int v)
-{
-    Vec2Int result;
-    result.x = (int)(s * (float32)v.x);
-    result.y = (int)(s * (float32)v.y);
-    return result;
-}
-inline Vec2Int operator*(Vec2Int v, float32 s)
-{
-    return s * v;
-}
-inline Vec2Int& operator*=(Vec2Int& v, float32 s)
-{
-    v = s * v;
-    return v;
-}*/
-
 inline Vec2Int MultiplyVec2IntFloat32(Vec2Int v, float32 f)
 {
     return Vec2Int { (int)((float32)v.x * f), (int)((float32)v.y * f) };
@@ -682,6 +694,114 @@ inline Vec3 Normalize(Vec3 v)
 inline Vec3 GetPerpendicular(Vec3 v)
 {
     return v.z < v.x ? Vec3 { v.y, -v.x, 0.0f } : Vec3 { 0.0f, -v.z, v.y };
+}
+
+// ------------------ Vec3Int -------------------
+inline Vec3 ToVec3(Vec3Int v)
+{
+    return Vec3 { (float32)v.x, (float32)v.y, (float32)v.z };
+}
+
+inline Vec3Int operator-(Vec3Int v)
+{
+    Vec3Int result;
+    result.x = -v.x;
+    result.y = -v.y;
+    return result;
+}
+
+inline Vec3Int operator+(Vec3Int v1, Vec3Int v2)
+{
+    Vec3Int result;
+    result.x = v1.x + v2.x;
+    result.y = v1.y + v2.y;
+    result.z = v1.z + v2.z;
+    return result;
+}
+inline Vec3Int& operator+=(Vec3Int& v1, Vec3Int v2)
+{
+    v1 = v1 + v2;
+    return v1;
+}
+
+inline Vec3Int operator-(Vec3Int v1, Vec3Int v2)
+{
+    Vec3Int result;
+    result.x = v1.x - v2.x;
+    result.y = v1.y - v2.y;
+    result.z = v1.z - v2.z;
+    return result;
+}
+inline Vec3Int& operator-=(Vec3Int& v1, Vec3Int v2)
+{
+    v1 = v1 - v2;
+    return v1;
+}
+
+inline Vec3Int operator*(int s, Vec3Int v)
+{
+    Vec3Int result;
+    result.x = s * v.x;
+    result.y = s * v.y;
+    result.z = s * v.z;
+    return result;
+}
+inline Vec3Int operator*(Vec3Int v, int s)
+{
+    return s * v;
+}
+inline Vec3Int& operator*=(Vec3Int& v, int s)
+{
+    v = s * v;
+    return v;
+}
+
+inline Vec3Int operator/(Vec3Int v, int s)
+{
+    Vec3Int result;
+    result.x = v.x / s;
+    result.y = v.y / s;
+    result.z = v.z / s;
+    return result;
+}
+inline Vec3Int& operator/=(Vec3Int& v, int s)
+{
+    v = v / s;
+    return v;
+}
+
+inline Vec3Int MultiplyVec2IntFloat32(Vec3Int v, float32 f)
+{
+    return Vec3Int { (int)((float32)v.x * f), (int)((float32)v.y * f), (int)((float32)v.z * f) };
+}
+
+inline bool operator==(const Vec3Int& v1, const Vec3Int& v2)
+{
+    return v1.x == v2.x && v1.y == v2.y && v1.z == v2.z;
+}
+
+inline bool operator!=(const Vec3Int& v1, const Vec3Int& v2)
+{
+    return v1.x != v2.x || v1.y != v2.y || v1.z != v2.z;
+}
+
+Vec3Int Lerp(Vec3Int v1, Vec3Int v2, float32 t)
+{
+    Vec3Int result = {
+        Lerp(v1.x, v2.x, t),
+        Lerp(v1.y, v2.y, t),
+        Lerp(v1.z, v2.z, t),
+    };
+    return result;
+}
+
+inline int MagSq(Vec3Int v)
+{
+    return v.x*v.x + v.y*v.y * v.z*v.z;
+}
+inline int Mag(Vec3Int v)
+{
+    return (int)sqrtf((float32)v.x*v.x + v.y*v.y + v.z*v.z);
 }
 
 // -------------------- Vec4 --------------------
