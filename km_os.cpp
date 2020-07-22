@@ -3,7 +3,7 @@
 #if GAME_WIN32
 #include <Windows.h>
 #undef ERROR
-#elif GAME_LINUX
+#elif GAME_LINUX || GAME_MACOS
 #include <stdlib.h>
 #include <sys/stat.h>
 #endif
@@ -58,7 +58,7 @@ Array<uint8> LoadEntireFile(const_string filePath, Allocator* allocator)
 
     file.size = fileSize32;
     CloseHandle(hFile);
-#elif GAME_LINUX
+#elif GAME_LINUX || GAME_MACOS
     FILE* filePtr = fopen(filePathC, "rb");
     if (filePtr == NULL) {
         return file;
@@ -129,7 +129,7 @@ bool WriteFile(const_string filePath, const Array<uint8>& data, bool append)
 
     CloseHandle(hFile);
     return bytesWritten == (DWORD)data.size;
-#elif GAME_LINUX
+#elif GAME_LINUX || GAME_MACOS
     FILE* filePtr;
     if (append) {
         filePtr = fopen(cFilePath, "ab");
@@ -163,7 +163,7 @@ bool DeleteFile(const_string filePath, bool errorIfNotFound)
             return false;
         }
     }
-#elif GAME_LINUX
+#elif GAME_LINUX || GAME_MACOS
     int result = unlink(cFilePath);
     if (result == -1) {
         if (errno != ENOENT) {
@@ -193,7 +193,7 @@ bool FileExists(const_string filePath)
         FindClose(fileHandle);
     }
     return found;
-#elif GAME_LINUX
+#elif GAME_LINUX || GAME_MACOS
     // TODO implement
     return false;
 #else
@@ -229,7 +229,7 @@ bool FileChangedSinceLastCall(const_string filePath)
     }
 
     return false;
-#elif GAME_LINUX
+#elif GAME_LINUX || GAME_MACOS
     // TODO implement
     return false;
 #else
@@ -257,7 +257,7 @@ bool CreateDirRecursive(const_string dir)
                 return false;
             }
         }
-#elif GAME_LINUX
+#elif GAME_LINUX || GAME_MACOS
         int result = mkdir(path.data, ACCESSPERMS);
         if (result == -1) {
             if (errno != EEXIST) {
@@ -289,7 +289,7 @@ FixedArray<char, PATH_MAX_LENGTH> GetExecutablePath(Allocator* allocator)
             path[i] = '/';
         }
     }
-#elif GAME_LINUX
+#elif GAME_LINUX || GAME_MACOS
     ssize_t count = readlink("/proc/self/exe", path.data, PATH_MAX_LENGTH);
     if (count == -1) {
         return path;
@@ -307,7 +307,7 @@ bool RunCommand(const_string command)
 {
     char* commandCString = ToCString(command, &defaultAllocator_);
 
-#if GAME_WIN32 || GAME_LINUX
+#if GAME_WIN32 || GAME_LINUX || GAME_MACOS
     int result = system(commandCString);
     if (result != 0) {
         LOG_ERROR("RunCommand system(...) call returned %d\n", result);
