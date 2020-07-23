@@ -302,6 +302,20 @@ string NextSplitElement(string* str, char separator)
     return next;
 }
 
+template <typename Allocator>
+string StringConcatenate(const_string str1, const_string str2, Allocator* allocator)
+{
+    string result;
+    result.size = str1.size + str2.size;
+    result.data = allocator->New<char>(result.size);
+    if (result.data == nullptr) {
+        return string::empty;
+    }
+    MemCopy(result.data, str1.data, str1.size);
+    MemCopy(result.data + str1.size, str2.data, str2.size);
+    return result;
+}
+
 bool SizedPrintf(string* str, const char* format, ...)
 {
     va_list args;
