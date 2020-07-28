@@ -559,7 +559,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     AppInput *newInput = &input[0];
     AppInput *oldInput = &input[1];
     if (WINDOW_LOCK_CURSOR) {
-        ShowCursor(FALSE);
+        LockCursor(true);
     }
 
     // Initialize app work queue
