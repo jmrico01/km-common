@@ -388,8 +388,9 @@ bool LoadSpritePipelineWindow(const VulkanWindow& window, VkCommandPool commandP
         }
 
         // Copy vertex data from staging buffer into GPU vertex buffer
-        CopyBuffer(window.device, commandPool, window.graphicsQueue,
-                   stagingBuffer.buffer, spritePipeline->vertexBuffer.buffer, vertexBufferSize);
+        VkCommandBuffer commandBuffer = BeginOneTimeCommands(window.device, commandPool);
+        CopyBuffer(commandBuffer, stagingBuffer.buffer, spritePipeline->vertexBuffer.buffer, vertexBufferSize);
+        EndOneTimeCommands(window.device, commandPool, window.graphicsQueue, commandBuffer);
 
         DestroyVulkanBuffer(window.device, &stagingBuffer);
     }

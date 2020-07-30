@@ -121,7 +121,7 @@ bool RegisterFont(VkDevice device, VkPhysicalDevice physicalDevice, VkQueue queu
     fontFace->glyphInfo.FromArray(fontFaceResult.glyphInfo);
 
     VulkanImage fontAtlas;
-    if (!LoadVulkanImage(device, physicalDevice, queue, commandPool,
+    if (!LoadVulkanImage(device, physicalDevice, commandPool, queue,
                          fontFaceResult.atlasWidth, fontFaceResult.atlasHeight, 1,
                          fontFaceResult.atlasData, &fontAtlas)) {
         LOG_ERROR("Failed to load Vulkan image for font atlas\n");
@@ -429,8 +429,9 @@ bool LoadTextPipelineWindow(const VulkanWindow& window, VkCommandPool commandPoo
         }
 
         // Copy vertex data from staging buffer into GPU vertex buffer
-        CopyBuffer(window.device, commandPool, window.graphicsQueue,
-                   stagingBuffer.buffer, textPipeline->vertexBuffer.buffer, vertexBufferSize);
+        VkCommandBuffer commandBuffer = BeginOneTimeCommands(window.device, commandPool);
+        CopyBuffer(commandBuffer, stagingBuffer.buffer, textPipeline->vertexBuffer.buffer, vertexBufferSize);
+        EndOneTimeCommands(window.device, commandPool, window.graphicsQueue, commandBuffer);
 
         DestroyVulkanBuffer(window.device, &stagingBuffer);
     }

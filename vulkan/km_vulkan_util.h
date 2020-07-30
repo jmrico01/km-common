@@ -34,6 +34,9 @@ struct VulkanImage
     VkImageView view;
 };
 
+VkCommandBuffer BeginOneTimeCommands(VkDevice device, VkCommandPool commandPool);
+void EndOneTimeCommands(VkDevice device, VkCommandPool commandPool, VkQueue queue, VkCommandBuffer commandBuffer);
+
 Vec2 ScreenPosToNdc(Vec2Int pos, Vec2Int screenSize);
 RectCoordsNdc ToRectCoordsNdc(Vec2Int pos, Vec2Int size, Vec2Int screenSize);
 RectCoordsNdc ToRectCoordsNdc(Vec2Int pos, Vec2Int size, Vec2 anchor, Vec2Int screenSize);
@@ -46,22 +49,19 @@ bool CreateVulkanBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPro
                         VkDevice device, VkPhysicalDevice physicalDevice, VulkanBuffer* buffer);
 void DestroyVulkanBuffer(VkDevice device, VulkanBuffer* buffer);
 
-void CopyBuffer(VkDevice device, VkCommandPool commandPool, VkQueue queue,
-                VkBuffer src, VkBuffer dst, VkDeviceSize size);
+void CopyBuffer(VkCommandBuffer commandBuffer, VkBuffer src, VkBuffer dst, VkDeviceSize size);
 
 bool CreateImage(VkDevice device, VkPhysicalDevice physicalDevice, uint32_t width, uint32_t height, VkFormat format,
                  VkImageTiling tiling, VkImageUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags,
                  VkImage* image, VkDeviceMemory* imageMemory);
 
-void TransitionImageLayout(VkDevice device, VkCommandPool commandPool, VkQueue queue, VkImage image,
-                           VkImageLayout oldLayout, VkImageLayout newLayout);
+void TransitionImageLayout(VkCommandBuffer commandBuffer, VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout);
 
-void CopyBufferToImage(VkDevice device, VkCommandPool commandPool, VkQueue queue,
-                       VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
+void CopyBufferToImage(VkCommandBuffer commandBuffer, VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
 
 bool CreateImageView(VkDevice device, VkImage image, VkFormat format, VkImageAspectFlags aspectFlags,
                      VkImageView* imageView);
 
-bool LoadVulkanImage(VkDevice device, VkPhysicalDevice physicalDevice, VkQueue queue, VkCommandPool commandPool,
+bool LoadVulkanImage(VkDevice device, VkPhysicalDevice physicalDevice, VkCommandPool commandPool, VkQueue queue,
                      uint32 width, uint32 height, uint32 channels, const uint8* data, VulkanImage* image);
 void DestroyVulkanImage(VkDevice device, VulkanImage* image);
