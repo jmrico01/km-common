@@ -703,11 +703,19 @@ inline float32 MagSq(Vec3 v)
 }
 inline float32 Mag(Vec3 v)
 {
-    return sqrtf(v.x*v.x + v.y*v.y + v.z*v.z);
+    return sqrtf(MagSq(v));
 }
 inline Vec3 Normalize(Vec3 v)
 {
     return v / Mag(v);
+}
+inline Vec3 NormalizeOrZero(Vec3 v)
+{
+    float32 magSq = MagSq(v);
+    if (magSq < 0.0001f) {
+        return Vec3::zero;
+    }
+    return v / sqrtf(magSq);
 }
 
 inline Vec3 GetPerpendicular(Vec3 v)
@@ -1394,32 +1402,6 @@ bool RayPlaneIntersection(Vec3 rayOrigin, Vec3 rayDir, Vec3 planeOrigin, Vec3 pl
 
     *t = Dot(planeOrigin - rayOrigin, planeNormal) / dotDirNormal;
     return true;
-}
-
-bool RayAxisAlignedBoxIntersection(Vec3 rayOrigin, Vec3 rayDirInv, Vec3 boxMin, Vec3 boxMax, float32* t)
-{
-    float32 tMin = -INFINITY;
-    float32 tMax = INFINITY;
-
-    const float32 tX1 = (boxMin.x - rayOrigin.x) * rayDirInv.x;
-    const float32 tX2 = (boxMax.x - rayOrigin.x) * rayDirInv.x;
-    tMin = MaxFloat32(tMin, MinFloat32(tX1, tX2));
-    tMax = MinFloat32(tMax, MaxFloat32(tX1, tX2));
-
-    const float32 tY1 = (boxMin.y - rayOrigin.y) * rayDirInv.y;
-    const float32 tY2 = (boxMax.y - rayOrigin.y) * rayDirInv.y;
-    tMin = MaxFloat32(tMin, MinFloat32(tY1, tY2));
-    tMax = MinFloat32(tMax, MaxFloat32(tY1, tY2));
-
-    const float32 tZ1 = (boxMin.z - rayOrigin.z) * rayDirInv.z;
-    const float32 tZ2 = (boxMax.z - rayOrigin.z) * rayDirInv.z;
-    tMin = MaxFloat32(tMin, MinFloat32(tZ1, tZ2));
-    tMax = MinFloat32(tMax, MaxFloat32(tZ1, tZ2));
-
-    // *point = 
-    *t = tMin;
-
-    return tMax >= tMin;
 }
 
 // NOTE remember this takes in the INVERSE ray direction!
