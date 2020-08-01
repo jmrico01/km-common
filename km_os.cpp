@@ -4,6 +4,8 @@
 #include <Windows.h>
 #undef ERROR
 #elif GAME_LINUX || GAME_MACOS
+#include <dirent.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <sys/stat.h>
 #endif
@@ -276,23 +278,23 @@ template <typename Allocator>
 Array<FileInfo> ListDir(const_string dir, Allocator* allocator)
 {
 #if GAME_WIN32
-    DynamicArray<FileInfo, Allocator> results(allocator);
-
     const_string starNull = {
         .size = 3,
         .data = "/*\0",
     };
-    const_string dirStar = StringConcatenate(dir, starNull, allocator);
-    if (dirStar.data == nullptr) {
+    const_string dirStarNull = StringConcatenate(dir, starNull, allocator);
+    if (dirStarNull.data == nullptr) {
         return Array<FileInfo>::empty;
     }
 
     WIN32_FIND_DATAA findData;
-    HANDLE handle = FindFirstFileA(dirStar.data, &findData);
+    HANDLE handle = FindFirstFileA(dirStarNull.data, &findData);
     if (handle == INVALID_HANDLE_VALUE) {
         return Array<FileInfo>::empty;
     }
     defer(FindClose(handle));
+
+    DynamicArray<FileInfo, Allocator> results(allocator);
 
     // List all the files in the directory with some info about them
     do {
@@ -307,16 +309,42 @@ Array<FileInfo> ListDir(const_string dir, Allocator* allocator)
         return Array<FileInfo>::empty;
     }
 
-    // TODO remove this once nopasanada is using non-freeing DynamicArrays
-    Array<FileInfo> persistResults = {
-        .size = results.size,
-        .data = allocator->New<FileInfo>(results.size)
-    };
-    MemCopy(persistResults.data, results.data, results.size * sizeof(FileInfo));
-    return persistResults;
+#elif GAME_LINUX || GAME_MACOS
+    const char* dirCStr = ToCString(dir, allocator);
+
+    DIR* d = opendir(dirCStr);
+    if (d == NULL) {
+        return Array<FileInfo>::empty;
+    }
+    defer(closedir(d));
+
+    DynamicArray<FileInfo, Allocator> results(allocator);
+
+    dirent* dirEntry;
+    errno = 0;
+    while ((dirEntry = readdir(d)) != NULL) {
+        FileInfo* info = results.Append();
+        info->name.size = StringLength(dirEntry->d_name);
+        info->name.data = allocator->template New<char>(info->name.size);
+        MemCopy(info->name.data, dirEntry->d_name, info->name.size);
+        errno = 0;
+    }
+
+    if (errno != 0) {
+        return Array<FileInfo>::empty;
+    }
+
 #else
 #error "ListDir not implemented on this platform"
 #endif
+
+    // TODO remove this once nopasanada is using non-freeing DynamicArrays
+    Array<FileInfo> persistResults = {
+        .size = results.size,
+        .data = allocator->template New<FileInfo>(results.size)
+    };
+    MemCopy(persistResults.data, results.data, results.size * sizeof(FileInfo));
+    return persistResults;
 }
 
 template <typename Allocator>
@@ -346,6 +374,7 @@ FixedArray<char, PATH_MAX_LENGTH> GetExecutablePath(Allocator* allocator)
             path[i] = '/';
         }
     }
+
 #elif GAME_LINUX || GAME_MACOS
     ssize_t count = readlink("/proc/self/exe", path.data, PATH_MAX_LENGTH);
     if (count == -1) {
