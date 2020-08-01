@@ -307,7 +307,7 @@ string StringConcatenate(const_string str1, const_string str2, Allocator* alloca
 {
     string result;
     result.size = str1.size + str2.size;
-    result.data = allocator->New<char>(result.size);
+    result.data = allocator->template New<char>(result.size);
     if (result.data == nullptr) {
         return string::empty;
     }
@@ -357,8 +357,8 @@ template <typename Allocator>
 char* AllocPrintfDynamicArrayCallback(const char* buffer, void* user, int length)
 {
     DynamicArray<char, Allocator>* result = *((DynamicArray<char, Allocator>*)user);
-    result->Append(string { .size = length, .data = buffer });
-    return buffer;
+    result->Append(string { .size = (uint64)length, .data = (char*)buffer });
+    return (char*)buffer;
 }
 
 template <typename Allocator>
