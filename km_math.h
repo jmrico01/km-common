@@ -1405,7 +1405,7 @@ bool RayPlaneIntersection(Vec3 rayOrigin, Vec3 rayDir, Vec3 planeOrigin, Vec3 pl
 }
 
 // NOTE remember this takes in the INVERSE ray direction!
-bool RayAxisAlignedBoxIntersection(Vec3 rayOrigin, Vec3 rayDirInv, Box box, float32* t)
+bool RayAxisAlignedBoxIntersection(Vec3 rayOrigin, Vec3 rayDirInv, Box box, float32* tMinOut, float32* tMaxOut)
 {
     float32 tMin = -INFINITY;
     float32 tMax = INFINITY;
@@ -1425,7 +1425,8 @@ bool RayAxisAlignedBoxIntersection(Vec3 rayOrigin, Vec3 rayDirInv, Box box, floa
     tMin = MaxFloat32(tMin, MinFloat32(tZ1, tZ2));
     tMax = MinFloat32(tMax, MaxFloat32(tZ1, tZ2));
 
-    *t = tMin;
+    *tMinOut = tMin;
+    *tMaxOut = tMax;
     return tMax >= tMin;
 }
 

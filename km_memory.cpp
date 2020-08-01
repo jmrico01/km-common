@@ -101,6 +101,11 @@ void LinearAllocator::Free(void* memory)
     used = memoryInd;
 }
 
+void LinearAllocator::Clear()
+{
+    used = 0;
+}
+
 LinearAllocatorState LinearAllocator::SaveState()
 {
     LinearAllocatorState state;

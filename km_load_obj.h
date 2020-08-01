@@ -14,11 +14,18 @@ struct ObjVertex
 struct ObjTriangle
 {
     ObjVertex v[3];
+    uint32 materialIndex;
 };
 
 struct ObjQuad
 {
     ObjVertex v[4];
+    uint32 materialIndex;
+};
+
+struct ObjMaterial
+{
+    string name;
 };
 
 struct ObjModel
@@ -31,6 +38,7 @@ struct LoadObjResult
 {
     Array<uint8> file;
     Array<ObjModel> models;
+    Array<ObjMaterial> materials;
 };
 
-bool LoadObj(const_string filePath, LoadObjResult* result, LinearAllocator* allocator);
+bool LoadObj(const_string filePath, Vec3 offset, float32 scale, LoadObjResult* result, LinearAllocator* allocator);

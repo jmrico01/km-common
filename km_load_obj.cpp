@@ -2,6 +2,8 @@
 
 #include "km_os.h"
 
+const uint32 MAX_FACE_VERTICES = 32;
+
 union FaceIndices
 {
     struct
@@ -21,12 +23,14 @@ bool StringToObjFaceInds(const_string str, FaceIndices* faceInds)
     return result && (numElements == 1 || numElements == 2);
 }
 
-bool LoadObj(const_string filePath, LoadObjResult* result, LinearAllocator* allocator)
+bool LoadObj(const_string filePath, Vec3 offset, float32 scale, LoadObjResult* result, LinearAllocator* allocator)
 {
     result->file = LoadEntireFile(filePath, allocator);
     if (result->file.data == nullptr) {
         return false;
     }
+
+    DynamicArray<ObjMaterial, LinearAllocator> materials(allocator);
 
     DynamicArray<Vec3, LinearAllocator> positions(allocator);
     DynamicArray<Vec2, LinearAllocator> uvs(allocator);
@@ -35,12 +39,13 @@ bool LoadObj(const_string filePath, LoadObjResult* result, LinearAllocator* allo
     DynamicArray<uint32, LinearAllocator> startTriangleInds(allocator);
     DynamicArray<uint32, LinearAllocator> startQuadInds(allocator);
 
-
     string fileString = {
         .size = result->file.size,
         .data = (char*)result->file.data
     };
     string next;
+
+    uint32 currentMaterialIndex = 0;
 
     bool firstMesh = true;
     while (true) {
@@ -59,6 +64,24 @@ bool LoadObj(const_string filePath, LoadObjResult* result, LinearAllocator* allo
             startTriangleInds.Append(triangles.size);
             startQuadInds.Append(quads.size);
             firstMesh = false;
+        }
+        else if (next.size > 7 && StringEquals(next.SliceTo(6), ToString("usemtl"))) {
+            const_string materialName = next.SliceFrom(7);
+
+            uint32 materialIndex = materials.size;
+            for (uint32 i = 0; i < materials.size; i++) {
+                if (StringEquals(materialName, materials[i].name)) {
+                    materialIndex = i;
+                }
+            }
+
+            if (materialIndex == materials.size) {
+                ObjMaterial* newMaterial = materials.Append();
+                newMaterial->name = allocator->NewArray<char>(materialName.size);
+                MemCopy(newMaterial->name.data, materialName.data, materialName.size);
+            }
+
+            currentMaterialIndex = materialIndex;
         }
         // Handle new vertex position
         else if (next[0] == 'v' && next[1] == ' ') {
@@ -80,6 +103,9 @@ bool LoadObj(const_string filePath, LoadObjResult* result, LinearAllocator* allo
             if (numElements != 3) {
                 return false;
             }
+
+            (*p) += offset;
+            (*p) *= scale;
         }
         // Handle new vertex UV
         else if (next.size > 2 && next[0] == 'v' && next[1] == 't' && next[2] == ' ') {
@@ -113,37 +139,60 @@ bool LoadObj(const_string filePath, LoadObjResult* result, LinearAllocator* allo
             next.data += 2;
             next.size -= 2;
 
-            FaceIndices indices[4];
+            FaceIndices indices[MAX_FACE_VERTICES];
             int numElements;
-            if (!StringToElementArray(next, ' ', false, StringToObjFaceInds, 4, indices, &numElements)) {
+            if (!StringToElementArray(next, ' ', false, StringToObjFaceInds, MAX_FACE_VERTICES, indices, &numElements)) {
                 LOG_ERROR("Failed to load face with value: %.*s\n", (int)next.size, next.data);
                 return false;
             }
 
-            // NOTE obj files store faces in counter-clockwise order, but we want to return clockwise
+            if (numElements < 3) {
+                LOG_ERROR("Face with < 3 vertices (%d)\n", numElements);
+                return false;
+            }
+
+            // obj is 1-indexed, convert to 0-indexed first
+            for (int i = 0; i < numElements; i++) {
+                indices[i].pos--;
+                if (indices[i].uv != -1) {
+                    indices[i].uv--;
+                }
+            }
+
+            // obj files store faces in counter-clockwise order, but we want to return clockwise
             if (numElements == 3) {
                 ObjTriangle* triangle = triangles.Append();
-                triangle->v[0].pos = positions[indices[0].pos - 1];
-                triangle->v[0].uv = indices[0].uv == -1 ? Vec2::zero : uvs[indices[0].uv - 1];
-                triangle->v[1].pos = positions[indices[2].pos - 1];
-                triangle->v[1].uv = indices[2].uv == -1 ? Vec2::zero : uvs[indices[2].uv - 1];
-                triangle->v[2].pos = positions[indices[1].pos - 1];
-                triangle->v[2].uv = indices[1].uv == -1 ? Vec2::zero : uvs[indices[1].uv - 1];
-
+                triangle->v[0].pos = positions[indices[0].pos];
+                triangle->v[0].uv = indices[0].uv == -1 ? Vec2::zero : uvs[indices[0].uv];
+                triangle->v[1].pos = positions[indices[2].pos];
+                triangle->v[1].uv = indices[2].uv == -1 ? Vec2::zero : uvs[indices[2].uv];
+                triangle->v[2].pos = positions[indices[1].pos];
+                triangle->v[2].uv = indices[1].uv == -1 ? Vec2::zero : uvs[indices[1].uv];
+                triangle->materialIndex = currentMaterialIndex;
             }
             else if (numElements == 4) {
                 ObjQuad* quad = quads.Append();
-                quad->v[0].pos = positions[indices[0].pos - 1];
-                quad->v[0].uv = indices[0].uv == -1 ? Vec2::zero : uvs[indices[0].uv - 1];
-                quad->v[1].pos = positions[indices[3].pos - 1];
-                quad->v[1].uv = indices[3].uv == -1 ? Vec2::zero : uvs[indices[3].uv - 1];
-                quad->v[2].pos = positions[indices[2].pos - 1];
-                quad->v[2].uv = indices[2].uv == -1 ? Vec2::zero : uvs[indices[2].uv - 1];
-                quad->v[3].pos = positions[indices[1].pos - 1];
-                quad->v[3].uv = indices[1].uv == -1 ? Vec2::zero : uvs[indices[1].uv - 1];
+                quad->v[0].pos = positions[indices[0].pos];
+                quad->v[0].uv = indices[0].uv == -1 ? Vec2::zero : uvs[indices[0].uv];
+                quad->v[1].pos = positions[indices[3].pos];
+                quad->v[1].uv = indices[3].uv == -1 ? Vec2::zero : uvs[indices[3].uv];
+                quad->v[2].pos = positions[indices[2].pos];
+                quad->v[2].uv = indices[2].uv == -1 ? Vec2::zero : uvs[indices[2].uv];
+                quad->v[3].pos = positions[indices[1].pos];
+                quad->v[3].uv = indices[1].uv == -1 ? Vec2::zero : uvs[indices[1].uv];
+                quad->materialIndex = currentMaterialIndex;
             }
             else {
-                return false;
+                for (int i = 2; i < numElements; i++) {
+                    ObjTriangle* triangle = triangles.Append();
+                    triangle->v[0].pos = positions[indices[0].pos];
+                    triangle->v[0].uv = indices[0].uv == -1 ? Vec2::zero : uvs[indices[0].uv];
+                    triangle->v[1].pos = positions[indices[i].pos];
+                    triangle->v[1].uv = indices[i].uv == -1 ? Vec2::zero : uvs[indices[i].uv];
+                    triangle->v[2].pos = positions[indices[i - 1].pos];
+                    triangle->v[2].uv = indices[i - 1].uv == -1 ? Vec2::zero : uvs[indices[i - 1].uv];
+                    triangle->materialIndex = currentMaterialIndex;
+                }
             }
         }
     }
@@ -167,6 +216,8 @@ bool LoadObj(const_string filePath, LoadObjResult* result, LinearAllocator* allo
         result->models[i].triangles = triangles.ToArray().Slice(startTriangleInds[i], endTriangleInd);
         result->models[i].quads = quads.ToArray().Slice(startQuadInds[i], endQuadInd);
     }
+
+    result->materials = materials.ToArray();
 
     return true;
 }
