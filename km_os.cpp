@@ -273,6 +273,47 @@ bool CreateDirRecursive(const_string dir)
 }
 
 template <typename Allocator>
+Array<string> ListDir(const_string dir, Allocator* allocator)
+{
+#if GAME_WIN32
+    DynamicArray<string, Allocator> result(allocator);
+
+    const_string starNull = {
+        .size = 3,
+        .data = "/*\0",
+    };
+    const_string dirStar = StringConcatenate(dir, starNull, allocator);
+    if (dirStar.data == nullptr) {
+        return Array<string>::empty;
+    }
+
+    WIN32_FIND_DATAA findData;
+    HANDLE handle = FindFirstFileA(dirStar.data, &findData);
+    if (handle == INVALID_HANDLE_VALUE) {
+        return Array<string>::empty;
+    }
+    defer(FindClose(handle));
+
+    // List all the files in the directory with some info about them
+    do {
+        string* path = result.Append();
+        path->size = StringLength(findData.cFileName);
+        path->data = allocator->New<char>(path->size);
+        MemCopy(path->data, findData.cFileName, path->size);
+    } while (FindNextFileA(handle, &findData) != 0);
+
+    DWORD error = GetLastError();
+    if (error != ERROR_NO_MORE_FILES) {
+        return Array<string>::empty;
+    }
+
+    return result.ToArray();
+#else
+#error "ListDir not implemented on this platform"
+#endif
+}
+
+template <typename Allocator>
 FixedArray<char, PATH_MAX_LENGTH> GetExecutablePath(Allocator* allocator)
 {
     FixedArray<char, PATH_MAX_LENGTH> path;

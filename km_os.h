@@ -17,6 +17,10 @@ bool FileChangedSinceLastCall(const_string filePath);
 
 bool CreateDirRecursive(const_string dir);
 
+// Traverses all files in the given directory. Returns an array with their names.
+template <typename Allocator>
+Array<string> ListDir(const_string dir, Allocator* allocator);
+
 template <typename Allocator>
 FixedArray<char, PATH_MAX_LENGTH> GetExecutablePath(Allocator* allocator);
 
