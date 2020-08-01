@@ -10,6 +10,10 @@
 #include <sys/stat.h>
 #endif
 
+#if GAME_MACOS
+#include <mach-o/dyld.h>
+#endif
+
 #if GAME_WIN32
 internal FILETIME Win32GetLastWriteTime(const char* filePath)
 {
@@ -375,12 +379,28 @@ FixedArray<char, PATH_MAX_LENGTH> GetExecutablePath(Allocator* allocator)
         }
     }
 
-#elif GAME_LINUX || GAME_MACOS
+#elif GAME_LINUX
     ssize_t count = readlink("/proc/self/exe", path.data, PATH_MAX_LENGTH);
     if (count == -1) {
         return path;
     }
     path.size = count;
+
+#elif GAME_MACOS
+    char pathWithStuff[PATH_MAX_LENGTH + 1];
+    uint32_t size = PATH_MAX_LENGTH + 1;
+    if (_NSGetExecutablePath(pathWithStuff, &size) != 0) {
+        return path;
+    }
+
+    // not sure if above function returns null-terminated string
+    pathWithStuff[size] = '\0';
+    if (realpath(pathWithStuff, path.data) == NULL) {
+        return path;
+    }
+
+    path.size = StringLength(path.data);
+
 #else
 #error "GetExecutablePath not implemented on this platform"
 #endif
