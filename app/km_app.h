@@ -15,7 +15,7 @@ struct AppMemory
 
 struct AppWorkQueue;
 
-#define APP_WORK_QUEUE_CALLBACK_FUNCTION(name) void name(AppWorkQueue* queue, void* data)
+#define APP_WORK_QUEUE_CALLBACK_FUNCTION(name) void name(uint32 threadIndex, AppWorkQueue* queue, void* data)
 typedef APP_WORK_QUEUE_CALLBACK_FUNCTION(AppWorkQueueCallbackFunction);
 
 struct AppWorkEntry
@@ -35,7 +35,8 @@ struct AppWorkQueue
     HANDLE win32SemaphoreHandle;
 };
 
-void CompleteAllWork(AppWorkQueue* queue);
+uint32 GetCpuCount();
+void CompleteAllWork(AppWorkQueue* queue, uint32 threadIndex);
 bool TryAddWork(AppWorkQueue* queue, AppWorkQueueCallbackFunction* callback, void* data);
 
 bool IsCursorLocked();

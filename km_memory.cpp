@@ -58,6 +58,20 @@ LinearAllocator::LinearAllocator(uint64 capacity, void* data)
 {
 }
 
+void LinearAllocator::Initialize(const LargeArray<uint8>& memory)
+{
+    used = 0;
+    capacity = memory.size;
+    data = memory.data;
+}
+
+void LinearAllocator::Initialize(uint64 capacity, void* data)
+{
+    used = 0;
+    this->capacity = capacity;
+    this->data = data;
+}
+
 void* LinearAllocator::Allocate(uint64 size)
 {
     if (used + size > capacity) {
@@ -104,6 +118,11 @@ void LinearAllocator::Free(void* memory)
 void LinearAllocator::Clear()
 {
     used = 0;
+}
+
+uint64 LinearAllocator::GetRemainingBytes()
+{
+    return capacity - used;
 }
 
 LinearAllocatorState LinearAllocator::SaveState()

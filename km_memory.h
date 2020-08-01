@@ -37,13 +37,17 @@ struct LinearAllocator
     LinearAllocator(const LargeArray<uint8>& memory);
     LinearAllocator(uint64 capacity, void* data);
 
+    void Initialize(const LargeArray<uint8>& memory);
+    void Initialize(uint64 capacity, void* data);
+    void Clear();
+    uint64 GetRemainingBytes();
+
     void* Allocate(uint64 size);
     template <typename T> T* New();
     template <typename T> T* New(uint64 size);
     template <typename T> Array<T> NewArray(uint32 size);
     void* ReAllocate(void* memory, uint64 size);
     void Free(void* memory);
-    void Clear();
 
     LinearAllocatorState SaveState();
     void LoadState(const LinearAllocatorState& state);

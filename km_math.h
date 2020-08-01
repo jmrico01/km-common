@@ -7,13 +7,18 @@
 #define PI_F 3.14159265f
 #define E_F  2.71828182f
 
-inline int RoundToPowerOfTwo(int n, int powerOfTwo)
+inline bool IsPowerOfTwo(int n)
 {
-    DEBUG_ASSERTF(powerOfTwo && ((powerOfTwo & (powerOfTwo - 1)) == 0), "%d should be power of 2\n", powerOfTwo);
+    return n && ((n & (n - 1)) == 0);
+}
+
+inline int RoundUpToPowerOfTwo(int n, int powerOfTwo)
+{
+    DEBUG_ASSERTF(IsPowerOfTwo(powerOfTwo), "%d should be power of 2\n", powerOfTwo);
     return (n + powerOfTwo - 1) & -powerOfTwo;
 }
 
-inline uint32 RoundUpToPowerOfTwo(int n)
+inline uint32 RoundUpToAnyPowerOfTwo(int n)
 {
     n--;
     n |= n >> 1;

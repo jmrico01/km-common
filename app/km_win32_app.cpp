@@ -15,7 +15,14 @@ WINDOWPLACEMENT windowPlacementPrev_ = { sizeof(windowPlacementPrev_) };
 
 FixedArray<char, PATH_MAX_LENGTH> logFilePath_;
 
-bool TryDoNextWorkEntry(AppWorkQueue* queue)
+struct ThreadInfo
+{
+    AppWorkQueue* queue;
+    HANDLE handle;
+    uint32 index;
+};
+
+bool TryDoNextWorkEntry(AppWorkQueue* queue, uint32 threadIndex)
 {
     const uint32 read = queue->read;
     if (read == queue->write) {
@@ -26,7 +33,7 @@ bool TryDoNextWorkEntry(AppWorkQueue* queue)
     const uint32 index = InterlockedCompareExchange((LONG volatile *)&queue->read, newRead, read);
     if (index == read) {
         AppWorkEntry entry = queue->entries[index];
-        entry.callback(queue, entry.data);
+        entry.callback(threadIndex, queue, entry.data);
         InterlockedIncrement((LONG volatile*)&queue->entriesComplete);
     }
 
@@ -35,20 +42,28 @@ bool TryDoNextWorkEntry(AppWorkQueue* queue)
 
 DWORD WINAPI WorkerThreadProc(_In_ LPVOID lpParameter)
 {
-    AppWorkQueue* queue = (AppWorkQueue*)lpParameter;
+    ThreadInfo* threadInfo = (ThreadInfo*)lpParameter;
     while (true) {
-        if (!TryDoNextWorkEntry(queue)) {
-            WaitForSingleObjectEx(queue->win32SemaphoreHandle, INFINITE, FALSE);
+        if (!TryDoNextWorkEntry(threadInfo->queue, threadInfo->index)) {
+            WaitForSingleObjectEx(threadInfo->queue->win32SemaphoreHandle, INFINITE, FALSE);
         }
     }
 
     return 0;
 }
 
-void CompleteAllWork(AppWorkQueue* queue)
+// TODO put in km_os
+uint32 GetCpuCount()
+{
+    SYSTEM_INFO systemInfo;
+    GetSystemInfo(&systemInfo);
+    return (uint32)systemInfo.dwNumberOfProcessors;
+}
+
+void CompleteAllWork(AppWorkQueue* queue, uint32 threadIndex)
 {
     while (queue->entriesComplete != queue->entriesTotal) {
-        TryDoNextWorkEntry(queue);
+        TryDoNextWorkEntry(queue, threadIndex);
     }
 
     queue->entriesTotal = 0;
@@ -565,7 +580,8 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     // Initialize app work queue
     AppWorkQueue appWorkQueue;
     const int MAX_THREADS = 256;
-    FixedArray<HANDLE, MAX_THREADS> threadHandles;
+    FixedArray<ThreadInfo, MAX_THREADS> threads;
+    threads.Clear();
     {
         appWorkQueue.entriesTotal = 0;
         appWorkQueue.entriesComplete = 0;
@@ -579,21 +595,22 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
             return 1;
         }
 
-        SYSTEM_INFO systemInfo;
-        GetSystemInfo(&systemInfo);
-        int numThreads = systemInfo.dwNumberOfProcessors - 1;
+        uint32 numThreads = GetCpuCount() - 1;
         if (numThreads > MAX_THREADS) {
-            LOG_INFO("Whoa, hello future! Machine has too many processors: %d, clamping to %d\n",
-                     systemInfo.dwNumberOfProcessors, MAX_THREADS);
+            LOG_INFO("hello future! Machine has too many processors: %d, clamping to %d\n", numThreads, MAX_THREADS);
             numThreads = MAX_THREADS;
         }
 #if !ENABLE_THREADS
         numThreads = 0;
 #endif
-        for (int i = 0; i < numThreads; i++) {
-            HANDLE* handle = threadHandles.Append();
-            *handle = CreateThread(NULL, 0, WorkerThreadProc, &appWorkQueue, 0, NULL);
-            if (*handle == NULL) {
+
+        for (uint32 i = 0; i < numThreads; i++) {
+            ThreadInfo* threadInfo = threads.Append();
+            threadInfo->queue = &appWorkQueue;
+            threadInfo->index = i + 1;
+
+            threadInfo->handle = CreateThread(NULL, 0, WorkerThreadProc, threadInfo, 0, NULL);
+            if (threadInfo->handle == NULL) {
                 LOG_ERROR("Failed to create worker thread\n");
                 LOG_FLUSH();
                 return 1;
