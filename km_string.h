@@ -48,6 +48,10 @@ bool StringToElementArray(const_string str, char sep, bool trimElements,
                           int maxElements, T* array, int* numElements);
 
 template <typename Allocator>
+string StringConcatenate(const_string str1, const_string str2, Allocator* allocator);
+
+bool SizedPrintf(string* str, const char* format, ...);
+template <typename Allocator>
 string AllocPrintf(Allocator* allocator, const char* format, ...);
 template <typename Allocator>
 DynamicArray<char, Allocator> AllocPrintf(const char* format, ...);

@@ -3,6 +3,18 @@
 #include "km_lib.h"
 #include "km_string.h"
 
+enum class FileType
+{
+    FILE,
+    DIR
+};
+
+struct FileInfo
+{
+    string name;
+    FileType type;
+};
+
 template <typename Allocator>
 Array<uint8> LoadEntireFile(const_string filePath, Allocator* allocator);
 template <typename Allocator>
@@ -19,7 +31,9 @@ bool CreateDirRecursive(const_string dir);
 
 // Traverses all files in the given directory. Returns an array with their names.
 template <typename Allocator>
-Array<string> ListDir(const_string dir, Allocator* allocator);
+Array<FileInfo> ListDir(const_string dir, Allocator* allocator);
+template <typename Allocator>
+void FreeListDir(Array<FileInfo> fileInfos, Allocator* allocator);
 
 template <typename Allocator>
 FixedArray<char, PATH_MAX_LENGTH> GetExecutablePath(Allocator* allocator);

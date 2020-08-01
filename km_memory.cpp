@@ -12,6 +12,11 @@ template <typename T> T* StandardAllocator::New()
     return (T*)Allocate(sizeof(T));
 }
 
+template <typename T> T* StandardAllocator::New(uint64 size)
+{
+    return (T*)Allocate(sizeof(T) * size);
+}
+
 void* StandardAllocator::ReAllocate(void* memory, uint64 size)
 {
     return realloc(memory, size);
@@ -32,7 +37,7 @@ void* LinearAllocator::Allocate(uint64 size)
     if (used + size > capacity) {
         return nullptr;
     }
-    
+
     uint64 start = used;
     used += size;
     return (void*)((uint8*)data + start);

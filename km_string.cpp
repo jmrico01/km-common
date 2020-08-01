@@ -303,6 +303,35 @@ string NextSplitElement(string* str, char separator)
 }
 
 template <typename Allocator>
+string StringConcatenate(const_string str1, const_string str2, Allocator* allocator)
+{
+    string result;
+    result.size = str1.size + str2.size;
+    result.data = allocator->New<char>(result.size);
+    if (result.data == nullptr) {
+        return string::empty;
+    }
+    MemCopy(result.data, str1.data, str1.size);
+    MemCopy(result.data + str1.size, str2.data, str2.size);
+    return result;
+}
+
+bool SizedPrintf(string* str, const char* format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    const int length = stbsp_vsnprintf(str->data, (int)str->size, format, args);
+    va_end(args);
+
+    if (length < 0 || length >= (int)str->size) {
+        return false;
+    }
+
+    str->size = length;
+    return true;
+}
+
+template <typename Allocator>
 string AllocPrintf(Allocator* allocator, const char* format, ...)
 {
     int bufferSize = 256;
