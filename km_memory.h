@@ -5,7 +5,7 @@
 
 // Pushes allocator state onto the stack
 // Resets the state when the current scope ends using a defer statement
-#define ALLOCATOR_SCOPE_RESET(allocator) auto KM_UNIQUE_NAME_LINE(scopedState) = (allocator).SaveState(); \
+#define SCOPED_ALLOCATOR_RESET(allocator) auto KM_UNIQUE_NAME_LINE(scopedState) = (allocator).SaveState(); \
 defer((allocator).LoadState(KM_UNIQUE_NAME_LINE(scopedState)));
 
 void MemCopy(void* dst, const void* src, uint64 numBytes);

@@ -7,6 +7,10 @@
 #include "../km_defines.h"
 #include "../km_math.h"
 
+#define SCOPED_VK_COMMAND_BUFFER(name, device, commandPool, queue) VkCommandBuffer name = \
+BeginOneTimeCommands((device), (commandPool)); \
+defer(EndOneTimeCommands((device), (commandPool), (queue), name));
+
 struct RectCoordsNdc
 {
     Vec2 pos;
