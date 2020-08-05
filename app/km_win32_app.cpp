@@ -1,6 +1,9 @@
 #include <Windows.h>
 
 #include <intrin.h>
+#ifdef TRACY_ENABLE
+#include <Tracy.hpp>
+#endif
 
 #include "../vulkan/km_vulkan_core.h"
 #include "km_app.h"
@@ -635,6 +638,14 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
     running_ = true;
     while (running_) {
+#ifdef TRACY_ENABLE
+        FrameMark;
+#endif
+
+#ifdef TRACY_ENABLE
+        TracyCZoneN(zoneInput, "Input", true);
+#endif
+
         int mouseWheelPrev = newInput->mouseWheel;
         Win32ProcessMessages(hWnd, newInput);
         newInput->mouseWheelDelta = newInput->mouseWheel - mouseWheelPrev;
@@ -668,6 +679,10 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
             windowPropertiesChanged_ = false;
             windowSizeChanged_ = false;
+
+#ifdef TRACY_ENABLE
+            TracyCZoneEnd(zoneInput);
+#endif
             continue;
         }
 
@@ -704,6 +719,14 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
             }
         }
 
+#ifdef TRACY_ENABLE
+        TracyCZoneEnd(zoneInput);
+#endif
+
+#ifdef TRACY_ENABLE
+        TracyCZoneN(zoneAcquireImage, "AcquireImage", true);
+#endif
+
         uint32_t imageIndex;
         VkResult result = vkAcquireNextImageKHR(vulkanState.window.device, vulkanState.swapchain.swapchain,
                                                 UINT64_MAX, vulkanState.window.imageAvailableSemaphore, VK_NULL_HANDLE,
@@ -721,11 +744,19 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
             if (!AppLoadVulkanSwapchainState(vulkanState, &appMemory)) {
                 DEBUG_PANIC("Failed to reload Vulkan swapchain-dependent app state\n");
             }
+
+#ifdef TRACY_ENABLE
+            TracyCZoneEnd(zoneAcquireImage);
+#endif
             continue;
         }
         else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
             LOG_ERROR("Failed to acquire swapchain image\n");
         }
+
+#ifdef TRACY_ENABLE
+        TracyCZoneEnd(zoneAcquireImage);
+#endif
 
         bool shouldRender = AppUpdateAndRender(vulkanState, imageIndex, *newInput, lastElapsed,
                                                &appMemory, &appAudio, &appWorkQueue);
@@ -734,20 +765,26 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
             continue;
         }
 
-        // TODO not sure what the split in Vulkan rendering responsibility should be between
-        // the OS and game layers...
-        const VkSemaphore signalSemaphores[] = { vulkanState.window.renderFinishedSemaphore };
+        {
+#ifdef TRACY_ENABLE
+            ZoneScopedN("Present");
+#endif
 
-        VkPresentInfoKHR presentInfo = {};
-        presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-        presentInfo.waitSemaphoreCount = C_ARRAY_LENGTH(signalSemaphores);
-        presentInfo.pWaitSemaphores = signalSemaphores;
-        presentInfo.swapchainCount = 1;
-        presentInfo.pSwapchains = &vulkanState.swapchain.swapchain;
-        presentInfo.pImageIndices = &imageIndex;
-        presentInfo.pResults = nullptr;
+            // TODO not sure what the split in Vulkan rendering responsibility should be between
+            // the OS and game layers...
+            const VkSemaphore signalSemaphores[] = { vulkanState.window.renderFinishedSemaphore };
 
-        vkQueuePresentKHR(vulkanState.window.presentQueue, &presentInfo);
+            VkPresentInfoKHR presentInfo = {};
+            presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+            presentInfo.waitSemaphoreCount = C_ARRAY_LENGTH(signalSemaphores);
+            presentInfo.pWaitSemaphores = signalSemaphores;
+            presentInfo.swapchainCount = 1;
+            presentInfo.pSwapchains = &vulkanState.swapchain.swapchain;
+            presentInfo.pImageIndices = &imageIndex;
+            presentInfo.pResults = nullptr;
+
+            vkQueuePresentKHR(vulkanState.window.presentQueue, &presentInfo);
+        }
 
         // timing information
         {
@@ -771,7 +808,12 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
         oldInput = temp;
         ClearInput(newInput, *oldInput);
 
-        LOG_FLUSH();
+        {
+#ifdef TRACY_ENABLE
+            ZoneScopedN("LogFlush");
+#endif
+            LOG_FLUSH();
+        }
     }
 
     vkDeviceWaitIdle(vulkanState.window.device);

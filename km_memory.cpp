@@ -19,7 +19,8 @@ void MemSet(void* dst, uint8 value, uint64 numBytes)
 {
     uint8* d = (uint8*)dst;
     for (uint32 i = 0; i < numBytes; i++) {
-        *(d++) = value;
+        *d = value;
+        d++;
     }
 }
 
