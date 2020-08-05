@@ -206,7 +206,7 @@ bool LoadVulkanSwapchain(const VulkanWindow& window, Vec2Int size, VulkanSwapcha
 
         swapchain->imageViews.size = imageCount;
         for (uint32 i = 0; i < swapchain->images.size; i++) {
-            if (!CreateImageView(window.device, swapchain->images[i], surfaceFormat.format,VK_IMAGE_ASPECT_COLOR_BIT,
+            if (!CreateImageView(window.device, swapchain->images[i], surfaceFormat.format, VK_IMAGE_ASPECT_COLOR_BIT,
                                  &swapchain->imageViews[i])) {
                 LOG_ERROR("CreateImageView failed for image %lu\n", i);
                 return false;
