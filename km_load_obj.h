@@ -30,6 +30,7 @@ struct ObjMaterial
 
 struct ObjModel
 {
+    string name;
     Array<ObjTriangle> triangles;
     Array<ObjQuad> quads;
 };

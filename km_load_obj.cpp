@@ -36,6 +36,7 @@ bool LoadObj(const_string filePath, Vec3 offset, float32 scale, LoadObjResult* r
     DynamicArray<Vec2, LinearAllocator> uvs(allocator);
     DynamicArray<ObjTriangle, LinearAllocator> triangles(allocator);
     DynamicArray<ObjQuad, LinearAllocator> quads(allocator);
+    DynamicArray<string, LinearAllocator> names(allocator);
     DynamicArray<uint32, LinearAllocator> startTriangleInds(allocator);
     DynamicArray<uint32, LinearAllocator> startQuadInds(allocator);
 
@@ -60,7 +61,8 @@ bool LoadObj(const_string filePath, Vec3 offset, float32 scale, LoadObjResult* r
         if (next.size < 2) continue;
 
         // Handle new model
-        if (next[0] == 'o' && next[1] == ' ') {
+        if (next.size > 2 && next[0] == 'o' && next[1] == ' ') {
+            names.Append(next.SliceFrom(2));
             startTriangleInds.Append(triangles.size);
             startQuadInds.Append(quads.size);
             firstMesh = false;
@@ -197,13 +199,17 @@ bool LoadObj(const_string filePath, Vec3 offset, float32 scale, LoadObjResult* r
         }
     }
 
+    if (names.size != startTriangleInds.size) {
+        LOG_ERROR("Error in name/triangle tracking when loading obj file %.*s\n", (int)filePath.size, filePath.data);
+        return false;
+    }
     if (startTriangleInds.size != startQuadInds.size) {
         LOG_ERROR("Error in triangle/quad tracking when loading obj file %.*s\n", (int)filePath.size, filePath.data);
         return false;
     }
 
-    result->models = allocator->NewArray<ObjModel>(startTriangleInds.size);
-    for (uint32 i = 0; i < startTriangleInds.size; i++) {
+    result->models = allocator->NewArray<ObjModel>(names.size);
+    for (uint32 i = 0; i < names.size; i++) {
         uint32 endTriangleInd = triangles.size;
         if (i != startTriangleInds.size - 1) {
             endTriangleInd = startTriangleInds[i + 1];
@@ -213,6 +219,7 @@ bool LoadObj(const_string filePath, Vec3 offset, float32 scale, LoadObjResult* r
             endQuadInd = startQuadInds[i + 1];
         }
 
+        result->models[i].name = names[i];
         result->models[i].triangles = triangles.ToArray().Slice(startTriangleInds[i], endTriangleInd);
         result->models[i].quads = quads.ToArray().Slice(startQuadInds[i], endQuadInd);
     }
