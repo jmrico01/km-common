@@ -717,7 +717,7 @@ inline Vec3 Normalize(Vec3 v)
 inline Vec3 NormalizeOrZero(Vec3 v)
 {
     float32 magSq = MagSq(v);
-    if (magSq < 0.0001f) {
+    if (magSq < 0.000001f) {
         return Vec3::zero;
     }
     return v / sqrtf(magSq);

@@ -391,15 +391,17 @@ bool LoadVulkanImage(VkDevice device, VkPhysicalDevice physicalDevice, VkCommand
     MemCopy(memoryMappedData, data, imageSize);
     vkUnmapMemory(device, stagingBuffer.memory);
 
-    VkCommandBuffer commandBuffer = BeginOneTimeCommands(device, commandPool);
-    TransitionImageLayout(commandBuffer, image->image,
-                          VK_IMAGE_LAYOUT_UNDEFINED,
-                          VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-    CopyBufferToImage(commandBuffer, stagingBuffer.buffer, image->image, width, height);
-    TransitionImageLayout(commandBuffer, image->image,
-                          VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                          VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-    EndOneTimeCommands(device, commandPool, queue, commandBuffer);
+    {
+        SCOPED_VK_COMMAND_BUFFER(commandBuffer, device, commandPool, queue);
+
+        TransitionImageLayout(commandBuffer, image->image,
+                              VK_IMAGE_LAYOUT_UNDEFINED,
+                              VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+        CopyBufferToImage(commandBuffer, stagingBuffer.buffer, image->image, width, height);
+        TransitionImageLayout(commandBuffer, image->image,
+                              VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                              VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    }
 
     // Create image view
     if (!CreateImageView(device, image->image, format, VK_IMAGE_ASPECT_COLOR_BIT, &image->view)) {
