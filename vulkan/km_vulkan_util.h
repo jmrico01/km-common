@@ -23,6 +23,8 @@ struct QueueFamilyInfo
     uint32_t graphicsFamilyIndex;
     bool hasPresentFamily;
     uint32_t presentFamilyIndex;
+    bool hasComputeFamily;
+    uint32_t computeFamilyIndex;
 };
 
 struct VulkanBuffer

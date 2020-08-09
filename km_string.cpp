@@ -108,6 +108,7 @@ void CatStrings(size_t sourceACount, const char* sourceA,
                 size_t sourceBCount, const char* sourceB,
                 size_t destCount, char* dest)
 {
+    UNREFERENCED_PARAMETER(destCount);
     DEBUG_ASSERT(sourceACount + sourceBCount <= destCount);
 
     for (size_t i = 0; i < sourceACount; i++) {

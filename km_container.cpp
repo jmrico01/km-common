@@ -90,7 +90,8 @@ void DynamicArray<T, Allocator>::FromArray(const Array<T>& array)
 {
     if (capacity < array.size) {
         // TODO round to nearest power of 2?
-        DEBUG_ASSERT(UpdateCapacity(array.size));
+        const bool result = UpdateCapacity(array.size);
+        DEBUG_ASSERT(result);
     }
 
     size = array.size;
@@ -103,7 +104,8 @@ template <typename T, typename Allocator>
 T* DynamicArray<T, Allocator>::Append()
 {
     if (size >= capacity) {
-        DEBUG_ASSERT(UpdateCapacity(capacity * 2));
+        const bool result = UpdateCapacity(capacity * 2);
+        DEBUG_ASSERT(result);
     }
 
     new (&data[size]) T();
@@ -130,7 +132,8 @@ void DynamicArray<T, Allocator>::Append(const Array<const T>& array)
     uint32 newSize = size + array.size;
     if (newSize > capacity) {
         // TODO round to nearest power of 2?
-        DEBUG_ASSERT(UpdateCapacity(newSize));
+        const bool result = UpdateCapacity(newSize);
+        DEBUG_ASSERT(newSize);
     }
 
     for (uint32 i = 0; i < array.size; i++) {
