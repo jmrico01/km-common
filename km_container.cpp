@@ -1,6 +1,5 @@
 #include "km_container.h"
 
-#include <cstring> // NOTE don't remove this! Otherwise MSVC freaks out about placement new
 #include <typeinfo>
 
 static const float32 HASH_TABLE_MAX_SIZE_TO_CAPACITY = 0.7f;
@@ -91,7 +90,9 @@ void DynamicArray<T, Allocator>::FromArray(const Array<T>& array)
     if (capacity < array.size) {
         // TODO round to nearest power of 2?
         const bool result = UpdateCapacity(array.size);
-        DEBUG_ASSERT(result);
+        if (!result) {
+            DEBUG_PANIC("DynamicArray out of memory\n");
+        }
     }
 
     size = array.size;
@@ -105,10 +106,14 @@ T* DynamicArray<T, Allocator>::Append()
 {
     if (size >= capacity) {
         const bool result = UpdateCapacity(capacity * 2);
-        DEBUG_ASSERT(result);
+        if (!result) {
+            DEBUG_PANIC("DynamicArray out of memory\n");
+            return nullptr;
+        }
     }
 
-    new (&data[size]) T();
+    // NOTE nope. not doing this anymore
+    //new (&data[size]) T();
     return &data[size++];
 }
 
@@ -133,7 +138,9 @@ void DynamicArray<T, Allocator>::Append(const Array<const T>& array)
     if (newSize > capacity) {
         // TODO round to nearest power of 2?
         const bool result = UpdateCapacity(newSize);
-        DEBUG_ASSERT(newSize);
+        if (!result) {
+            DEBUG_PANIC("DynamicArray out of memory\n");
+        }
     }
 
     for (uint32 i = 0; i < array.size; i++) {
@@ -353,7 +360,8 @@ void HashTable<V, Allocator>::Initialize(Allocator* allocator, uint32 capacity)
 
     for (uint32 i = 0; i < capacity; i++) {
         pairs[i].key.s.size = 0;
-        new (&pairs[i]) KeyValuePair<V>();
+        // NOTE nope. not doing this anymore
+        // new (&pairs[i]) KeyValuePair<V>();
     }
 
     this->capacity = capacity;

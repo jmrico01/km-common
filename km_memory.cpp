@@ -102,6 +102,10 @@ template <typename T> Array<T> LinearAllocator::NewArray(uint32 size)
 void* LinearAllocator::ReAllocate(void* memory, uint64 size)
 {
     void* newData = Allocate(size);
+    if (newData == nullptr) {
+        return nullptr;
+    }
+
     // TODO extremely hacky way of copying memory, but otherwise, we would have had to know the previous alloc size
     uint64 diff = (uint64)newData - (uint64)memory;
     MemCopy(newData, memory, MinUInt64(diff, size));
