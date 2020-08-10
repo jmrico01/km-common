@@ -28,6 +28,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugCallback(VkDebugUtilsMessageSev
 
     LOG_ERROR("Validation layer, message (severity %d, type %d): %s\n",
               messageSeverity, messageType, pCallbackData->pMessage);
+    LOG_FLUSH();
     return VK_FALSE;
 }
 

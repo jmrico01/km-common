@@ -941,11 +941,11 @@ bool IsInside(Vec2Int v, RectInt rect)
 }
 
 // -------------------- Box ---------------------
-bool IsInside(Vec3 v, Box box)
+bool IsInsideInclusive(Vec3 v, Box box)
 {
-    return box.min.x <= v.x && v.x < box.max.x
-        && box.min.y <= v.y && v.y < box.max.y
-        && box.min.z <= v.z && v.z < box.max.z;
+    return box.min.x <= v.x && v.x <= box.max.x
+        && box.min.y <= v.y && v.y <= box.max.y
+        && box.min.z <= v.z && v.z <= box.max.z;
 }
 
 // ------------------ BoxInt --------------------

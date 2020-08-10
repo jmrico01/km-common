@@ -683,6 +683,8 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 #ifdef TRACY_ENABLE
             TracyCZoneEnd(zoneInput);
 #endif
+
+            LOG_FLUSH();
             continue;
         }
 
@@ -748,6 +750,8 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 #ifdef TRACY_ENABLE
             TracyCZoneEnd(zoneAcquireImage);
 #endif
+
+            LOG_FLUSH();
             continue;
         }
         else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
