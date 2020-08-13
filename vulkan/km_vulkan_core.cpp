@@ -65,12 +65,20 @@ internal void GetSwapchainSupportInfo(VkSurfaceKHR surface, VkPhysicalDevice phy
 internal VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const Array<VkSurfaceFormatKHR>& availableFormats)
 {
     for (uint32 i = 0; i < availableFormats.size; i++) {
+#if 1
+        if (availableFormats[i].format == VK_FORMAT_B8G8R8A8_UINT ||
+            availableFormats[i].format == VK_FORMAT_B8G8R8A8_UNORM) {
+            return availableFormats[i];
+        }
+#else
         if (availableFormats[i].format == VK_FORMAT_B8G8R8A8_SRGB &&
             availableFormats[i].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
             return availableFormats[i];
         }
+#endif
     }
 
+    DEBUG_PANIC("Ideal swap surface format not found\n");
     return availableFormats[0]; // sloppy fallback
 }
 
