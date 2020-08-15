@@ -345,8 +345,7 @@ struct Quat
 {
     const static Quat one;
 
-    // You should NOT be changing
-    // these values manually
+    // Should probably not be changing these values manually
     float32 x, y, z, w;
 };
 
