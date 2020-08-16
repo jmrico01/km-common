@@ -117,6 +117,16 @@ uint32 SafeTruncateUInt64(uint64 value)
     return result;
 }
 
+inline float32 Sqrt32(float32 x)
+{
+    return sqrtf(x);
+}
+
+inline float32 Exp32(float32 x)
+{
+    return expf(x);
+}
+
 inline float32 Sin32(float32 x)
 {
     return (float32)sin(x);
@@ -456,7 +466,7 @@ inline float32 MagSq(Vec2 v)
 }
 inline float32 Mag(Vec2 v)
 {
-    return sqrtf(v.x*v.x + v.y*v.y);
+    return Sqrt32(v.x*v.x + v.y*v.y);
 }
 inline Vec2 Normalize(Vec2 v)
 {
@@ -568,7 +578,7 @@ inline int MagSq(Vec2Int v)
 }
 inline int Mag(Vec2Int v)
 {
-    return (int)sqrtf((float32)v.x*v.x + v.y*v.y);
+    return (int)Sqrt32((float32)v.x*v.x + v.y*v.y);
 }
 
 // -------------------- Vec3 --------------------
@@ -707,7 +717,7 @@ inline float32 MagSq(Vec3 v)
 }
 inline float32 Mag(Vec3 v)
 {
-    return sqrtf(MagSq(v));
+    return Sqrt32(MagSq(v));
 }
 inline Vec3 Normalize(Vec3 v)
 {
@@ -719,7 +729,7 @@ inline Vec3 NormalizeOrZero(Vec3 v)
     if (magSq < 0.000001f) {
         return Vec3::zero;
     }
-    return v / sqrtf(magSq);
+    return v / Sqrt32(magSq);
 }
 
 inline Vec3 GetPerpendicular(Vec3 v)
@@ -833,7 +843,7 @@ inline int MagSq(Vec3Int v)
 }
 inline int Mag(Vec3Int v)
 {
-    return (int)sqrtf((float32)v.x*v.x + v.y*v.y + v.z*v.z);
+    return (int)Sqrt32((float32)v.x*v.x + v.y*v.y + v.z*v.z);
 }
 
 // -------------------- Vec4 --------------------
@@ -1268,7 +1278,7 @@ inline float32 MagSq(Quat q)
 }
 inline float32 Mag(Quat q)
 {
-    return sqrtf(MagSq(q));
+    return Sqrt32(MagSq(q));
 }
 inline Quat Normalize(Quat q)
 {
@@ -1358,7 +1368,7 @@ Quat QuatRotBetweenVectors(Vec3 v1, Vec3 v2)
     }
 
     const Vec3 axis = Cross(v1, v2);
-    const float32 angle = (float32)sqrt(MagSq(v1) * MagSq(v2)) + dot;
+    const float32 angle = Sqrt32(MagSq(v1) * MagSq(v2)) + dot;
     return QuatFromAngleUnitAxis(angle, Normalize(axis));
 }
 
@@ -1409,23 +1419,23 @@ bool RayPlaneIntersection(Vec3 rayOrigin, Vec3 rayDir, Vec3 planeOrigin, Vec3 pl
 }
 
 // NOTE remember this takes in the INVERSE ray direction!
-bool RayAxisAlignedBoxIntersection(Vec3 rayOrigin, Vec3 rayDirInv, Box box, float32* tMinOut, float32* tMaxOut)
+bool RayAABBIntersection(Vec3 rayOrigin, Vec3 rayDirInv, Box aabb, float32* tMinOut, float32* tMaxOut)
 {
     float32 tMin = -INFINITY;
     float32 tMax = INFINITY;
 
-    const float32 tX1 = (box.min.x - rayOrigin.x) * rayDirInv.x;
-    const float32 tX2 = (box.max.x - rayOrigin.x) * rayDirInv.x;
+    const float32 tX1 = (aabb.min.x - rayOrigin.x) * rayDirInv.x;
+    const float32 tX2 = (aabb.max.x - rayOrigin.x) * rayDirInv.x;
     tMin = MaxFloat32(tMin, MinFloat32(tX1, tX2));
     tMax = MinFloat32(tMax, MaxFloat32(tX1, tX2));
 
-    const float32 tY1 = (box.min.y - rayOrigin.y) * rayDirInv.y;
-    const float32 tY2 = (box.max.y - rayOrigin.y) * rayDirInv.y;
+    const float32 tY1 = (aabb.min.y - rayOrigin.y) * rayDirInv.y;
+    const float32 tY2 = (aabb.max.y - rayOrigin.y) * rayDirInv.y;
     tMin = MaxFloat32(tMin, MinFloat32(tY1, tY2));
     tMax = MinFloat32(tMax, MaxFloat32(tY1, tY2));
 
-    const float32 tZ1 = (box.min.z - rayOrigin.z) * rayDirInv.z;
-    const float32 tZ2 = (box.max.z - rayOrigin.z) * rayDirInv.z;
+    const float32 tZ1 = (aabb.min.z - rayOrigin.z) * rayDirInv.z;
+    const float32 tZ2 = (aabb.max.z - rayOrigin.z) * rayDirInv.z;
     tMin = MaxFloat32(tMin, MinFloat32(tZ1, tZ2));
     tMax = MinFloat32(tMax, MaxFloat32(tZ1, tZ2));
 
