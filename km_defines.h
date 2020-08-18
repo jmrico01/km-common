@@ -80,6 +80,8 @@ const int16  INT16_MIN_VALUE  = -32768;
 const int16  INT16_MAX_VALUE  = 32767;
 const uint16 UINT16_MAX_VALUE = 0xffff;
 
+const int32 INT32_MAX_VALUE = 0x7FFFFFFF;
+const int32 INT32_MIN_VALUE = 0x80000000;
 const uint32 UINT32_MAX_VALUE = 0xffffffff;
 
 const uint64 UINT64_MAX_VALUE = 0xffffffffffffffff;
