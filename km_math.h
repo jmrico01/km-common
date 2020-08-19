@@ -1316,19 +1316,18 @@ inline Quat Inverse(Quat q)
 inline Vec3 operator*(Quat q, Vec3 v)
 {
     // Treat v as a quaternion with w = 0
-    Quat vQuat = { v.x, v.y, v.z, 0.0f };
+    const Quat vQuat = { v.x, v.y, v.z, 0.0f };
     // TODO Quat multiply with baked in w=0 would be faster, obviously
     /*qv.x = q.w*v.x + q.y*v.z - q.z*v.y;
     qv.y = q.w*v.y + q.z*v.x - q.x*v.z;
     qv.z = q.w*v.z + q.x*v.y - q.y*v.x;
     qv.w = -q.x*v.x - q.y*v.y - q.z*v.z;*/
-    Quat qv = q * vQuat;
+    const Quat qv = q * vQuat;
 
-    Quat qInv = Inverse(q);
-    Quat qvqInv = qv * qInv;
+    const Quat qInv = Inverse(q);
+    const Quat qvqInv = qv * qInv;
 
-    Vec3 result = { qvqInv.x, qvqInv.y, qvqInv.z };
-    return result;
+    return Vec3 { qvqInv.x, qvqInv.y, qvqInv.z };
 }
 
 // Axis should be a unit vector
